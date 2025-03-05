@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
 import 'app.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'features/authentication/controller/login_controller.dart';
+import 'features/authentication/controller/task_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init();
 
-  //  Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  final storage = GetStorage();
+  String? token = storage.read("auth_token");
 
-  // Add 3-second delay for the splash screen
-  await Future.delayed(const Duration(seconds: 3));
+  Get.put(LoginController());
+  Get.put(TaskController());
 
-  runApp(const MyApp());
+  runApp(MyApp(initialRoute: token == null ? '/login' : '/home'));
 }
+
+

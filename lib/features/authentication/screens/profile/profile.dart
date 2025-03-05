@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../controller/login_controller.dart';
 import '../../../../utils/constants/colors.dart';
 import '../../../../utils/constants/size.dart';
 import '../change_password/change_password.dart';
-
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final storage = GetStorage();
+    final email = storage.read("user_email") ?? "user@oneject.co.id";
+    final firstName = storage.read("first_name") ?? "First Name";
+    final lastName = storage.read("last_name") ?? "Last Name";
+    final nik = storage.read("nik").toString() ?? "-";
+    final divisi = storage.read("divisi") ?? "-";
+    final department = storage.read("department") ?? "-";
+    final role = storage.read("role") ?? "-";
+
     final loginController = Get.find<LoginController>();
 
     return Scaffold(
@@ -40,11 +47,11 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    "First Name Last Name",
+                    "$firstName $lastName",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    user?.email ?? 'user@oneject.co.id',
+                    email,
                     style: const TextStyle(color: OColors.darkerGrey),
                   ),
                 ],
@@ -61,33 +68,10 @@ class ProfilePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "NIK",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text("-"),
-                    const Divider(),
-                    const Text(
-                      "Divisi",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text("-"),
-                    const Divider(),
-                    const Text(
-                      "Department",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text("-"),
-                    const Divider(),
-                    const Text(
-                      "Role",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text("-"),
+                    profileDetail("NIK", nik),
+                    profileDetail("Divisi", divisi),
+                    profileDetail("Department", department),
+                    profileDetail("Role", role),
                   ],
                 ),
               ),
@@ -108,6 +92,21 @@ class ProfilePage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget profileDetail(String title, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(value),
+        const Divider(),
+      ],
     );
   }
 }

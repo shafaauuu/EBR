@@ -3,81 +3,51 @@ import 'package:flutter/material.dart';
 class Task {
   final String code;
   final String name;
-  final String? title;
+  final String status;
   final IconData icon;
   final Color color;
 
   Task({
-    this.title,
     required this.code,
     required this.name,
+    required this.status,
     required this.icon,
     required this.color,
   });
 
-  // Convert a database row (Map<String, dynamic>) to a Task object
-  factory Task.fromMap(Map<String, dynamic> data) {
+  factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      code: data['code'],
-      name: data['name'],
-      title: data['title'], // Nullable field
-      icon: _mapIcon(data['icon']), // Convert DB string to Flutter IconData
-      color: _mapColor(data['color']), // Convert DB string to Flutter Color
+      code: json['code'] ?? 'No Code',
+      name: json['task_name'] ?? 'Unnamed Task',
+      status: json['status'],
+      icon: _getStatusIcon(json['status']),
+      color: _getStatusColor(json['status']),
     );
   }
 
-  // Convert a Task object to a database-friendly format (Map)
-  Map<String, dynamic> toMap() {
-    return {
-      'code': code,
-      'name': name,
-      'title': title,
-      'icon': _iconToString(icon), // Convert Flutter IconData to a string
-      'color': _colorToString(color), // Convert Flutter Color to a string
-    };
-  }
-
-  // Convert database icon string to Flutter IconData
-  static IconData _mapIcon(String iconName) {
-    switch (iconName) {
-      case 'check_circle':
+  static IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'ongoing':
+        return Icons.schedule;
+      case 'pending':
+        return Icons.pending_actions;
+      case 'completed':
         return Icons.check_circle;
-      case 'access_time_filled':
-        return Icons.access_time_filled;
-      case 'warning':
-        return Icons.warning;
       default:
-        return Icons.help_outline;
+        return Icons.help;
     }
   }
 
-  // Convert Flutter IconData to a string for storage
-  static String _iconToString(IconData icon) {
-    if (icon == Icons.check_circle) return 'check_circle';
-    if (icon == Icons.access_time_filled) return 'access_time_filled';
-    if (icon == Icons.warning) return 'warning';
-    return 'help_outline';
-  }
-
-  // Convert database color string to Flutter Color
-  static Color _mapColor(String colorName) {
-    switch (colorName) {
-      case 'green':
-        return Colors.green;
-      case 'blue':
+  static Color _getStatusColor(String status) {
+    switch (status) {
+      case 'ongoing':
+        return Colors.orange;
+      case 'pending':
         return Colors.blue;
-      case 'red':
-        return Colors.red;
+      case 'completed':
+        return Colors.green;
       default:
         return Colors.grey;
     }
-  }
-
-  // Convert Flutter Color to a string for storage
-  static String _colorToString(Color color) {
-    if (color == Colors.green) return 'green';
-    if (color == Colors.blue) return 'blue';
-    if (color == Colors.red) return 'red';
-    return 'grey';
   }
 }

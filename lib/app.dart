@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:oji_1/features/authentication/screens/home/home.dart';
 import 'package:oji_1/features/authentication/screens/login/login.dart';
 import 'package:oji_1/utils/theme/theme.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +18,12 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       theme: OAppTheme.lightTheme,
       darkTheme: OAppTheme.lightTheme,
-      home: const LoginScreen(),
+      initialRoute: initialRoute, // Use the initialRoute
+      getPages: [
+        GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(name: '/home', page: () => const HomePage()),
+      ],
     );
   }
 }
+

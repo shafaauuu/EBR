@@ -1,21 +1,29 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:oji_1/features/authentication/controller/login_controller.dart';
-import 'package:oji_1/features/authentication/screens/tabs/ongoing.dart';
-import 'package:oji_1/features/authentication/screens/tabs/pending.dart';
-import 'package:oji_1/features/authentication/screens/tabs/completed.dart';
-import 'package:oji_1/features/authentication/screens/profile/profile.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
+
 import '../../../../utils/constants/text_strings.dart';
+import '../../controller/login_controller.dart';
+import '../../controller/task_controller.dart';
 import '../change_password/change_password.dart';
+import '../profile/profile.dart';
+import '../tabs/completed.dart';
+import '../tabs/ongoing.dart';
+import '../tabs/pending.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final loginController = Get.find<LoginController>(); // Using Controller
+    final storage = GetStorage();
+    final firstName = storage.read("first_name") ?? "First Name";
+    final department = storage.read("department") ?? "No Department";
+    final role = storage.read("role") ?? "No Role";
+    final TaskController taskController = Get.put(TaskController());
+
 
     return DefaultTabController(
       length: 3,
@@ -41,6 +49,7 @@ class HomePage extends StatelessWidget {
                 } else if (value == 'change_password') {
                   Get.to(() => const ChangePasswordPage());
                 } else if (value == 'logout') {
+                  final loginController = Get.find<LoginController>();
                   loginController.logout(context);
                 }
               },
@@ -51,10 +60,17 @@ class HomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user?.email ?? 'user@example.com',
+                        firstName,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      const Text("Production Operation"),
+                      Text(
+                        department,
+                        style: const TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                      Text(
+                        role,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const Divider(),
                     ],
                   ),

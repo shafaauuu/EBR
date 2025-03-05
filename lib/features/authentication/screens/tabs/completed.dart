@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:oji_1/features/authentication/controller/task_controller.dart';
 import 'task_item.dart';
-import 'package:oji_1/features/authentication/models/task_model.dart';
 
 class CompletedPage extends StatelessWidget {
   const CompletedPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Task completedTask = Task(
-      code: 'XXX-BRL-XX XmL-LL-HRT',
-      name: 'XXXXX-XX-XXX-Safeject',
-      icon: Icons.check_circle,
-      color: Colors.green,
-    );
+    final taskController = Get.find<TaskController>();
 
-    return ListView(
-      children: [
-        TaskItem(task: completedTask), // Pass a Task object instead of raw values
-      ],
-    );
+    return Obx(() {
+      var completedTasks = taskController.tasks.where((task) => task.status == 'completed').toList();
+
+      return completedTasks.isEmpty
+          ? const Center(child: Text("No completed tasks"))
+          : ListView.builder(
+        itemCount: completedTasks.length,
+        itemBuilder: (context, index) {
+          return TaskItem(task: completedTasks[index]);
+        },
+      );
+    });
   }
 }
