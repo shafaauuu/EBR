@@ -29,7 +29,7 @@ class TaskItem extends StatelessWidget {
           onPressed: () => taskController.showOptionsMenu(context, task.code, task.status),
         ),
         onTap: () {
-          Get.to(() => TaskDetailsPage(task: task));
+          Get.to(() => TaskDetails(task: task));
         },
       ),
     );

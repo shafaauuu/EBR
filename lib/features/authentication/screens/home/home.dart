@@ -47,7 +47,7 @@ class HomePage extends StatelessWidget {
                 if (value == 'profile') {
                   Get.to(() => const ProfilePage());
                 } else if (value == 'change_password') {
-                  Get.to(() => const ChangePasswordPage());
+                  Get.to(() => const ChangePassword());
                 } else if (value == 'logout') {
                   final loginController = Get.find<LoginController>();
                   loginController.logout(context);

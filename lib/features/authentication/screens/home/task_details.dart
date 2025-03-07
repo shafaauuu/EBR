@@ -4,15 +4,17 @@ import 'package:oji_1/features/authentication/models/task_model.dart';
 import 'package:oji_1/features/authentication/controller/task_details_controller.dart';
 import 'package:oji_1/features/authentication/screens/Form/part_a.dart';
 
-class TaskDetailsPage extends StatefulWidget {
+import '../Form/part_b.dart';
+
+class TaskDetails extends StatefulWidget {
   final Task task;
-  const TaskDetailsPage({super.key, required this.task});
+  const TaskDetails({super.key, required this.task});
 
   @override
-  _TaskDetailsPageState createState() => _TaskDetailsPageState();
+  _TaskDetailsState createState() => _TaskDetailsState();
 }
 
-class _TaskDetailsPageState extends State<TaskDetailsPage> {
+class _TaskDetailsState extends State<TaskDetails> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
 
   @override
@@ -100,10 +102,10 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
   void _navigateToSection(String key) {
     switch (key) {
       case "A":
-        Get.to(() => PartAPage(task: widget.task));
+        Get.to(() => PartA(task: widget.task));
         break;
       case "B":
-      // Get.to(() => PartBPage());
+        Get.to(() => PartB(task: widget.task));
         break;
       default:
         _showSweetAlert();

@@ -81,7 +81,7 @@ class ProfilePage extends StatelessWidget {
               leading: const Icon(Icons.lock),
               title: const Text('Change Password'),
               onTap: () {
-                Get.to(() => const ChangePasswordPage());
+                Get.to(() => const ChangePassword());
               },
             ),
             ListTile(
