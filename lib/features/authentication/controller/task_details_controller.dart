@@ -14,8 +14,8 @@ class TaskDetailsController extends GetxController {
 
   final Map<String, String> sectionTitles = {
     "A": "Part A. Line Clearance",
-    "B": "Part B. Persiapan dan Inspeksi Mesin",
-    "C": "Part C. Penerimaan dan Inspeksi Material",
+    "B": "Part B. Persiapan dan Inspeksi Mesin dan Perlengkapan",
+    "C": "Part C. Penerimaan dan Inspeksi Material/Komponen",
     "D": "Part D. Instruksi Kerja dan Catatan",
     "E": "Part E. Production Summary",
     "F": "Part F. Label Material, Mesin, dan Proses",
@@ -74,5 +74,29 @@ class TaskDetailsController extends GetxController {
       default:
         return "Task Details";
     }
+  }
+
+  // Observable BRM List
+  RxList<String> brmList = <String>[].obs;
+
+  // Selected BRM
+  RxString selectedBRM = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchBRMList(); // Disabled for now
+  }
+
+  // Fetch BRM List (Currently Mocked)
+  void fetchBRMList() {
+    // TODO: Replace with database call
+    brmList.value = ["BRM001", "BRM002", "BRM003"];
+  }
+
+  // Fetch BRM Data (Currently Disabled)
+  void fetchBRMData(String brmNumber) {
+    // TODO: Implement fetching logic
+    print("Fetching data for $brmNumber...");
   }
 }

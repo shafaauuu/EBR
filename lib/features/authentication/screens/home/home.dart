@@ -18,6 +18,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).orientation == Orientation.portrait) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            'Please rotate your device to landscape mode.',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     final storage = GetStorage();
     final firstName = storage.read("first_name") ?? "First Name";
     final department = storage.read("department") ?? "No Department";
@@ -47,7 +59,7 @@ class HomePage extends StatelessWidget {
                 if (value == 'profile') {
                   Get.to(() => const ProfilePage());
                 } else if (value == 'change_password') {
-                  Get.to(() => const ChangePasswordPage());
+                  Get.to(() => const ChangePassword());
                 } else if (value == 'logout') {
                   final loginController = Get.find<LoginController>();
                   loginController.logout(context);

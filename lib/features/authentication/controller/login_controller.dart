@@ -112,9 +112,9 @@ class LoginController extends GetxController {
         });
       } else {
         String errorMessage;
-        if (data["message"] == "User not found") {
+        if (data["message"] == "User not found") { //not working
           errorMessage = "Email not registered.";
-        } else if (data["message"] == "Incorrect password") {
+        } else if (data["message"] == "Incorrect password") { //not working
           errorMessage = "Password is incorrect.";
         } else {
           errorMessage = data["message"] ?? "Login failed. Please try again.";
@@ -263,6 +263,7 @@ class LoginController extends GetxController {
       return;
     }
 
+    ///in progress
     try {
       final response = await http.post(
         Uri.parse('http://127.0.0.1:8000/api/change-password'),
