@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controller/task_details_controller.dart';
-import '../../models/task_model.dart';
+import '../../../controller/task_details_controller.dart';
+import '../../../models/task_model.dart';
 
 class PartD extends StatefulWidget {
   final Task task;

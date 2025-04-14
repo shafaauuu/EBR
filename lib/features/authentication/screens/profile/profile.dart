@@ -15,10 +15,12 @@ class ProfilePage extends StatelessWidget {
     final email = storage.read("user_email") ?? "user@oneject.co.id";
     final firstName = storage.read("first_name") ?? "First Name";
     final lastName = storage.read("last_name") ?? "Last Name";
-    final nik = storage.read("nik").toString() ?? "-";
+    final nik = storage.read("nik")?.toString() ?? "-";
     final divisi = storage.read("divisi") ?? "-";
     final department = storage.read("department") ?? "-";
     final role = storage.read("role") ?? "-";
+    final inisial = storage.read("inisial") ?? "-";
+    final group = storage.read("group") ?? "-";
 
     final loginController = Get.find<LoginController>();
 
@@ -30,7 +32,7 @@ class ProfilePage extends StatelessWidget {
         ),
         title: const Text('Profile'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +41,11 @@ class ProfilePage extends StatelessWidget {
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: OColors.lightGrey,
-                child: Icon(Icons.account_circle, size: 80, color: OColors.darkerGrey),
+                child: const Icon(
+                  Icons.account_circle,
+                  size: 80,
+                  color: OColors.darkerGrey,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -72,6 +78,8 @@ class ProfilePage extends StatelessWidget {
                     profileDetail("Divisi", divisi),
                     profileDetail("Department", department),
                     profileDetail("Role", role),
+                    profileDetail("Inisial", inisial),
+                    profileDetail("Group", group),
                   ],
                 ),
               ),

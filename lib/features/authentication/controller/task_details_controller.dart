@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/services.dart';
 
 class TaskDetailsController extends GetxController {
+  var selectedMaterialCode = ''.obs;
+  var requiredQuantity = ''.obs;
+
   var sectionCompletion = <String, bool>{
     "A": false,
     "B": false,
@@ -28,16 +34,35 @@ class TaskDetailsController extends GetxController {
     sectionCompletion[key] = true;
   }
 
-  void showShiftInputDialog() {
+  void showShiftInputDialog({
+    required String firstName,
+    required String inisial,
+    required String group,
+  }) {
     Get.dialog(
       AlertDialog(
         title: const Text("Shift Transfer"),
-        content: TextField(
-          controller: shiftController,
-          decoration: const InputDecoration(
-            labelText: "Enter Shift Name",
-            border: OutlineInputBorder(),
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Name: $firstName"),
+            Text("Inisial: $inisial"),
+            Text("Group: $group"),
+            const SizedBox(height: 12),
+            TextField(
+              controller: shiftController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(1),
+              ],
+              decoration: const InputDecoration(
+                labelText: "Enter Shift Group",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -49,11 +74,21 @@ class TaskDetailsController extends GetxController {
               String shiftName = shiftController.text;
               if (shiftName.isNotEmpty) {
                 Get.back();
-                Get.snackbar("Success", "Shift transferred to $shiftName",
-                    snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                Get.snackbar(
+                  "Success",
+                  "Shift transferred to Group $shiftName",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                );
               } else {
-                Get.snackbar("Error", "Shift name cannot be empty",
-                    snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+                Get.snackbar(
+                  "Error",
+                  "Shift name cannot be empty",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
               }
             },
             child: const Text("Confirm"),
@@ -88,15 +123,89 @@ class TaskDetailsController extends GetxController {
     fetchBRMList(); // Disabled for now
   }
 
-  // Fetch BRM List (Currently Mocked)
-  void fetchBRMList() {
-    // TODO: Replace with database call
-    brmList.value = ["BRM001", "BRM002", "BRM003"];
+  // Fetch BRM List
+  Future<void> fetchBRMList() async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/brms'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        // Step 1: Extract, trim, and clean the data
+        List<String> rawList = List<String>.from(data.map((item) => item['brm_no'].toString().trim()));
+
+        // Step 2: Remove duplicates using Set
+        List<String> uniqueList = rawList.toSet().toList();
+
+        // Step 3: Sort the list
+        uniqueList.sort((a, b) => a.compareTo(b));
+
+        // Step 4: Assign to the observable list
+        brmList.value = uniqueList;
+
+        print('BRM List Fetched: $brmList');
+      } else {
+        Get.snackbar("Error", "Failed to load BRM list (Status ${response.statusCode})",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load BRM list: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 
-  // Fetch BRM Data (Currently Disabled)
-  void fetchBRMData(String brmNumber) {
-    // TODO: Implement fetching logic
-    print("Fetching data for $brmNumber...");
+  // Fetch BRM Data (in progress)
+  void fetchBRMData(String brmNumber) async {
+    try {
+      final encodedBRM = Uri.encodeComponent(brmNumber.trim());
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/brms/$encodedBRM'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Do something with the data, like storing it in a variable or showing on screen
+        print("BRM Data: $data");
+      } else {
+        Get.snackbar("Error", "Failed to fetch BRM details",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to fetch BRM details: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
+
+  RxList<String> materialCodes = <String>[].obs;
+
+  Future<void> fetchMaterialCodes(String brmNo) async {
+    try {
+      final encodedBRM = Uri.encodeComponent(brmNo.trim());
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/brms/$encodedBRM/materials'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final fetchedCodes = data.map((code) => code.toString()).toList();
+        final uniqueCodes = fetchedCodes.toSet().toList();
+
+        materialCodes.value = uniqueCodes;
+
+        // 💡 Fix: Reset selectedMaterialCode if it doesn't exist in the new list
+        if (!fetchedCodes.contains(selectedMaterialCode.value)) {
+          selectedMaterialCode.value = '';
+        }
+
+        print('Fetched material codes: $fetchedCodes');
+      } else {
+        materialCodes.clear();
+        selectedMaterialCode.value = ''; // 💡 Also reset here to avoid mismatched value
+        Get.snackbar("Error", "Failed to fetch material codes",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      materialCodes.clear();
+      selectedMaterialCode.value = ''; // 💡 Important to reset here as well
+      Get.snackbar("Error", "Error fetching material codes: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
 }

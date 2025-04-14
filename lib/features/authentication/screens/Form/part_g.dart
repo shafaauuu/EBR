@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../controller/task_details_controller.dart';
 import '../../models/task_model.dart';
+import 'package:signature/signature.dart';
 
 class PartG extends StatefulWidget {
   final Task? task;
@@ -12,6 +14,14 @@ class PartG extends StatefulWidget {
 }
 
 class _PartGState extends State<PartG> {
+  final TaskDetailsController controller = Get.put(TaskDetailsController());
+
+  final SignatureController _signatureController = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +79,7 @@ class _PartGState extends State<PartG> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildAlignedText("BRM No.", ""),
+                          Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
                           _buildAlignedText("Rev No.", ""),
                           _buildAlignedText("Eff. Date", ""),
                         ],
@@ -90,11 +100,80 @@ class _PartGState extends State<PartG> {
               ),
               const SizedBox(height: 8),
               TextField(
-                maxLines: 10,
+                maxLines: 5,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: "Masukkan catatan di sini...",
                 ),
+              ),
+
+              const SizedBox(height: 16),
+
+              const SizedBox(height: 16),
+              const Text(
+                "Tanda Tangan/Sign:",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 8),
+
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Signature(
+                  controller: _signatureController,
+                  height: 200,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      _signatureController.clear();
+                    },
+                    icon: const Icon(Icons.refresh, color: Colors.red),
+                    label: const Text(
+                      "Clear",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final image = await _signatureController.toPngBytes();
+                      if (image != null) {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text("Signature Preview"),
+                            content: Image.memory(image),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Close"),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("Preview"),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 3,
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 16),

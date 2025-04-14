@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../controller/task_details_controller.dart';
 import '../../models/task_model.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
@@ -16,6 +17,8 @@ class PartF extends StatefulWidget {
 }
 
 class _PartFState extends State<PartF> {
+  final TaskDetailsController controller = Get.put(TaskDetailsController());
+
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
@@ -107,7 +110,7 @@ class _PartFState extends State<PartF> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildAlignedText("BRM No.", ""),
+                          Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
                           _buildAlignedText("Rev No.", ""),
                           _buildAlignedText("Eff. Date", ""),
                         ],

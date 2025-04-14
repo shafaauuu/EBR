@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:oji_1/features/authentication/models/task_model.dart';
 import 'package:oji_1/features/authentication/controller/task_details_controller.dart';
 import 'package:oji_1/features/authentication/screens/Form/part_a.dart';
@@ -23,13 +25,8 @@ class _TaskDetailsState extends State<TaskDetails> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
 
   @override
-  void initState() {
-    super.initState();
-    controller.fetchBRMList(); // This is currently disabled
-  }
-
-  @override
   Widget build(BuildContext context) {
+
     if (MediaQuery.of(context).orientation == Orientation.portrait) {
       return Scaffold(
         body: Center(
@@ -91,7 +88,7 @@ class _TaskDetailsState extends State<TaskDetails> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildAlignedText("BRM No.", ""),
+                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -106,10 +103,17 @@ class _TaskDetailsState extends State<TaskDetails> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               children: [
-                // BRM Dropdown inside the scrollable section
-                Obx(() => _buildBRMDropdown()),
+                Obx(() {
+                  if (controller.brmList.isEmpty) {
+                    return const CircularProgressIndicator();
+                  } else {
+                    return _buildBRMDropdown();
+                  }
+                }),
 
                 const SizedBox(height: 10),
+
+                buildRequiredQuantityInput(),
 
                 ...controller.sectionTitles.entries.map((entry) {
                   return Padding(
@@ -161,9 +165,11 @@ class _TaskDetailsState extends State<TaskDetails> {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: DropdownButton<String>(
+            child: Obx(() => DropdownButton<String>(
               isExpanded: true,
-              value: controller.selectedBRM.value.isNotEmpty ? controller.selectedBRM.value : null,
+              value: controller.selectedBRM.value.isNotEmpty
+                  ? controller.selectedBRM.value
+                  : null,
               hint: const Text("Select BRM"),
               items: controller.brmList.map((brm) {
                 return DropdownMenuItem(
@@ -174,9 +180,85 @@ class _TaskDetailsState extends State<TaskDetails> {
               onChanged: (value) {
                 if (value != null) {
                   controller.selectedBRM.value = value;
-                  controller.fetchBRMData(value); // This is currently disabled
+                  controller.fetchMaterialCodes(value); // fetch new material codes
+                  controller.selectedMaterialCode.value = ''; // reset material code selection
                 }
               },
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildRequiredQuantityInput() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          // Material Code Dropdown
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                const Text(
+                  "Material Code: ",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Obx(() {
+                    return DropdownButton<String>(
+                      value: controller.selectedMaterialCode.value.isNotEmpty
+                          ? controller.selectedMaterialCode.value
+                          : null,
+                      hint: const Text("Select"),
+                      isExpanded: true,
+                      items: controller.materialCodes.map((code) {
+                        return DropdownMenuItem(
+                          value: code,
+                          child: Text(code),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          controller.selectedMaterialCode.value = value;
+                        }
+                      },
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          // Required Quantity Input
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                const Text(
+                  "Required Quantity: ",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    maxLines: 1,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "200",
+                      hintStyle: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -263,23 +345,43 @@ class _TaskDetailsState extends State<TaskDetails> {
   }
 
   Widget _buildShiftButton() {
+    final storage = GetStorage();
+    final firstName = storage.read("first_name") ?? "First Name";
+    final inisial = storage.read("inisial") ?? "-";
+    final group = storage.read("group") ?? "-";
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
-        onTap: () => controller.showShiftInputDialog(),
-        child: Align( // This keeps the button as wide as its content
-          alignment: Alignment.center, // Change alignment if needed
+        onTap: () {
+          controller.showShiftInputDialog(
+            firstName: widget.task.firstName ?? firstName,
+            inisial: widget.task.inisial ?? inisial,
+            group: widget.task.group ?? group,
+          );
+        },
+        child: Align(
+          alignment: Alignment.center,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Padding inside the button
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(colors: [Colors.orange.shade700, Colors.orange.shade400]),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.orange.shade700,
+                  Colors.orange.shade400,
+                ],
+              ),
             ),
             child: const Text(
               "Transfer Record To Next Shift",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
               softWrap: true,
             ),
           ),

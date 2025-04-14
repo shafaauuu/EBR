@@ -223,6 +223,8 @@ class LoginController extends GetxController {
         storage.write("divisi", data["div"]);
         storage.write("department", data["dept"]);
         storage.write("role", data["role"]);
+        storage.write("inisial", data['inisial']);
+        storage.write("group", data['group']);
 
         print("User data fetched successfully: $data");
       } else {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../controller/task_details_controller.dart';
 import '../../models/task_model.dart';
 
 class PartE extends StatefulWidget {
@@ -12,6 +13,10 @@ class PartE extends StatefulWidget {
 }
 
 class _PartEState extends State<PartE> {
+  final TaskDetailsController controller = Get.put(TaskDetailsController());
+
+  final String role = "Production Operation";
+
   final List<Map<String, String>> sentences = [
     {"no": "1", "text": "Jumlah Awal Assembling (produk rilis) (a)", "label": "unit/pcs"},
     {"no": "2", "text": "Jumlah Produk Karantina Assembling yang telah bersatu rilis (b)", "label": "unit/pcs"},
@@ -77,7 +82,7 @@ class _PartEState extends State<PartE> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildAlignedText("BRM No.", ""),
+                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -95,7 +100,7 @@ class _PartEState extends State<PartE> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProductSummaryTable(),
+                  _buildProductSummaryList(),
                   const SizedBox(height: 16),
                   Center(
                     child: ElevatedButton(
@@ -137,68 +142,82 @@ class _PartEState extends State<PartE> {
     );
   }
 
-  Widget _buildProductSummaryTable() {
-    return Table(
-      border: TableBorder.all(color: Colors.black26, width: 1.0),
-      columnWidths: const {
-        0: FlexColumnWidth(1),
-        1: FlexColumnWidth(5),
-        2: FlexColumnWidth(4),
-      },
-      children: [
-        TableRow(
-          decoration: BoxDecoration(color: Colors.grey[300]),
-          children: [
-            _buildTableHeaderCell("No."),
-            _buildTableHeaderCell("Remarks"),
-            _buildTableHeaderCell("Amount"),
-          ],
-        ),
-        ...sentences.map((row) {
-          return TableRow(
-            children: [
-              _buildTableCell(row["no"]!, isCentered: true),
-              _buildTableCell(row["text"]!),
-              _buildTableInput(row["label"]!),
-            ],
-          );
-        }).toList(),
-      ],
-    );
-  }
+  Widget _buildProductSummaryList() {
+    return Column(
+      children: sentences.map((row) {
+        bool isQCField = (row["no"] == "6.A." || row["no"] == "6.B.");
+        bool isEnabled = !(isQCField && role != "Quality Control");
 
-  Widget _buildTableHeaderCell(String text) {
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Center(
-        child: Text(
-          text,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableCell(String text, {bool isCentered = false}) {
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: isCentered ? Center(child: Text(text)) : Text(text),
-    );
-  }
-
-  Widget _buildTableInput(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      child: TextField(
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
+        return Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Circle Number
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      row["no"]!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Description and Input
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        row["text"]!,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        enabled: isEnabled,
+                        keyboardType: TextInputType.number,
+                        style: isQCField
+                            ? const TextStyle(color: Colors.blue)
+                            : null,
+                        decoration: InputDecoration(
+                          labelText: row["label"],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                          // Gray background if disabled
+                          filled: !isEnabled,
+                          fillColor: !isEnabled ? Colors.grey[200] : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
-        ),
-      ),
+        );
+      }).toList(),
     );
   }
+
 }

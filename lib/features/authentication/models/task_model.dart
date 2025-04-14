@@ -7,12 +7,20 @@ class Task {
   final IconData icon;
   final Color color;
 
+  final String? firstName;
+  final String? inisial;
+  final String? group;
+
   Task({
     required this.code,
     required this.name,
     required this.status,
     required this.icon,
     required this.color,
+
+    this.firstName,
+    this.inisial,
+    this.group,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -22,6 +30,9 @@ class Task {
       status: json['status'],
       icon: _getStatusIcon(json['status']),
       color: _getStatusColor(json['status']),
+
+      inisial: json['inisial'],
+      group: json['group'],
     );
   }
 
