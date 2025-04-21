@@ -17,13 +17,25 @@ class _PartAState extends State<PartA> {
   TextEditingController dateController = TextEditingController();
 
   final Map<String, bool?> responses = {
+    "pallet_clean": null,
     "floor_clean": null,
-    "walls_clean": null,
+    "area_under_clean": null,
+    "area_above_clean": null,
     "grill_clean": null,
-    "tools_clean": null,
-    "no_material_left": null,
+
+    "no_product_left": null,
+    "no_barrel_left": null,
+    "no_plunger_left": null,
+    "no_bulk_needle_left": null,
+    "no_gasket_left": null,
+    "no_component_left": null,
+    "no_output_left": null,
+    "no_reject_left": null,
+    "no_rework_left": null,
+
     "no_docs_left": null,
     "picking_list":null,
+    "document_related":null,
   };
 
   final Map<String, TextEditingController> numericResponses = {
@@ -34,6 +46,7 @@ class _PartAState extends State<PartA> {
   final TextEditingController batchController = TextEditingController();
   final TextEditingController productNameController = TextEditingController();
   final TextEditingController previousProductController = TextEditingController();
+  final TextEditingController needleController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +187,13 @@ class _PartAState extends State<PartA> {
                                 _buildTextFieldCell(batchController), // Input field
                               ],
                             ),
+                            // Row 3: Jenis Needle
+                            TableRow(
+                              children: [
+                                _buildTableCell("Jenis Needle", "Needle Type"),
+                                _buildTextFieldCell(needleController), // Input field
+                              ],
+                            ),
                           ],
                         ),
                       ],
@@ -194,13 +214,43 @@ class _PartAState extends State<PartA> {
                         1: FlexColumnWidth(2),
                       },
                       children: [
-                        _buildQuestionRow("a. Lantai bersih (tidak lengket, tidak ada genangan air)", "Floor is clean (not sticky and dry)", "floor_clean"),
-                        _buildQuestionRow("b. Dinding dan langit-langit ruangan bersih", "Walls and ceiling are clean", "walls_clean"),
-                        _buildQuestionRow("c. Return grill dalam keadaan bersih", "Return grill is clean", "grill_clean"),
-                        _buildQuestionRow("Kebersihan Peralatan dan Perlengkapan", "Cleanliness of tools and equipment", "tools_clean"),
-                        _buildYesNoRow("Tidak ada sisa produk/komponen/material sebelumnya", "No leftover products/components/materials", "no_material_left"),
+                        _buildQuestionRow("a. Palet untuk menaruh komponen dalam keadaan bersih", "Pallets for placing components are clean", "pallet_clean"),
+                        _buildQuestionRow("b. Lantai bersih (tidak lengket dan tidak ada genangan air)", "Floor is clean (not sticky and dry)", "floor_clean"),
+                        _buildQuestionRow("c. Kolong mesin dalam keadaan bersih dan kosong (tidak ada benda asing)", "Area under machine is clean and empty (no foreign objects)", "under_machine_clean"),
+                        _buildQuestionRow("d. Area atas mesin dalam keadaan bersih dan kosong (tidak ada benda asing)", "Area above machine is clean and empty (no foreign object)", "above_machine_clean"),
+                        _buildQuestionRow("e. Return grill dalam keadaan bersih", "Return grills are clean", "grill_clean"),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildSectionHeader(
+                        "Tidak ada sisa produk/komponen/material sebelumnya:",
+                        "There is no previous product/component/material"
+                    ),
+
+                    // Table Section
+                    Table(
+                      border: TableBorder.all(),
+                      columnWidths: const {
+                        0: FlexColumnWidth(3),
+                        1: FlexColumnWidth(2),
+                      },
+                      children: [
+                        _buildYesNoRow("a. Tidak ada sisa produk atau komponen yang berceceran di lantai atau palet", "There is no previous product or component scattered on floor or pallet", "no_product_left"),
+                        _buildYesNoRow("b. Tidak ada sisa barrel pada area hopper bawah, hopper atas, conveyor hopper, dan sepanjang rel", "There is no previous barrel in bottom hopper, top hopper, hopper conveyor, and along the rail", "no_barrel_left"),
+                        _buildYesNoRow("c. Tidak ada sisa plunger pada area hopper bawah, hopper atas, conveyor hopper, dan sepanjang rel", "There is no previous plunger in bottom hopper, top hopper, hopper conveyor, and along the rail", "no_plunger_left"),
+                        _buildYesNoRow("d. Tidak ada sisa bulk needle pada area hopper dan sepanjang rel", "There is no previous bulk needle on hopper area and along the rail", "no_bulk_needle_left"),
+                        _buildYesNoRow("e. Tidak ada sisa gasket pada area hopper", "There is no previous gasket in hopper area", "no_gasket_left"),
+                        _buildYesNoRow("f. Tidak ada sisa komponen atau produk pada celah starwheel/dragon dan sepanjang rel mesin assembling dan printing", "There is no previous component or product on the gap of starwheel/dragon along the rail of assembling and printing machine", "no_component_left"),
+                        _buildYesNoRow("g. Tidak ada sisa produk pada box hasil", "There is no previous product in output box", "no_output_left"),
+                        _buildYesNoRow("h. Tidak ada sisa produk reject pada box reject", "There is no previous reject product in reject box", "no_reject_left"),
+                        _buildYesNoRow("i. Tidak ada sisa komponen rework pada wadah rework", "There is no previous rework component in rework container", "no_rework_left"),
+
                         _buildYesNoRow("Tidak ada dokumen, catatan, atau label dari proses produksi sebelumnya", "There is no documents, records, or label from previous production process", "no_docs_left"),
                         _buildYesNoRow("Material sesuai dengan Picking List dan CoA komponen (Tanggal Kadaluarsa, Tanggal Produksi dan Nama Material", "Material According to the picking list and components of the CoA (Expire Date, Manufacturing Date and Material Name)", "picking_list"),
+                        _buildYesNoRow("Dokumen yang terkait proses produksi batch berjalan, telah berada di area mesin, meliputi Picklist, Label Status Mesin & Ruangan, dan Label Identitas Running", "Documents related to production process of on going batch, have been placed in machine area, include Picklist, Status Label of Machine & Room, and idenity Running Label", "document_related"),
+
                         _buildNumberInputRow("Pernyataan Suhu Lingkungan (T)", "Environmental Temperature (20-26°C)", "temperature"),
                         _buildNumberInputRow("Pernyataan Kelembapan Relatif (RH)", "Relative Humidity (<70%)", "humidity"),
                       ],

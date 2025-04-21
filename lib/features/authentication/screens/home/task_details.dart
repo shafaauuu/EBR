@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oji_1/features/authentication/models/task_model.dart';
 import 'package:oji_1/features/authentication/controller/task_details_controller.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_a.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_a.dart';
 import 'package:oji_1/features/authentication/screens/Form/part_b.dart';
 import 'package:oji_1/features/authentication/screens/Form/part_c.dart';
 import 'package:oji_1/features/authentication/screens/Form/part_d.dart';

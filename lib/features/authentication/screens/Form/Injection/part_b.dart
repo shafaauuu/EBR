@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../utils/constants/size.dart';
-import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
+import '../../../models/task_model.dart';
 
 class PartB extends StatefulWidget {
   final Task task;
@@ -171,7 +171,7 @@ class _PartBState extends State<PartB> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  _buildRadioOptions("Blister Pack Hualian 1"),
+                  _buildRadioOptions("Blister Pack Hualian 1"), // key1
                 ],
               ),
             ),
@@ -188,7 +188,7 @@ class _PartBState extends State<PartB> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  _buildRadioOptions("Blister Pack Hualian 1"),
+                  _buildRadioOptions("Blister Pack Hualian 2"), // use different key
                 ],
               ),
             ),

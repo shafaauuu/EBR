@@ -171,7 +171,7 @@ class _PartBState extends State<PartB> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  _buildRadioOptions("Blister Pack Hualian 1"),
+                  _buildRadioOptions("Blister Pack Hualian 1"), // key1
                 ],
               ),
             ),
@@ -188,7 +188,7 @@ class _PartBState extends State<PartB> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  _buildRadioOptions("Blister Pack Hualian 1"),
+                  _buildRadioOptions("Blister Pack Hualian 2"), // use different key
                 ],
               ),
             ),

@@ -107,12 +107,38 @@ class _PartGState extends State<PartG> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 25),
 
-              const SizedBox(height: 16),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Batch Record ini telah diisi sepenuhnya sesuai dengan kondisi sebenarnya.",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      "This Batch Record has been completed accurately according to the actual conditions.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
               const Text(
                 "Tanda Tangan/Sign:",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
               ),
 
               const SizedBox(height: 8),
@@ -174,6 +200,31 @@ class _PartGState extends State<PartG> {
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 16),
+
+              const Divider(thickness: 2),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Halaman Terakhir",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      "End of the page",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 16),
