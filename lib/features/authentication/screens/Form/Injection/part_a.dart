@@ -3,15 +3,15 @@ import 'package:get/get.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
 
-class PartA extends StatefulWidget {
+class PartA_Injection extends StatefulWidget {
   final Task task;
-  const PartA({super.key, required this.task});
+  const PartA_Injection({super.key, required this.task});
 
   @override
-  _PartAState createState() => _PartAState();
+  _PartA_InjectionState createState() => _PartA_InjectionState();
 }
 
-class _PartAState extends State<PartA> {
+class _PartA_InjectionState extends State<PartA_Injection> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   DateTime? _selectedDate;
   TextEditingController dateController = TextEditingController();
@@ -21,6 +21,7 @@ class _PartAState extends State<PartA> {
     "walls_clean": null,
     "grill_clean": null,
     "tools_clean": null,
+
     "no_material_left": null,
     "no_docs_left": null,
     "picking_list":null,

@@ -3,15 +3,15 @@ import 'package:get/get.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
 
-class PartA extends StatefulWidget {
+class PartA_Blister extends StatefulWidget {
   final Task task;
-  const PartA({super.key, required this.task});
+  const PartA_Blister({super.key, required this.task});
 
   @override
-  _PartAState createState() => _PartAState();
+  _PartA_BlisterState createState() => _PartA_BlisterState();
 }
 
-class _PartAState extends State<PartA> {
+class _PartA_BlisterState extends State<PartA_Blister> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   DateTime? _selectedDate;
   TextEditingController dateController = TextEditingController();

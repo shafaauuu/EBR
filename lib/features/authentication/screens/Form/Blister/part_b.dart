@@ -4,16 +4,16 @@ import '../../../../../utils/constants/size.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
-class PartB extends StatefulWidget {
+class PartB_Blister extends StatefulWidget {
   final Task task;
 
-  const PartB({super.key, required this.task});
+  const PartB_Blister({super.key, required this.task});
 
   @override
-  _PartBState createState() => _PartBState();
+  _PartB_BlisterState createState() => _PartB_BlisterState();
 }
 
-class _PartBState extends State<PartB> {
+class _PartB_BlisterState extends State<PartB_Blister> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   Map<String, String?> selectedValues = {}; // Allowing null values
 

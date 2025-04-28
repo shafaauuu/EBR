@@ -8,15 +8,15 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'dart:typed_data';
 import 'dart:html' as html;
 
-class PartD extends StatefulWidget {
+class PartD_Injection extends StatefulWidget {
   final Task task;
-  const PartD({super.key, required this.task});
+  const PartD_Injection({super.key, required this.task});
 
   @override
-  _PartDState createState() => _PartDState();
+  _PartD_InjectionState createState() => _PartD_InjectionState();
 }
 
-class _PartDState extends State<PartD> {
+class _PartD_InjectionState extends State<PartD_Injection> {
   Uint8List? _webImage;
 
   final TaskDetailsController controller = Get.put(TaskDetailsController());
@@ -53,9 +53,9 @@ class _PartDState extends State<PartD> {
   void onNeedleChanged(String? val) => setState(() => selectedNeedleItem = val);
 
   // Controllers for each field (5 fields per item)
-  List<TextEditingController> plungerControllers = List.generate(5, (_) => TextEditingController());
-  List<TextEditingController> barrelControllers = List.generate(5, (_) => TextEditingController());
-  List<TextEditingController> needleControllers = List.generate(5, (_) => TextEditingController());
+  List<TextEditingController> plungerControllers = List.generate(8, (_) => TextEditingController());
+  List<TextEditingController> barrelControllers = List.generate(8, (_) => TextEditingController());
+  List<TextEditingController> needleControllers = List.generate(8, (_) => TextEditingController());
 
 
   Future<void> _pickImage(ImageSource source) async {
@@ -174,7 +174,7 @@ class _PartDState extends State<PartD> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Mesin yang digunakan (Dropdown)
                   const Text("Mesin yang Digunakan:",
@@ -206,7 +206,7 @@ class _PartDState extends State<PartD> {
                     ),
                     hint: const Text("Pilih Mesin"),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Line Clearance (Inline Radio Buttons)
                   const Text(
@@ -251,11 +251,11 @@ class _PartDState extends State<PartD> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   buildCustomTableSection(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   const Align(
                     alignment: Alignment.centerLeft,
@@ -289,7 +289,7 @@ class _PartDState extends State<PartD> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 30),
 
                   // Material Reconciliation Title
                   Column(
@@ -323,7 +323,7 @@ class _PartDState extends State<PartD> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   const Divider(thickness: 1),
 
@@ -639,13 +639,52 @@ class _PartDState extends State<PartD> {
           ),
         ),
         const SizedBox(height: 8),
+
+        // Row for labels
         Row(
           children: [
-            buildTextField('Jumlah Awal', controllers[0]),
-            buildTextField('Jumlah Reject', controllers[1]),
-            buildTextField('Jumlah Release', controllers[2]),
-            buildTextField('Jumlah Karantina', controllers[3]),
-            buildTextField('Sisa Setelah Produksi', controllers[4]),
+            for (var label in [
+              'Jumlah Awal',
+              'Jumlah Tambahan (SPBT)',
+              'Jumlah Reject',
+              'Jumlah Terpakai',
+              'Jumlah Material Karantina',
+              'Sisa Setelah Produksi',
+              'Jumlah Dimusnahkan',
+              'Jumlah Dikembalikan',
+            ])
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 4),
+
+        // Row for input fields
+        Row(
+          children: [
+            for (var i = 0; i < controllers.length; i++)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: TextFormField(
+                    controller: controllers[i],
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ],

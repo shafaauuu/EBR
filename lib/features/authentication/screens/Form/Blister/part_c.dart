@@ -3,15 +3,15 @@ import 'package:get/get.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
-class PartC extends StatefulWidget {
+class PartC_Blister extends StatefulWidget {
   final Task task;
-  const PartC({super.key, required this.task});
+  const PartC_Blister({super.key, required this.task});
 
   @override
-  _PartCState createState() => _PartCState();
+  _PartC_BlisterState createState() => _PartC_BlisterState();
 }
 
-class _PartCState extends State<PartC> {
+class _PartC_BlisterState extends State<PartC_Blister> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
 
   //dropdown items

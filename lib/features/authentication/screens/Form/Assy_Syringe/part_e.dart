@@ -3,16 +3,16 @@ import 'package:get/get.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
-class PartE extends StatefulWidget {
+class PartE_Syringe extends StatefulWidget {
   final Task? task;
 
-  const PartE({super.key, this.task});
+  const PartE_Syringe({super.key, this.task});
 
   @override
-  _PartEState createState() => _PartEState();
+  _PartE_SyringeState createState() => _PartE_SyringeState();
 }
 
-class _PartEState extends State<PartE> {
+class _PartE_SyringeState extends State<PartE_Syringe> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
 
   final String role = "Production Operation";
@@ -26,7 +26,8 @@ class _PartEState extends State<PartE> {
     {"no": "4.A.", "text": "Sampel IPC (diisi QC)", "label": "unit/pcs"},
     {"no": "4.B.", "text": "Sampel QC (diisi QC)", "label": "unit/pcs"},
     {"no": "4.C.", "text": "Sampel (released) untuk keperluan lain/tidak dikembalikan ke Line (f)", "label": "unit/pcs"},
-    {"no": "7", "text": "Hasil / Yield Blister (g)", "label": "% (persen)"},
+    {"no": "5", "text": "Hasil / Yield Blister (g)", "label": "% (persen)"},
+    {"no": "6", "text": "Total hasil produksi di tahap Blister-Packing ( d + e + f + g )", "label": "unit/pcs"},
   ];
 
   @override

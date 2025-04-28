@@ -174,7 +174,7 @@ class _PartDState extends State<PartD> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Mesin yang digunakan (Dropdown)
                   const Text("Mesin yang Digunakan:",
@@ -206,7 +206,7 @@ class _PartDState extends State<PartD> {
                     ),
                     hint: const Text("Pilih Mesin"),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Line Clearance (Inline Radio Buttons)
                   const Text(
@@ -251,11 +251,11 @@ class _PartDState extends State<PartD> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   buildCustomTableSection(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   const Align(
                     alignment: Alignment.centerLeft,
@@ -289,7 +289,7 @@ class _PartDState extends State<PartD> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 30),
 
                   // Material Reconciliation Title
                   Column(
@@ -323,7 +323,7 @@ class _PartDState extends State<PartD> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   const Divider(thickness: 1),
 

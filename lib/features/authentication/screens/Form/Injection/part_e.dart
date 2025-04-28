@@ -3,33 +3,31 @@ import 'package:get/get.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
-class PartE extends StatefulWidget {
+class PartE_Injection extends StatefulWidget {
   final Task? task;
 
-  const PartE({super.key, this.task});
+  const PartE_Injection({super.key, this.task});
 
   @override
-  _PartEState createState() => _PartEState();
+  _PartE_InjectionState createState() => _PartE_InjectionState();
 }
 
-class _PartEState extends State<PartE> {
+class _PartE_InjectionState extends State<PartE_Injection> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
 
   final String role = "Production Operation";
 
   final List<Map<String, String>> sentences = [
-    {"no": "1", "text": "Jumlah Awal Assembling (produk rilis) (a)", "label": "unit/pcs"},
-    {"no": "2", "text": "Jumlah Produk Karantina Assembling yang telah bersatu rilis (b)", "label": "unit/pcs"},
-    {"no": "3", "text": "Total Bulk Syringe Siap Blister (c) c = a + b", "label": "unit/pcs"},
-    {"no": "4", "text": "Jumlah finished goods rilis (d)", "label": "unit/pcs"},
-    {"no": "5.A.", "text": "Jumlah produk karantina di tahap Blister-Packing (e)", "label": "unit/pcs"},
-    {"no": "5.B.", "text": "Jumlah reject di tahap Blister-Packing (f)", "label": "unit/pcs"},
-    {"no": "5.C.", "text": "Jumlah reject di tahap Blister-Packing yang dimusnahkan (g)", "label": "unit/pcs"},
-    {"no": "6.A.", "text": "Sampel IPC (diisi QC)", "label": "unit/pcs"},
-    {"no": "6.B.", "text": "Sampel QC (diisi QC)", "label": "unit/pcs"},
-    {"no": "6.C.", "text": "Sampel (released) untuk keperluan lain/tidak dikembalikan ke Line (h)", "label": "unit/pcs"},
-    {"no": "7", "text": "Hasil / Yield Blister (i)", "label": "% (persen)"},
-    {"no": "8", "text": "Total hasil produksi di tahap Blister-Packing ( d + e + f + g )", "label": "unit/pcs"},
+    {"no": "1", "text": "Jumlah Teoritis (a)", "label": "unit/pcs"},
+    {"no": "2", "text": "Jumlah Finished Goods Rilis (b)", "label": "unit/pcs"},
+    {"no": "3.A.", "text": "Jumlah produk karantina di tahap Blister-Packing (c)", "label": "unit/pcs"},
+    {"no": "3.B.", "text": "Jumlah reject di tahap Blister-Packing (d)", "label": "unit/pcs"},
+    {"no": "3.C.", "text": "Jumlah sisa di tahap Blister-Packing yang dimusnahkan (e)", "label": "unit/pcs"},
+    {"no": "4.A.", "text": "Sampel IPC (diisi QC)", "label": "unit/pcs"},
+    {"no": "4.B.", "text": "Sampel QC (diisi QC)", "label": "unit/pcs"},
+    {"no": "4.C.", "text": "Sampel (released) untuk keperluan lain/tidak dikembalikan ke Line (f)", "label": "unit/pcs"},
+    {"no": "5", "text": "Hasil / Yield Blister (g)", "label": "% (persen)"},
+    {"no": "6", "text": "Total hasil produksi di tahap Blister-Packing ( d + e + f + g )", "label": "unit/pcs"},
   ];
 
   @override

@@ -2,15 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
+
 import 'package:oji_1/features/authentication/models/task_model.dart';
 import 'package:oji_1/features/authentication/controller/task_details_controller.dart';
+
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_a.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_b.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_c.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_d.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_e.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_f.dart';
-import 'package:oji_1/features/authentication/screens/Form/part_g.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_b.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_c.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_d.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_e.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_f.dart';
+import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_g.dart';
+
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_a.dart';
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_b.dart';
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_c.dart';
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_d.dart';
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_e.dart';
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_f.dart';
+import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_g.dart';
+
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_a.dart';
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_b.dart';
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_c.dart';
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_d.dart';
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_e.dart';
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_f.dart';
+import 'package:oji_1/features/authentication/screens/Form/Blister/part_g.dart';
+
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_a.dart';
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_b.dart';
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_c.dart';
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_d.dart';
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_e.dart';
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_f.dart';
+import 'package:oji_1/features/authentication/screens/Form/Injection/part_g.dart';
+
+import '../../models/material_model.dart';
 
 
 class TaskDetails extends StatefulWidget {
@@ -113,7 +142,7 @@ class _TaskDetailsState extends State<TaskDetails> {
 
                 const SizedBox(height: 10),
 
-                buildRequiredQuantityInput(),
+                buildMaterialSearchInput(),
 
                 ...controller.sectionTitles.entries.map((entry) {
                   return Padding(
@@ -180,6 +209,7 @@ class _TaskDetailsState extends State<TaskDetails> {
               onChanged: (value) {
                 if (value != null) {
                   controller.selectedBRM.value = value;
+                  controller.fetchCategory(value); // ← Add this
                   controller.fetchMaterialCodes(value); // fetch new material codes
                   controller.selectedMaterialCode.value = ''; // reset material code selection
                 }
@@ -191,72 +221,98 @@ class _TaskDetailsState extends State<TaskDetails> {
     );
   }
 
-  Widget buildRequiredQuantityInput() {
+  Widget buildMaterialSearchInput() {
+    final TextEditingController searchController = TextEditingController();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Material Code Dropdown
+          // 🔍 Search Material Field
           Expanded(
-            flex: 2,
-            child: Row(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Material Code: ",
+                  "Search Material:",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Obx(() {
-                    return DropdownButton<String>(
-                      value: controller.selectedMaterialCode.value.isNotEmpty
-                          ? controller.selectedMaterialCode.value
-                          : null,
-                      hint: const Text("Select"),
-                      isExpanded: true,
-                      items: controller.materialCodes.map((code) {
-                        return DropdownMenuItem(
-                          value: code,
-                          child: Text(code),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          controller.selectedMaterialCode.value = value;
-                        }
-                      },
+                const SizedBox(height: 8),
+                TypeAheadField<MaterialModel>(
+                  textFieldConfiguration: TextFieldConfiguration(
+                    controller: searchController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter code, description, or group",
+                    ),
+                  ),
+                  suggestionsCallback: (pattern) async {
+                    if (controller.selectedBRM.value.isEmpty) {
+                      Get.snackbar("Warning", "Please select a BRM first.",
+                          backgroundColor: Colors.orange, colorText: Colors.white);
+                      return [];
+                    }
+
+                    controller.searchQuery.value = pattern;
+                    return await controller.searchMaterials();
+                  },
+                  itemBuilder: (context, MaterialModel suggestion) {
+                    return ListTile(
+                      title: Text('${suggestion.materialCode} - ${suggestion.materialDesc}'),
+                      subtitle: Text(suggestion.materialGroup),
                     );
-                  }),
+                  },
+                  onSuggestionSelected: (MaterialModel suggestion) {
+                    controller.selectedMaterialCode.value = suggestion.materialCode;
+                    controller.selectedMaterialDisplay.value =
+                    '${suggestion.materialCode} - ${suggestion.materialDesc}';
+                    searchController.text = controller.selectedMaterialDisplay.value;
+                  },
+                  noItemsFoundBuilder: (context) => const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('No materials found'),
+                  ),
+                  loadingBuilder: (context) => const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                  errorBuilder: (context, error) => Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('Error: ${controller.errorMessage.value}'),
+                  ),
                 ),
               ],
             ),
           ),
-
           const SizedBox(width: 16),
 
-          // Required Quantity Input
+          // 🔢 Required Quantity Field
           Expanded(
             flex: 2,
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Required Quantity: ",
+                  "Required Quantity:",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    maxLines: 1,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                    ],
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: "200",
-                      hintStyle: TextStyle(color: Colors.grey),
-                    ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  maxLines: 1,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: "200",
+                    hintStyle: TextStyle(color: Colors.grey),
                   ),
+                  onChanged: (value) {
+                    controller.requiredQuantity.value = value;
+                  },
                 ),
               ],
             ),
@@ -298,32 +354,67 @@ class _TaskDetailsState extends State<TaskDetails> {
   }
 
   void _navigateToSection(String key) {
-    switch (key) {
-      case "A":
-        Get.to(() => PartA(task: widget.task));
+    final category = controller.selectedCategory.value;
+
+    switch (category) {
+
+      case "Blister":
+        switch (key) {
+          case "A": Get.to(() => PartA_Blister(task: widget.task)); break;
+          case "B": Get.to(() => PartB_Blister(task: widget.task)); break;
+          case "C": Get.to(() => PartC_Blister(task: widget.task)); break;
+          case "D": Get.to(() => PartD_Blister(task: widget.task)); break;
+          case "E": Get.to(() => PartE_Blister(task: widget.task)); break;
+          case "F": Get.to(() => PartF_Blister(task: widget.task)); break;
+          case "G": Get.to(() => PartG_Blister(task: widget.task)); break;
+          default: _showSweetAlert();
+        }
         break;
-      case "B":
-        Get.to(() => PartB(task: widget.task));
+
+      case "Assy Syringe":
+        switch (key) {
+          case "A": Get.to(() => PartA_Syringe(task: widget.task)); break;
+          case "B": Get.to(() => PartB_Syringe(task: widget.task)); break;
+          case "C": Get.to(() => PartC_Syringe(task: widget.task)); break;
+          case "D": Get.to(() => PartD_Syringe(task: widget.task)); break;
+          case "E": Get.to(() => PartE_Syringe(task: widget.task)); break;
+          case "F": Get.to(() => PartF_Syringe(task: widget.task)); break;
+          case "G": Get.to(() => PartG_Syringe(task: widget.task)); break;
+          default: _showSweetAlert();
+        }
         break;
-      case "C":
-        Get.to(() => PartC(task: widget.task));
+
+      case "Injection":
+        switch (key) {
+          case "A": Get.to(() => PartA_Injection(task: widget.task)); break;
+          case "B": Get.to(() => PartB_Injection(task: widget.task)); break;
+          case "C": Get.to(() => PartC_Injection(task: widget.task)); break;
+          case "D": Get.to(() => PartD_Injection(task: widget.task)); break;
+          case "E": Get.to(() => PartE_Injection(task: widget.task)); break;
+          case "F": Get.to(() => PartF_Injection(task: widget.task)); break;
+          case "G": Get.to(() => PartG_Injection(task: widget.task)); break;
+          default: _showSweetAlert();
+        }
         break;
-      case "D":
-        Get.to(() => PartD(task: widget.task));
+
+      case "Needle Assy":
+        switch (key) {
+          case "A": Get.to(() => PartA_NeedleAssy(task: widget.task)); break;
+          case "B": Get.to(() => PartB_NeedleAssy(task: widget.task)); break;
+          case "C": Get.to(() => PartC_NeedleAssy(task: widget.task)); break;
+          case "D": Get.to(() => PartD_NeedleAssy(task: widget.task)); break;
+          case "E": Get.to(() => PartE_NeedleAssy(task: widget.task)); break;
+          case "F": Get.to(() => PartF_NeedleAssy(task: widget.task)); break;
+          case "G": Get.to(() => PartG_NeedleAssy(task: widget.task)); break;
+          default: _showSweetAlert();
+        }
         break;
-      case "E":
-        Get.to(() => PartE(task: widget.task));
-        break;
-      case "F":
-        Get.to(() => PartF(task: widget.task));
-        break;
-      case "G":
-        Get.to(() => PartG(task: widget.task));
-        break;
+
       default:
         _showSweetAlert();
     }
   }
+
 
   void _showSweetAlert() {
     Get.dialog(

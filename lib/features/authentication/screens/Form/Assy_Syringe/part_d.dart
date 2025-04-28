@@ -8,15 +8,15 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'dart:typed_data';
 import 'dart:html' as html;
 
-class PartD extends StatefulWidget {
+class PartD_Syringe extends StatefulWidget {
   final Task task;
-  const PartD({super.key, required this.task});
+  const PartD_Syringe({super.key, required this.task});
 
   @override
-  _PartDState createState() => _PartDState();
+  _PartD_SyringeState createState() => _PartD_SyringeState();
 }
 
-class _PartDState extends State<PartD> {
+class _PartD_SyringeState extends State<PartD_Syringe> {
   Uint8List? _webImage;
 
   final TaskDetailsController controller = Get.put(TaskDetailsController());
@@ -38,6 +38,24 @@ class _PartDState extends State<PartD> {
 
   File? _image;
   final ImagePicker _picker = ImagePicker();
+
+  // Dropdown data and states
+  List<String> plungerDropdownItems = ['Item A', 'Item B'];
+  String? selectedPlungerItem;
+  void onPlungerChanged(String? val) => setState(() => selectedPlungerItem = val);
+
+  List<String> barrelDropdownItems = ['Item C', 'Item D'];
+  String? selectedBarrelItem;
+  void onBarrelChanged(String? val) => setState(() => selectedBarrelItem = val);
+
+  List<String> needleDropdownItems = ['Item E', 'Item F'];
+  String? selectedNeedleItem;
+  void onNeedleChanged(String? val) => setState(() => selectedNeedleItem = val);
+
+  // Controllers for each field (5 fields per item)
+  List<TextEditingController> plungerControllers = List.generate(8, (_) => TextEditingController());
+  List<TextEditingController> barrelControllers = List.generate(8, (_) => TextEditingController());
+  List<TextEditingController> needleControllers = List.generate(8, (_) => TextEditingController());
 
 
   Future<void> _pickImage(ImageSource source) async {
@@ -156,7 +174,7 @@ class _PartDState extends State<PartD> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Mesin yang digunakan (Dropdown)
                   const Text("Mesin yang Digunakan:",
@@ -188,7 +206,7 @@ class _PartDState extends State<PartD> {
                     ),
                     hint: const Text("Pilih Mesin"),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Line Clearance (Inline Radio Buttons)
                   const Text(
@@ -233,7 +251,7 @@ class _PartDState extends State<PartD> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   buildCustomTableSection(),
 
@@ -271,7 +289,43 @@ class _PartDState extends State<PartD> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 30),
+
+                  // Material Reconciliation Title
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Material Reconciliation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        'Rekonsiliasi Material',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Repeated for each material type
+                      buildMaterialRow('Plunger', plungerDropdownItems, selectedPlungerItem, onPlungerChanged, plungerControllers),
+                      const Divider(height: 32),
+
+                      buildMaterialRow('Barrel', barrelDropdownItems, selectedBarrelItem, onBarrelChanged, barrelControllers),
+                      const Divider(height: 32),
+
+                      buildMaterialRow('Bulk Needle', needleDropdownItems, selectedNeedleItem, onNeedleChanged, needleControllers),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  const Divider(thickness: 1),
 
                   // Submit Button
                   Center(
@@ -549,6 +603,109 @@ class _PartDState extends State<PartD> {
                 ],
               );
             }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildMaterialRow(
+      String title,
+      List<String> dropdownItems,
+      String? selectedItem,
+      ValueChanged<String?> onChanged,
+      List<TextEditingController> controllers,
+      ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: selectedItem,
+          items: dropdownItems.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'Select Here',
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Row for labels
+        Row(
+          children: [
+            for (var label in [
+              'Jumlah Awal',
+              'Jumlah Tambahan (SPBT)',
+              'Jumlah Reject',
+              'Jumlah Terpakai',
+              'Jumlah Material Karantina',
+              'Sisa Setelah Produksi',
+              'Jumlah Dimusnahkan',
+              'Jumlah Dikembalikan',
+            ])
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 4),
+
+        // Row for input fields
+        Row(
+          children: [
+            for (var i = 0; i < controllers.length; i++)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: TextFormField(
+                    controller: controllers[i],
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          children: [
+            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+            TextFormField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                border: OutlineInputBorder(),
+              ),
+            ),
           ],
         ),
       ),

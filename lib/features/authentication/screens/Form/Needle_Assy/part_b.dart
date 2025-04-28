@@ -4,16 +4,16 @@ import '../../../../../utils/constants/size.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
-class PartB extends StatefulWidget {
+class PartB_NeedleAssy extends StatefulWidget {
   final Task task;
 
-  const PartB({super.key, required this.task});
+  const PartB_NeedleAssy({super.key, required this.task});
 
   @override
-  _PartBState createState() => _PartBState();
+  _PartB_NeedleAssyState createState() => _PartB_NeedleAssyState();
 }
 
-class _PartBState extends State<PartB> {
+class _PartB_NeedleAssyState extends State<PartB_NeedleAssy> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   Map<String, String?> selectedValues = {}; // Allowing null values
 

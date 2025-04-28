@@ -3,10 +3,17 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import '../models/material_model.dart';
 
 class TaskDetailsController extends GetxController {
   var selectedMaterialCode = ''.obs;
+  var selectedMaterialDisplay = ''.obs;
   var requiredQuantity = ''.obs;
+  var selectedCategory = ''.obs;
+  var searchQuery = ''.obs;
+  var materials = <MaterialModel>[].obs;
+  var isLoading = false.obs; // To track loading state
+  var errorMessage = ''.obs; // To show error messages if any
 
   var sectionCompletion = <String, bool>{
     "A": false,
@@ -208,4 +215,53 @@ class TaskDetailsController extends GetxController {
     }
   }
 
+  Future<void> fetchCategory(String brmNo) async {
+    final encodedBRM = Uri.encodeComponent(brmNo.trim());
+    final url = Uri.parse("http://127.0.0.1:8000/api/brms/$encodedBRM/category");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        selectedCategory.value = jsonData['category'];
+        print("Fetched category: ${selectedCategory.value}");
+      } else {
+        print("Error: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      print("Exception fetching category: $e");
+    }
+  }
+
+  Future<List<MaterialModel>> searchMaterials() async {
+    if (searchQuery.value.isEmpty || selectedBRM.value.isEmpty) {
+      materials.clear();
+      return [];
+    }
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://127.0.0.1:8000/api/materials/search?search=${searchQuery.value}&brm=${selectedBRM.value}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        materials.value = data.map((item) => MaterialModel.fromJson(item)).toList();
+      } else {
+        errorMessage.value = 'Failed to load materials';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error fetching materials: $e';
+    } finally {
+      isLoading.value = false;
+    }
+
+    return materials;
+  }
+
 }
+

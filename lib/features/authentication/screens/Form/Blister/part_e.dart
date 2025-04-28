@@ -3,16 +3,16 @@ import 'package:get/get.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
-class PartE extends StatefulWidget {
+class PartE_Blister extends StatefulWidget {
   final Task? task;
 
-  const PartE({super.key, this.task});
+  const PartE_Blister({super.key, this.task});
 
   @override
-  _PartEState createState() => _PartEState();
+  _PartE_BlisterState createState() => _PartE_BlisterState();
 }
 
-class _PartEState extends State<PartE> {
+class _PartE_BlisterState extends State<PartE_Blister> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
 
   final String role = "Production Operation";
