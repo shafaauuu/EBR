@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../controller/Form/A/form_a_assysyringe_controller.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 class PartA_Syringe extends StatefulWidget {
   final Task task;
@@ -12,6 +14,8 @@ class PartA_Syringe extends StatefulWidget {
 }
 
 class _PartA_SyringeState extends State<PartA_Syringe> {
+  final formAAssySyringeController = Get.put(FormAAssySyringeController());
+
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   DateTime? _selectedDate;
   TextEditingController dateController = TextEditingController();
@@ -19,8 +23,8 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
   final Map<String, bool?> responses = {
     "pallet_clean": null,
     "floor_clean": null,
-    "area_under_clean": null,
-    "area_above_clean": null,
+    "under_machine_clean": null, // fix key
+    "above_machine_clean": null, // fix key
     "grill_clean": null,
 
     "no_product_left": null,
@@ -34,9 +38,10 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
     "no_rework_left": null,
 
     "no_docs_left": null,
-    "picking_list":null,
-    "document_related":null,
+    "picking_list": null,
+    "document_related": null,
   };
+
 
   final Map<String, TextEditingController> numericResponses = {
     "temperature": TextEditingController(),
@@ -46,7 +51,7 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
   final TextEditingController batchController = TextEditingController();
   final TextEditingController productNameController = TextEditingController();
   final TextEditingController previousProductController = TextEditingController();
-  final TextEditingController needleController = TextEditingController();
+  final TextEditingController syringeController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +196,7 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
                             TableRow(
                               children: [
                                 _buildTableCell("Jenis Needle", "Needle Type"),
-                                _buildTextFieldCell(needleController), // Input field
+                                _buildTextFieldCell(syringeController), // Input field
                               ],
                             ),
                           ],
@@ -261,7 +266,20 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
                     // Submit Button
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          if (validateForm()) {
+                            formAAssySyringeController.submitForm(
+                              context: context,
+                              codeTask: widget.task.code,
+                              tanggal: _selectedDate!.toIso8601String().substring(0, 10),
+                              sebelumProduk: productNameController.text,
+                              sebelumBets: batchController.text,
+                              sebelumSyringe: syringeController.text,
+                              responses: responses,
+                              numericResponses: numericResponses,
+                            );
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -531,5 +549,41 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
     }
   }
 
+  bool validateForm() {
+    // Validate text inputs
+    if (_selectedDate == null ||
+        productNameController.text.isEmpty ||
+        batchController.text.isEmpty ||
+        syringeController.text.isEmpty ||
+        numericResponses['temperature']?.text.isEmpty == true ||
+        numericResponses['humidity']?.text.isEmpty == true) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Missing Fields",
+          text: "Please fill all required fields.",
+        ),
+      );
+      return false;
+    }
+
+    // Validate radio/boolean responses
+    for (var entry in responses.entries) {
+      if (entry.value == null) {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.warning,
+            title: "Incomplete Selections",
+            text: "Please complete all Yes/No/Clean selections.",
+          ),
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
 
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oji_1/features/authentication/controller/Form/A/form_a_injection_controller.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
 
@@ -21,10 +22,11 @@ class _PartA_InjectionState extends State<PartA_Injection> {
     "walls_clean": null,
     "grill_clean": null,
     "tools_clean": null,
-
     "no_material_left": null,
+
     "no_docs_left": null,
-    "picking_list":null,
+    "picking_list": null,
+    "document_related": null,
   };
 
   final Map<String, TextEditingController> numericResponses = {
@@ -198,10 +200,13 @@ class _PartA_InjectionState extends State<PartA_Injection> {
                         _buildQuestionRow("a. Lantai bersih (tidak lengket, tidak ada genangan air)", "Floor is clean (not sticky and dry)", "floor_clean"),
                         _buildQuestionRow("b. Dinding dan langit-langit ruangan bersih", "Walls and ceiling are clean", "walls_clean"),
                         _buildQuestionRow("c. Return grill dalam keadaan bersih", "Return grill is clean", "grill_clean"),
+
                         _buildQuestionRow("Kebersihan Peralatan dan Perlengkapan", "Cleanliness of tools and equipment", "tools_clean"),
                         _buildYesNoRow("Tidak ada sisa produk/komponen/material sebelumnya", "No leftover products/components/materials", "no_material_left"),
                         _buildYesNoRow("Tidak ada dokumen, catatan, atau label dari proses produksi sebelumnya", "There is no documents, records, or label from previous production process", "no_docs_left"),
                         _buildYesNoRow("Material sesuai dengan Picking List dan CoA komponen (Tanggal Kadaluarsa, Tanggal Produksi dan Nama Material", "Material According to the picking list and components of the CoA (Expire Date, Manufacturing Date and Material Name)", "picking_list"),
+                        _buildYesNoRow("Dokumen yang terkait proses produksi batch berjalan, telah berada di area mesin, meliputi Picklist, Label Status Mesin & Ruangan, dan Label Identitas Running", "Documents related to production process of on going batch, have been placed in machine area, include Picklist, Status Label of Machine & Room, and idenity Running Label", "document_related"),
+
                         _buildNumberInputRow("Pernyataan Suhu Lingkungan (T)", "Environmental Temperature (20-26°C)", "temperature"),
                         _buildNumberInputRow("Pernyataan Kelembapan Relatif (RH)", "Relative Humidity (<70%)", "humidity"),
                       ],
@@ -212,7 +217,18 @@ class _PartA_InjectionState extends State<PartA_Injection> {
                     // Submit Button
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          final controller = Get.put(FormAInjectionController());
+                          controller.submitForm(
+                            context: context, // Pass the BuildContext
+                            codeTask: widget.task.code,
+                            tanggal: _selectedDate!.toIso8601String().substring(0, 10),
+                            sebelumProduk: productNameController.text,
+                            sebelumBets: batchController.text,
+                            responses: responses,
+                            numericResponses: numericResponses,
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

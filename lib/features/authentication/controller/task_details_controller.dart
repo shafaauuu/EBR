@@ -36,6 +36,7 @@ class TaskDetailsController extends GetxController {
   };
 
   final TextEditingController shiftController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   void markSectionAsCompleted(String key) {
     sectionCompletion[key] = true;
@@ -127,8 +128,22 @@ class TaskDetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchBRMList(); // Disabled for now
+    fetchBRMList();
+
+    // Listen to BRM changes
+    ever(selectedBRM, (brm) {
+      searchQuery.value = '';
+      materials.clear();
+      searchController.clear(); // <-- IMPORTANT to clear text field!
+
+      if (brm.isNotEmpty) {
+        fetchMaterialCodes(brm);
+        fetchCategory(brm);
+      }
+    });
+
   }
+
 
   // Fetch BRM List
   Future<void> fetchBRMList() async {

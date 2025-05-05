@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
-import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 
 class PartF_NeedleAssy extends StatefulWidget {
@@ -32,25 +32,26 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
   }
 
   void _showImageSourceDialog(BuildContext context) {
-    AwesomeDialog(
+    ArtSweetAlert.show(
       context: context,
-      dialogType: DialogType.info,
-      animType: AnimType.scale,
-      title: 'Select Image Source',
-      desc: 'Choose where to get the image from:',
-      btnOkText: "Camera",
-      btnOkColor: Colors.blue, // Blue for Camera
-      btnOkOnPress: () {
-        _pickImage(ImageSource.camera);
-      },
-      btnCancelText: "Gallery",
-      btnCancelColor: Colors.blue, // Green for Gallery
-      btnCancelOnPress: () {
-        _pickImage(ImageSource.gallery);
-      },
-    ).show();
+      artDialogArgs: ArtDialogArgs(
+        type: ArtSweetAlertType.question,
+        title: "Select Image Source",
+        text: "Choose where to get the image from:",
+        showCancelBtn: true,
+        cancelButtonText: "Gallery",
+        confirmButtonText: "Camera",
+        onConfirm: () {
+          _pickImage(ImageSource.camera);
+          return true;
+        },
+        onCancel: () {
+          _pickImage(ImageSource.gallery);
+          return true;
+        },
+      ),
+    );
   }
-
 
   @override
   Widget build(BuildContext context) {

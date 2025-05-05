@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../controller/Form/A/form_a_needleassy_controller.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
 
@@ -19,8 +20,8 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
   final Map<String, bool?> responses = {
     "pallet_clean": null,
     "floor_clean": null,
-    "area_under_clean": null,
-    "area_above_clean": null,
+    "under_machine_clean": null,
+    "above_machine_clean": null,
     "grill_clean": null,
 
     "no_product_left": null,
@@ -265,7 +266,20 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                     // Submit Button
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          FormANeedleassyController().submitForm(
+                            context: context,
+                            codeTask: widget.task.code,
+                            tanggal: dateController.text,
+                            sebelumProduk: productNameController.text,
+                            sebelumBets: batchController.text,
+                            sebelumNeedle: needleController.text,
+                            sebelumCap: capController.text,
+                            responses: responses,
+                            numericResponses: numericResponses,
+                          );
+
+                        },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

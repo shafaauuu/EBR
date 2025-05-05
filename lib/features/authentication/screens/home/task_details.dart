@@ -209,8 +209,6 @@ class _TaskDetailsState extends State<TaskDetails> {
               onChanged: (value) {
                 if (value != null) {
                   controller.selectedBRM.value = value;
-                  controller.fetchCategory(value); // ← Add this
-                  controller.fetchMaterialCodes(value); // fetch new material codes
                   controller.selectedMaterialCode.value = ''; // reset material code selection
                 }
               },
@@ -222,7 +220,6 @@ class _TaskDetailsState extends State<TaskDetails> {
   }
 
   Widget buildMaterialSearchInput() {
-    final TextEditingController searchController = TextEditingController();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -242,7 +239,7 @@ class _TaskDetailsState extends State<TaskDetails> {
                 const SizedBox(height: 8),
                 TypeAheadField<MaterialModel>(
                   textFieldConfiguration: TextFieldConfiguration(
-                    controller: searchController,
+                    controller: controller.searchController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter code, description, or group",
@@ -260,15 +257,15 @@ class _TaskDetailsState extends State<TaskDetails> {
                   },
                   itemBuilder: (context, MaterialModel suggestion) {
                     return ListTile(
-                      title: Text('${suggestion.materialCode} - ${suggestion.materialDesc}'),
-                      subtitle: Text(suggestion.materialGroup),
+                      title: Text('${suggestion.materialCode} - ${suggestion.materialDesc} - ${suggestion.materialGroup}'),
+                      // subtitle: Text(suggestion.materialGroup),
                     );
                   },
                   onSuggestionSelected: (MaterialModel suggestion) {
                     controller.selectedMaterialCode.value = suggestion.materialCode;
                     controller.selectedMaterialDisplay.value =
                     '${suggestion.materialCode} - ${suggestion.materialDesc}';
-                    searchController.text = controller.selectedMaterialDisplay.value;
+                    controller.searchController.text = controller.selectedMaterialDisplay.value;
                   },
                   noItemsFoundBuilder: (context) => const Padding(
                     padding: EdgeInsets.all(8.0),
@@ -397,7 +394,7 @@ class _TaskDetailsState extends State<TaskDetails> {
         }
         break;
 
-      case "Needle Assy":
+      case "Assy Needle":
         switch (key) {
           case "A": Get.to(() => PartA_NeedleAssy(task: widget.task)); break;
           case "B": Get.to(() => PartB_NeedleAssy(task: widget.task)); break;
