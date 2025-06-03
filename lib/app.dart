@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       darkTheme: OAppTheme.lightTheme,
       initialRoute: initialRoute, // Use the initialRoute
       getPages: [
-        GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(name: '/', page: () => const LoginScreen()),
         GetPage(name: '/home', page: () => const HomePage()),
       ],
     );

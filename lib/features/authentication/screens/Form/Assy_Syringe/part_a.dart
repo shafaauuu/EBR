@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../controller/Form/A/form_a_assysyringe_controller.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
@@ -14,44 +15,38 @@ class PartA_Syringe extends StatefulWidget {
 }
 
 class _PartA_SyringeState extends State<PartA_Syringe> {
-  final formAAssySyringeController = Get.put(FormAAssySyringeController());
-
+  final FormAAssySyringeController assyController = Get.put(FormAAssySyringeController());
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   DateTime? _selectedDate;
+
   TextEditingController dateController = TextEditingController();
+  final TextEditingController batchController = TextEditingController();
+  final TextEditingController productNameController = TextEditingController();
+  final TextEditingController previousProductController = TextEditingController();
+  final TextEditingController syringeController = TextEditingController();
 
-  final Map<String, bool?> responses = {
-    "pallet_clean": null,
-    "floor_clean": null,
-    "under_machine_clean": null, // fix key
-    "above_machine_clean": null, // fix key
-    "grill_clean": null,
-
-    "no_product_left": null,
-    "no_barrel_left": null,
-    "no_plunger_left": null,
-    "no_bulk_needle_left": null,
-    "no_gasket_left": null,
-    "no_component_left": null,
-    "no_output_left": null,
-    "no_reject_left": null,
-    "no_rework_left": null,
-
-    "no_docs_left": null,
-    "picking_list": null,
-    "document_related": null,
-  };
-
+  late Future<Map<String, dynamic>> formData;
 
   final Map<String, TextEditingController> numericResponses = {
     "temperature": TextEditingController(),
     "humidity": TextEditingController(),
   };
+  int counter = 0;
 
-  final TextEditingController batchController = TextEditingController();
-  final TextEditingController productNameController = TextEditingController();
-  final TextEditingController previousProductController = TextEditingController();
-  final TextEditingController syringeController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    check();
+  }
+  void check() async {
+    final controller = Get.put(FormAAssySyringeController());
+    await controller.fetchFormAAssySyringe(widget.task.id.toString());
+    setState(() {
+      counter++;
+    }); // triggers rebuild
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +99,7 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                      _buildAlignedText("BRM No.", widget.task.brmNo),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -150,7 +145,7 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
                                 onTap: () => _pickDate(context),
                                 child: AbsorbPointer(
                                   child: TextField(
-                                    controller: dateController,
+                                    controller:assyController.dateController,
                                     decoration: InputDecoration(
                                       hintText: "DD/MM/YYYY",
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -182,21 +177,21 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
                             TableRow(
                               children: [
                                 _buildTableCell("Nama Produk/Komponen", "Product/Component Name"),
-                                _buildTextFieldCell(productNameController), // Input field
+                                _buildTextFieldCell(assyController.productNameController), // Input field
                               ],
                             ),
                             // Row 2: Nomor Bets
                             TableRow(
                               children: [
                                 _buildTableCell("Nomor Bets", "Batch No."),
-                                _buildTextFieldCell(batchController), // Input field
+                                _buildTextFieldCell(assyController.batchController), // Input field
                               ],
                             ),
                             // Row 3: Jenis Needle
                             TableRow(
                               children: [
                                 _buildTableCell("Jenis Needle", "Needle Type"),
-                                _buildTextFieldCell(syringeController), // Input field
+                                _buildTextFieldCell(assyController.syringeController), // Input field
                               ],
                             ),
                           ],
@@ -267,18 +262,20 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
                     Center(
                       child: ElevatedButton(
                         onPressed: () {
-                          if (validateForm()) {
-                            formAAssySyringeController.submitForm(
-                              context: context,
+                          // if (validateForm()) {
+                            final controller = Get.put(FormAAssySyringeController());
+                            controller.submitForm(
+                              context: context, // Pass the BuildContext
+                              task_id: widget.task.id,
                               codeTask: widget.task.code,
-                              tanggal: _selectedDate!.toIso8601String().substring(0, 10),
-                              sebelumProduk: productNameController.text,
-                              sebelumBets: batchController.text,
-                              sebelumSyringe: syringeController.text,
-                              responses: responses,
+                              tanggal: DateTime.parse(assyController.dateController.text.replaceAll('/', '-')).toIso8601String().substring(0, 10),
+                              sebelumProduk: assyController.productNameController.text,
+                              sebelumBets: assyController.batchController.text,
+                              sebelumSyringe: assyController.syringeController.text,
+                              responses: assyController.responses,
                               numericResponses: numericResponses,
                             );
-                          }
+                          // }
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -368,9 +365,9 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: responses[key],
+                  groupValue: assyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => assyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -390,9 +387,9 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
               children: [
                 Radio<bool>(
                   value: false,
-                  groupValue: responses[key],
+                  groupValue: assyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => assyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -437,9 +434,9 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: responses[key],
+                  groupValue: assyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => assyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -459,9 +456,9 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
               children: [
                 Radio<bool>(
                   value: false,
-                  groupValue: responses[key],
+                  groupValue: assyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => assyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -500,7 +497,7 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: TextField(
-          controller: numericResponses[key],
+          controller: assyController.numericResponses[key],
           keyboardType: TextInputType.number,
           decoration: InputDecoration(labelText: right),
         ),
@@ -544,19 +541,19 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        dateController.text = "${picked.day}/${picked.month}/${picked.year}";
+        assyController.dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
 
   bool validateForm() {
     // Validate text inputs
-    if (_selectedDate == null ||
-        productNameController.text.isEmpty ||
-        batchController.text.isEmpty ||
-        syringeController.text.isEmpty ||
-        numericResponses['temperature']?.text.isEmpty == true ||
-        numericResponses['humidity']?.text.isEmpty == true) {
+    if (assyController.dateController.text.isEmpty ||
+        assyController.productNameController.text.isEmpty ||
+        assyController.batchController.text.isEmpty ||
+        assyController.syringeController.text.isEmpty ||
+        assyController.numericResponses['temperature']?.text.isEmpty == true ||
+        assyController.numericResponses['humidity']?.text.isEmpty == true) {
       ArtSweetAlert.show(
         context: context,
         artDialogArgs: ArtDialogArgs(
@@ -569,7 +566,7 @@ class _PartA_SyringeState extends State<PartA_Syringe> {
     }
 
     // Validate radio/boolean responses
-    for (var entry in responses.entries) {
+    for (var entry in assyController.responses.entries) {
       if (entry.value == null) {
         ArtSweetAlert.show(
           context: context,

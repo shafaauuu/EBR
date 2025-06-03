@@ -88,7 +88,8 @@ flutter:
   assets:
     - assets/logos/
     - assets/icons/brands/
-    - assets/images/
+    - assets/images/yield_form_e.jpeg
+
 
   fonts:
     - family: Poppins

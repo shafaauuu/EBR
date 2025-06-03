@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:oji_1/common/styles/spacing_styles.dart';
+import 'package:oji_1/features/authentication/screens/home/home.dart';
 import 'package:oji_1/utils/constants/colors.dart';
 import 'package:oji_1/utils/constants/size.dart';
 import 'package:oji_1/utils/constants/text_strings.dart';
@@ -11,10 +12,26 @@ import '../../controller/login_controller.dart';
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
+  void checkUser(BuildContext context, AuthController authController) async {
+      await authController.checkUser(context);
+      // Check if the user is already logged in
+      print("Checking user...");
+      print(authController.userData);
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      });
+
+  }
+  
   @override
   Widget build(BuildContext context) {
+
     final dark = OHelperFunction.isDarkMode(context);
-    final loginController = Get.put(LoginController());
+    final authController = Get.put(AuthController());
+    checkUser(context, authController);
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -47,7 +64,7 @@ class LoginScreen extends StatelessWidget {
                     children: [
                       // Email Field
                       TextFormField(
-                        controller: loginController.emailController,
+                        controller: authController.emailController,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Iconsax.direct_right),
                           labelText: Texts.email,
@@ -57,16 +74,16 @@ class LoginScreen extends StatelessWidget {
 
                       // Password Field with Eye Icon
                       Obx(() => TextFormField(
-                        controller: loginController.passwordController,
-                        obscureText: loginController.isPasswordHidden.value,
+                        controller: authController.passwordController,
+                        obscureText: authController.isPasswordHidden.value,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Iconsax.password_check),
                           labelText: Texts.password,
                           suffixIcon: IconButton(
                             icon: Icon(
-                              loginController.isPasswordHidden.value ? Iconsax.eye_slash : Iconsax.eye,
+                              authController.isPasswordHidden.value ? Iconsax.eye_slash : Iconsax.eye,
                             ),
-                            onPressed: loginController.togglePasswordVisibility,
+                            onPressed: authController.togglePasswordVisibility,
                           ),
                         ),
                       )),
@@ -79,14 +96,14 @@ class LoginScreen extends StatelessWidget {
                           Row(
                             children: [
                               // Obx(() => Checkbox(
-                              //   value: loginController.rememberMe.value,
-                              //   onChanged: loginController.toggleRememberMe,
+                              //   value: authController.rememberMe.value,
+                              //   onChanged: authController.toggleRememberMe,
                               // )),
                               // const Text(Texts.rememberMe),
                             ],
                           ),
                           TextButton(
-                            onPressed: () => loginController.showForgotPasswordAlert(context),
+                            onPressed: () => authController.showForgotPasswordAlert(context),
                             child: const Text(Texts.forgetPassword),
                           ),
                         ],
@@ -97,7 +114,7 @@ class LoginScreen extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () => loginController.signIn(context),
+                          onPressed: () => authController.signIn(context),
                           child: const Text(Texts.signIn),
                         ),
                       ),

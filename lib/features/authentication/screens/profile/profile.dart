@@ -22,7 +22,7 @@ class ProfilePage extends StatelessWidget {
     final inisial = storage.read("inisial") ?? "-";
     final group = storage.read("group") ?? "-";
 
-    final loginController = Get.find<LoginController>();
+    final loginController = Get.find<AuthController>();
 
     return Scaffold(
       appBar: AppBar(

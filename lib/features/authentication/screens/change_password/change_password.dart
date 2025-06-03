@@ -11,7 +11,7 @@ class ChangePassword extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loginController = Get.find<LoginController>();
+    final loginController = Get.find<AuthController>();
 
     return Scaffold(
       appBar: AppBar(

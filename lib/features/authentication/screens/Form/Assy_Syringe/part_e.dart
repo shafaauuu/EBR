@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../controller/Form/E/form_e_assysyringe_controller.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 
 class PartE_Syringe extends StatefulWidget {
-  final Task? task;
+  final Task task;
 
-  const PartE_Syringe({super.key, this.task});
+  const PartE_Syringe({super.key, required this.task});
 
   @override
   _PartE_SyringeState createState() => _PartE_SyringeState();
@@ -14,21 +15,38 @@ class PartE_Syringe extends StatefulWidget {
 
 class _PartE_SyringeState extends State<PartE_Syringe> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
+  final formEController = Get.put(FormEAssySyringeController());
+  int counter = 0;
 
   final String role = "Production Operation";
 
   final List<Map<String, String>> sentences = [
-    {"no": "1", "text": "Jumlah Teoritis (a)", "label": "unit/pcs"},
-    {"no": "2", "text": "Jumlah Finished Goods Rilis (b)", "label": "unit/pcs"},
-    {"no": "3.A.", "text": "Jumlah produk karantina di tahap Blister-Packing (c)", "label": "unit/pcs"},
-    {"no": "3.B.", "text": "Jumlah reject di tahap Blister-Packing (d)", "label": "unit/pcs"},
-    {"no": "3.C.", "text": "Jumlah sisa di tahap Blister-Packing yang dimusnahkan (e)", "label": "unit/pcs"},
-    {"no": "4.A.", "text": "Sampel IPC (diisi QC)", "label": "unit/pcs"},
-    {"no": "4.B.", "text": "Sampel QC (diisi QC)", "label": "unit/pcs"},
-    {"no": "4.C.", "text": "Sampel (released) untuk keperluan lain/tidak dikembalikan ke Line (f)", "label": "unit/pcs"},
-    {"no": "5", "text": "Hasil / Yield Blister (g)", "label": "% (persen)"},
-    {"no": "6", "text": "Total hasil produksi di tahap Blister-Packing ( d + e + f + g )", "label": "unit/pcs"},
+    {"no": "1", "text": "Jumlah Teoritis (a)", "label": "unit/pcs", "key": "jml_teoritis"},
+    {"no": "2", "text": "Jumlah Finished Goods Rilis (b)", "label": "unit/pcs", "key": "jml_release"},
+    {"no": "3.A.", "text": "Jumlah produk karantina di tahap Blister-Packing (c)", "label": "unit/pcs", "key": "jml_karantina"},
+    {"no": "3.B.", "text": "Jumlah reject di tahap Blister-Packing (d)", "label": "unit/pcs",  "key": "jml_reject"},
+    {"no": "3.C.", "text": "Jumlah sisa di tahap Blister-Packing yang dimusnahkan (e)", "label": "unit/pcs", "key": "jml_sisa"},
+    {"no": "4.A.", "text": "Sampel IPC (diisi QC)", "label": "unit/pcs", "key": "sample_ipc"},
+    {"no": "4.B.", "text": "Sampel QC (diisi QC)", "label": "unit/pcs", "key": "sample_qc"},
+    {"no": "4.C.", "text": "Sampel (released) untuk keperluan lain/tidak dikembalikan ke Line (f)", "label": "unit/pcs", "key": "sample_release"},
+    {"no": "5", "text": "Hasil / Yield Blister (g)", "label": "% (persen)", "key": "yield"},
+    {"no": "6", "text": "Total hasil produksi di tahap Blister-Packing ( d + e + f + g )", "label": "unit/pcs", "key": "total_hasil"},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    check();
+  }
+  void check() async {
+    final controller = Get.put(FormEAssySyringeController());
+    await controller.fetchFormEAssySyringe(widget.task.id.toString());
+    setState(() {
+      counter++;
+    }); // triggers rebuild
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +98,7 @@ class _PartE_SyringeState extends State<PartE_Syringe> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                      _buildAlignedText("BRM No.", widget.task.brmNo ?? ""),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -102,7 +120,13 @@ class _PartE_SyringeState extends State<PartE_Syringe> {
                   const SizedBox(height: 16),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        formEController.submitForm(
+                          context: context,
+                          task_id: widget.task.id,
+                          codeTask: widget.task.code,
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -116,7 +140,7 @@ class _PartE_SyringeState extends State<PartE_Syringe> {
           ),
         ],
       ),
-    ); // <-- This closing bracket was missing
+    );
   }
 
   Widget _buildAlignedText(String label, String value) {
@@ -143,79 +167,141 @@ class _PartE_SyringeState extends State<PartE_Syringe> {
   Widget _buildProductSummaryList() {
     return Column(
       children: sentences.map((row) {
-        bool isQCField = (row["no"] == "6.A." || row["no"] == "6.B.");
+        bool isQCField = (row["no"] == "4.A." || row["no"] == "4.B.");
         bool isEnabled = !(isQCField && role != "Quality Control");
 
-        return Card(
-          elevation: 3,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Circle Number
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      row["no"]!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+        // Map 'no' to the controller observable
+        RxInt fieldValue;
+        switch (row["no"]) {
+          case "1":
+            fieldValue = formEController.jmlTeoritis;
+            break;
+          case "2":
+            fieldValue = formEController.jmlRelease;
+            break;
+          case "3.A.":
+            fieldValue = formEController.jmlKarantina;
+            break;
+          case "3.B.":
+            fieldValue = formEController.jmlReject;
+            break;
+          case "3.C.":
+            fieldValue = formEController.jmlSisa;
+            break;
+          case "4.A.":
+            fieldValue = formEController.sampleIpc;
+            break;
+          case "4.B.":
+            fieldValue = formEController.sampleQc;
+            break;
+          case "4.C.":
+            fieldValue = formEController.sampleRelease;
+            break;
+          case "5":
+            fieldValue = formEController.hasilYield;
+            break;
+          case "6":
+            fieldValue = formEController.totalHasil;
+            break;
+          default:
+            fieldValue = 0.obs;
+        }
+
+        List<Widget> children = [];
+
+        // Show image only for "yield"
+        if (row["key"] == "yield") {
+          children.add(
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Image.asset(
+                'assets/images/yield_form_e.jpeg',
+                height: 80,
+                fit: BoxFit.contain,
+              ),
+            ),
+          );
+        }
+
+        // The main card
+        children.add(
+          Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.blueAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        row["no"]!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                // Description and Input
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        row["text"]!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          row["text"]!,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        enabled: isEnabled,
-                        keyboardType: TextInputType.number,
-                        style: isQCField
-                            ? const TextStyle(color: Colors.blue)
-                            : null,
-                        decoration: InputDecoration(
-                          labelText: row["label"],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 14,
-                          ),
-                          // Gray background if disabled
-                          filled: !isEnabled,
-                          fillColor: !isEnabled ? Colors.grey[200] : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Obx(() {
+                                final text = fieldValue.value == 0 ? '' : fieldValue.value.toString();
+                                final controller = TextEditingController(text: text);
+                                if (text.isNotEmpty) {
+                                  controller.selection = TextSelection.collapsed(offset: text.length);
+                                }
+                                return TextFormField(
+                                  enabled: isEnabled,
+                                  keyboardType: TextInputType.number,
+                                  controller: controller,
+                                  onChanged: (val) {
+                                    final parsed = int.tryParse(val);
+                                    if (parsed != null) fieldValue.value = parsed;
+                                  },
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                                  ),
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(row["label"] ?? "")
+                          ],
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
         );
       }).toList(),
     );
   }
-
 }

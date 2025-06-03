@@ -12,6 +12,7 @@ class TaskItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final taskController = Get.find<TaskController>();
 
+
     return Card(
       margin: const EdgeInsets.all(8.0),
       child: ListTile(

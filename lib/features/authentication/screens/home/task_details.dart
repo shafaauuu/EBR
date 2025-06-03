@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:oji_1/features/authentication/controller/task_controller.dart';
 
 import 'package:oji_1/features/authentication/models/task_model.dart';
 import 'package:oji_1/features/authentication/controller/task_details_controller.dart';
@@ -52,10 +53,15 @@ class TaskDetails extends StatefulWidget {
 
 class _TaskDetailsState extends State<TaskDetails> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
+  final TaskController taskController = Get.find<TaskController>();
+
 
   @override
   Widget build(BuildContext context) {
-
+    controller.fetchCategory(widget.task.brmNo);
+    controller.fetchMaterialCodes(widget.task.brmNo);
+    controller.fetchMachinesByBRM(widget.task.brmNo);
+    controller.setBRM(widget.task.brmNo);
     if (MediaQuery.of(context).orientation == Orientation.portrait) {
       return Scaffold(
         body: Center(
@@ -117,7 +123,7 @@ class _TaskDetailsState extends State<TaskDetails> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                       _buildAlignedText("BRM No.", widget.task.brmNo),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],

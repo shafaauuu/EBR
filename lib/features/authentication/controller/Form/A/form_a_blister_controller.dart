@@ -3,10 +3,33 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:intl/intl.dart';
+import 'package:oji_1/common/api.dart';
 
 class FormABlisterController extends GetxController {
+  final responses = <String, bool?>{
+    'floor_clean': false,
+    'walls_clean': false,
+    'grill_clean': false,
+    'tools_clean': false,
+    'no_material_left': false,
+    'no_docs_left': false,
+    'picking_list': false,
+    'document_related': false,
+  }.obs;
+
+  final numericResponses = <String, TextEditingController>{
+    'temperature': TextEditingController(),
+    'humidity': TextEditingController(),
+  };
+
+  final dateController = TextEditingController();
+  final productNameController = TextEditingController();
+  final batchController = TextEditingController();
+
   Future<void> submitForm({
     required BuildContext context,
+    required int task_id,
     required String codeTask,
     required String tanggal,
     required String sebelumProduk,
@@ -14,9 +37,9 @@ class FormABlisterController extends GetxController {
     required Map<String, bool?> responses,
     required Map<String, TextEditingController> numericResponses,
   }) async {
-    final uri = Uri.parse('http://127.0.0.1:8000/api/form-a-blister');
 
     final formData = {
+      'task_id': task_id,
       'code_task': codeTask,
       'tanggal': tanggal,
       'sebelum_produk': sebelumProduk,
@@ -37,17 +60,10 @@ class FormABlisterController extends GetxController {
     };
 
     try {
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(formData),
+      final response = await Api.post(
+        "form-a-blister", formData
       );
-
-      if (response.statusCode == 201) {
-        // Show success dialog
+       // Show success dialog
         ArtSweetAlert.show(
           context: context,
           artDialogArgs: ArtDialogArgs(
@@ -56,18 +72,7 @@ class FormABlisterController extends GetxController {
             text: "Form submitted successfully!",
           ),
         );
-      } else {
-        final body = jsonDecode(response.body);
-        // Show error dialog
-        ArtSweetAlert.show(
-          context: context,
-          artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.danger,
-            title: "Error",
-            text: "Submission failed: ${body['error'] ?? response.body}",
-          ),
-        );
-      }
+
     } catch (e) {
       // Show exception dialog
       ArtSweetAlert.show(
@@ -79,5 +84,35 @@ class FormABlisterController extends GetxController {
         ),
       );
     }
+  }
+
+  Future<void> fetchFormABlister(String id) async {
+    final data = (await Api.get("form-a-blister/$id"))['data'];
+    // convert from 2025-04-30T17:00:00.000000Z = dd/mm/yyyy
+    String rawDate = data['tanggal'] ?? '';
+    if (rawDate.isNotEmpty) {
+      DateTime parsedDate = DateTime.parse(rawDate);
+      String formattedDate = DateFormat('yyyy-MM-dd').format(parsedDate);
+      dateController.text = formattedDate;
+    } else {
+      dateController.text = '';
+    }
+      productNameController.text = data['sebelum_produk'] ?? '';
+      batchController.text = data['sebelum_bets'] ?? '';
+
+      responses['floor_clean'] = data['bersih_lantai'];
+      responses['walls_clean'] = data['bersih_dinding'];
+      responses['grill_clean'] = data['bersih_grill'];
+      responses['tools_clean'] = data['bersih_alat'];
+      responses['no_material_left'] = data['sisa_produk'];
+      responses['no_docs_left'] = data['sebelum_dokumen'];
+      responses['picking_list'] = data['material_sesuai'];
+      responses['document_related'] = data['saat_dokumen'];
+
+      numericResponses['temperature']?.text = data['suhu']?.toString() ?? '';
+      numericResponses['humidity']?.text = data['kelembapan']?.toString() ?? '';
+      print(responses);
+
+      update(); // notify UI to refresh
   }
 }

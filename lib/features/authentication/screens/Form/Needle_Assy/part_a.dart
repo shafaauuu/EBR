@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../controller/Form/A/form_a_needleassy_controller.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 class PartA_NeedleAssy extends StatefulWidget {
   final Task task;
@@ -13,40 +15,37 @@ class PartA_NeedleAssy extends StatefulWidget {
 }
 
 class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
+  final FormANeedleassyController needleassyController = Get.put(FormANeedleassyController());
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   DateTime? _selectedDate;
   TextEditingController dateController = TextEditingController();
-
-  final Map<String, bool?> responses = {
-    "pallet_clean": null,
-    "floor_clean": null,
-    "under_machine_clean": null,
-    "above_machine_clean": null,
-    "grill_clean": null,
-
-    "no_product_left": null,
-    "no_hub_left": null,
-    "no_cap_left": null,
-    "no_cannula_left": null,
-    "no_output_left": null,
-    "no_reject_left": null,
-    "no_rework_left": null,
-
-    "no_docs_left": null,
-    "picking_list":null,
-    "document_related":null,
-  };
 
   final Map<String, TextEditingController> numericResponses = {
     "temperature": TextEditingController(),
     "humidity": TextEditingController(),
   };
+  int counter = 0;
 
   final TextEditingController batchController = TextEditingController();
   final TextEditingController productNameController = TextEditingController();
   final TextEditingController previousProductController = TextEditingController();
   final TextEditingController needleController = TextEditingController();
   final TextEditingController capController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    check();
+  }
+  void check() async {
+    final controller = Get.put(FormANeedleassyController());
+    await controller.fetchFormANeedleAssy(widget.task.id.toString());
+    setState(() {
+      counter++;
+    }); // triggers rebuild
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +98,7 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                      _buildAlignedText("BRM No.", widget.task.brmNo),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -145,7 +144,7 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                                 onTap: () => _pickDate(context),
                                 child: AbsorbPointer(
                                   child: TextField(
-                                    controller: dateController,
+                                    controller: needleassyController.dateController,
                                     decoration: InputDecoration(
                                       hintText: "DD/MM/YYYY",
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -177,28 +176,28 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                             TableRow(
                               children: [
                                 _buildTableCell("Nama Produk/Komponen", "Product/Component Name"),
-                                _buildTextFieldCell(productNameController), // Input field
+                                _buildTextFieldCell(needleassyController.productNameController), // Input field
                               ],
                             ),
                             // Row 2: Nomor Bets
                             TableRow(
                               children: [
                                 _buildTableCell("Nomor Bets", "Batch No."),
-                                _buildTextFieldCell(batchController), // Input field
+                                _buildTextFieldCell(needleassyController.batchController), // Input field
                               ],
                             ),
                             // Row 3: Jenis Needle
                             TableRow(
                               children: [
                                 _buildTableCell("Jenis Needle", "Needle Type"),
-                                _buildTextFieldCell(needleController), // Input field
+                                _buildTextFieldCell(needleassyController.needleController), // Input field
                               ],
                             ),
                             // Row 4: Jenis Cap
                             TableRow(
                               children: [
                                 _buildTableCell("Jenis Cap", "Cap Type"),
-                                _buildTextFieldCell(capController), // Input field
+                                _buildTextFieldCell(needleassyController.capController), // Input field
                               ],
                             ),
                           ],
@@ -267,18 +266,20 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                     Center(
                       child: ElevatedButton(
                         onPressed: () {
-                          FormANeedleassyController().submitForm(
-                            context: context,
-                            codeTask: widget.task.code,
-                            tanggal: dateController.text,
-                            sebelumProduk: productNameController.text,
-                            sebelumBets: batchController.text,
-                            sebelumNeedle: needleController.text,
-                            sebelumCap: capController.text,
-                            responses: responses,
-                            numericResponses: numericResponses,
-                          );
-
+                          if (validateForm()) {
+                            final controller = Get.put(FormANeedleassyController());
+                            controller.submitForm(                              context: context,
+                              task_id: widget.task.id,
+                              codeTask: widget.task.code,
+                              tanggal: DateTime.parse(needleassyController.dateController.text.replaceAll('/', '-')).toIso8601String().substring(0, 10),
+                              sebelumProduk: needleassyController.productNameController.text,
+                              sebelumBets: needleassyController.batchController.text,
+                              sebelumNeedle: needleassyController.needleController.text,
+                              sebelumCap: needleassyController.capController.text,
+                              responses: needleassyController.responses,
+                              numericResponses: needleassyController.numericResponses,
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -368,9 +369,9 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: responses[key],
+                  groupValue: needleassyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => needleassyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -390,9 +391,9 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
               children: [
                 Radio<bool>(
                   value: false,
-                  groupValue: responses[key],
+                  groupValue: needleassyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => needleassyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -437,9 +438,9 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: responses[key],
+                  groupValue: needleassyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => needleassyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -459,9 +460,9 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
               children: [
                 Radio<bool>(
                   value: false,
-                  groupValue: responses[key],
+                  groupValue: needleassyController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => needleassyController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -500,7 +501,7 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: TextField(
-          controller: numericResponses[key],
+          controller: needleassyController.numericResponses[key],
           keyboardType: TextInputType.number,
           decoration: InputDecoration(labelText: right),
         ),
@@ -544,10 +545,47 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        dateController.text = "${picked.day}/${picked.month}/${picked.year}";
+        needleassyController.dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
 
+  bool validateForm() {
+    // Validate text inputs
+    if (needleassyController.dateController.text.isEmpty ||
+        needleassyController.productNameController.text.isEmpty ||
+        needleassyController.batchController.text.isEmpty ||
+        needleassyController.needleController.text.isEmpty ||
+        needleassyController.capController.text.isEmpty ||
+        needleassyController.numericResponses['temperature']?.text.isEmpty == true ||
+        needleassyController.numericResponses['humidity']?.text.isEmpty == true) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Missing Fields",
+          text: "Please fill all required fields.",
+        ),
+      );
+      return false;
+    }
+
+    // Validate radio/boolean responses
+    for (var entry in needleassyController.responses.entries) {
+      if (entry.value == null) {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.warning,
+            title: "Incomplete Selections",
+            text: "Please complete all Yes/No/Clean selections.",
+          ),
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
 
 }

@@ -1,0 +1,88 @@
+import 'dart:convert';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+
+class ApiConfig {
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
+}
+
+class Api {
+  static Map<String, String> buildHeader() {
+    final storage = GetStorage();
+    var headers = {
+      "Content-Type": "application/json",
+    };
+    String? token = storage.read("auth_token");
+    if(token != null) {
+        headers["Authorization"] = "Bearer $token";
+     }
+    return headers;
+  }
+  static Future<dynamic> get(String endpoint) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/$endpoint');
+    final response = await http.get(url, headers: buildHeader());
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('GET request failed: ${response.statusCode}');
+    }
+  }
+
+  static Future<dynamic> post(String endpoint, dynamic body) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/$endpoint');
+
+    final response = await http.post(
+      url,
+      headers: buildHeader(),
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('POST request failed: ${response.statusCode}');
+    }
+  }
+
+  static Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/$endpoint');
+    final response = await http.put(
+      url,
+      headers: buildHeader(),
+      body: json.encode(body),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('PUT request failed: ${response.statusCode}');
+    }
+  }
+
+  static Future<dynamic> patch(String endpoint, Map<String, dynamic> body) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/$endpoint');
+    final response = await http.patch(
+      url,
+      headers: buildHeader(),
+      body: json.encode(body),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('PATCH request failed: ${response.statusCode}');
+    }
+  }
+
+  static Future<dynamic> delete(String endpoint) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/$endpoint');
+    final response = await http.delete(
+      url,
+      headers: buildHeader(),
+    );
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return response.body.isNotEmpty ? json.decode(response.body) : null;
+    } else {
+      throw Exception('DELETE request failed: ${response.statusCode}');
+    }
+  }
+
+}

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:oji_1/features/authentication/controller/Form/A/form_a_injection_controller.dart';
 import '../../../models/task_model.dart';
 import '../../../controller/task_details_controller.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+
 
 class PartA_Injection extends StatefulWidget {
   final Task task;
@@ -14,29 +17,34 @@ class PartA_Injection extends StatefulWidget {
 
 class _PartA_InjectionState extends State<PartA_Injection> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
+  final FormAInjectionController injectionController = Get.put(FormAInjectionController());
   DateTime? _selectedDate;
   TextEditingController dateController = TextEditingController();
-
-  final Map<String, bool?> responses = {
-    "floor_clean": null,
-    "walls_clean": null,
-    "grill_clean": null,
-    "tools_clean": null,
-    "no_material_left": null,
-
-    "no_docs_left": null,
-    "picking_list": null,
-    "document_related": null,
-  };
 
   final Map<String, TextEditingController> numericResponses = {
     "temperature": TextEditingController(),
     "humidity": TextEditingController(),
   };
+  int counter = 0;
 
   final TextEditingController batchController = TextEditingController();
   final TextEditingController productNameController = TextEditingController();
   final TextEditingController previousProductController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    check();
+  }
+  void check() async {
+    final controller = Get.put(FormAInjectionController());
+    await controller.fetchFormAInjection(widget.task.id.toString());
+    setState(() {
+      counter++;
+    }); // triggers rebuild
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +97,7 @@ class _PartA_InjectionState extends State<PartA_Injection> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                      _buildAlignedText("BRM No.", widget.task.brmNo),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -135,7 +143,7 @@ class _PartA_InjectionState extends State<PartA_Injection> {
                                 onTap: () => _pickDate(context),
                                 child: AbsorbPointer(
                                   child: TextField(
-                                    controller: dateController,
+                                    controller: injectionController.dateController,
                                     decoration: InputDecoration(
                                       hintText: "DD/MM/YYYY",
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -167,14 +175,14 @@ class _PartA_InjectionState extends State<PartA_Injection> {
                             TableRow(
                               children: [
                                 _buildTableCell("Nama Produk/Komponen", "Product/Component Name"),
-                                _buildTextFieldCell(productNameController), // Input field
+                                _buildTextFieldCell(injectionController.productNameController), // Input field
                               ],
                             ),
                             // Row 2: Nomor Bets
                             TableRow(
                               children: [
                                 _buildTableCell("Nomor Bets", "Batch No."),
-                                _buildTextFieldCell(batchController), // Input field
+                                _buildTextFieldCell(injectionController.batchController), // Input field
                               ],
                             ),
                           ],
@@ -218,16 +226,19 @@ class _PartA_InjectionState extends State<PartA_Injection> {
                     Center(
                       child: ElevatedButton(
                         onPressed: () {
-                          final controller = Get.put(FormAInjectionController());
-                          controller.submitForm(
-                            context: context, // Pass the BuildContext
-                            codeTask: widget.task.code,
-                            tanggal: _selectedDate!.toIso8601String().substring(0, 10),
-                            sebelumProduk: productNameController.text,
-                            sebelumBets: batchController.text,
-                            responses: responses,
-                            numericResponses: numericResponses,
-                          );
+                          if (validateForm()) {
+                            final controller = Get.put(FormAInjectionController());
+                            controller.submitForm(
+                              context: context, // Pass the BuildContext
+                              task_id: widget.task.id,
+                              codeTask: widget.task.code,
+                              tanggal: DateTime.parse(injectionController.dateController.text.replaceAll('/', '-')).toIso8601String().substring(0, 10),
+                              sebelumProduk: injectionController.productNameController.text,
+                              sebelumBets:injectionController.batchController.text,
+                              responses: injectionController.responses,
+                              numericResponses: injectionController.numericResponses,
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -317,9 +328,9 @@ class _PartA_InjectionState extends State<PartA_Injection> {
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: responses[key],
+                  groupValue: injectionController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => injectionController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -339,9 +350,9 @@ class _PartA_InjectionState extends State<PartA_Injection> {
               children: [
                 Radio<bool>(
                   value: false,
-                  groupValue: responses[key],
+                  groupValue: injectionController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => injectionController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -386,9 +397,9 @@ class _PartA_InjectionState extends State<PartA_Injection> {
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: responses[key],
+                  groupValue: injectionController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => injectionController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -408,9 +419,9 @@ class _PartA_InjectionState extends State<PartA_Injection> {
               children: [
                 Radio<bool>(
                   value: false,
-                  groupValue: responses[key],
+                  groupValue: injectionController.responses[key],
                   onChanged: (value) {
-                    setState(() => responses[key] = value);
+                    setState(() => injectionController.responses[key] = value);
                   },
                 ),
                 Column(
@@ -449,7 +460,7 @@ class _PartA_InjectionState extends State<PartA_Injection> {
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: TextField(
-          controller: numericResponses[key],
+          controller: injectionController.numericResponses[key],
           keyboardType: TextInputType.number,
           decoration: InputDecoration(labelText: right),
         ),
@@ -493,10 +504,45 @@ class _PartA_InjectionState extends State<PartA_Injection> {
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        dateController.text = "${picked.day}/${picked.month}/${picked.year}";
+        injectionController.dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
 
+  bool validateForm() {
+    // Validate text inputs
+    if (injectionController.dateController.text.isEmpty ||
+        injectionController.productNameController.text.isEmpty ||
+        injectionController.batchController.text.isEmpty ||
+        injectionController.numericResponses['temperature']?.text.isEmpty == true ||
+        injectionController.numericResponses['humidity']?.text.isEmpty == true) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Missing Fields",
+          text: "Please fill all required fields.",
+        ),
+      );
+      return false;
+    }
+
+    // Validate radio/boolean responses
+    for (var entry in injectionController.responses.entries) {
+      if (entry.value == null) {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.warning,
+            title: "Incomplete Selections",
+            text: "Please complete all Yes/No/Clean selections.",
+          ),
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
 
 }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:oji_1/common/api.dart';
 import '../models/material_model.dart';
 
 class TaskDetailsController extends GetxController {
@@ -14,6 +15,7 @@ class TaskDetailsController extends GetxController {
   var materials = <MaterialModel>[].obs;
   var isLoading = false.obs; // To track loading state
   var errorMessage = ''.obs; // To show error messages if any
+  Map<String, String?> selectedValues = {};
 
   var sectionCompletion = <String, bool>{
     "A": false,
@@ -41,6 +43,7 @@ class TaskDetailsController extends GetxController {
   void markSectionAsCompleted(String key) {
     sectionCompletion[key] = true;
   }
+
 
   void showShiftInputDialog({
     required String firstName,
@@ -134,7 +137,7 @@ class TaskDetailsController extends GetxController {
     ever(selectedBRM, (brm) {
       searchQuery.value = '';
       materials.clear();
-      searchController.clear(); // <-- IMPORTANT to clear text field!
+      searchController.clear(); // <--  clear text field!
 
       if (brm.isNotEmpty) {
         fetchMaterialCodes(brm);
@@ -148,10 +151,7 @@ class TaskDetailsController extends GetxController {
   // Fetch BRM List
   Future<void> fetchBRMList() async {
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/brms'));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      final data = await Api.get("brms");
 
         // Step 1: Extract, trim, and clean the data
         List<String> rawList = List<String>.from(data.map((item) => item['brm_no'].toString().trim()));
@@ -166,30 +166,18 @@ class TaskDetailsController extends GetxController {
         brmList.value = uniqueList;
 
         print('BRM List Fetched: $brmList');
-      } else {
-        Get.snackbar("Error", "Failed to load BRM list (Status ${response.statusCode})",
-            backgroundColor: Colors.red, colorText: Colors.white);
-      }
+
     } catch (e) {
       Get.snackbar("Error", "Failed to load BRM list: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 
-  // Fetch BRM Data (in progress)
   void fetchBRMData(String brmNumber) async {
     try {
       final encodedBRM = Uri.encodeComponent(brmNumber.trim());
-      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/brms/$encodedBRM'));
+      final data = await Api.get("brms/$encodedBRM");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Do something with the data, like storing it in a variable or showing on screen
-        print("BRM Data: $data");
-      } else {
-        Get.snackbar("Error", "Failed to fetch BRM details",
-            backgroundColor: Colors.red, colorText: Colors.white);
-      }
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch BRM details: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
@@ -201,10 +189,8 @@ class TaskDetailsController extends GetxController {
   Future<void> fetchMaterialCodes(String brmNo) async {
     try {
       final encodedBRM = Uri.encodeComponent(brmNo.trim());
-      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/brms/$encodedBRM/materials'));
+      final data = await Api.get("brms/$encodedBRM/materials") as List<dynamic>;
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
         final fetchedCodes = data.map((code) => code.toString()).toList();
         final uniqueCodes = fetchedCodes.toSet().toList();
 
@@ -216,12 +202,7 @@ class TaskDetailsController extends GetxController {
         }
 
         print('Fetched material codes: $fetchedCodes');
-      } else {
-        materialCodes.clear();
-        selectedMaterialCode.value = ''; // 💡 Also reset here to avoid mismatched value
-        Get.snackbar("Error", "Failed to fetch material codes",
-            backgroundColor: Colors.red, colorText: Colors.white);
-      }
+
     } catch (e) {
       materialCodes.clear();
       selectedMaterialCode.value = ''; // 💡 Important to reset here as well
@@ -232,18 +213,12 @@ class TaskDetailsController extends GetxController {
 
   Future<void> fetchCategory(String brmNo) async {
     final encodedBRM = Uri.encodeComponent(brmNo.trim());
-    final url = Uri.parse("http://127.0.0.1:8000/api/brms/$encodedBRM/category");
 
     try {
-      final response = await http.get(url);
+      final response = await Api.get("brms/$encodedBRM/category");
 
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        selectedCategory.value = jsonData['category'];
+        selectedCategory.value = response['category'];
         print("Fetched category: ${selectedCategory.value}");
-      } else {
-        print("Error: ${response.statusCode} - ${response.body}");
-      }
     } catch (e) {
       print("Exception fetching category: $e");
     }
@@ -259,16 +234,10 @@ class TaskDetailsController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/materials/search?search=${searchQuery.value}&brm=${selectedBRM.value}'),
-      );
+      final data = await Api.get("materials/search?search=${searchQuery.value}&brm=${selectedBRM.value}") as List<dynamic>;
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
         materials.value = data.map((item) => MaterialModel.fromJson(item)).toList();
-      } else {
-        errorMessage.value = 'Failed to load materials';
-      }
+
     } catch (e) {
       errorMessage.value = 'Error fetching materials: $e';
     } finally {
@@ -278,5 +247,148 @@ class TaskDetailsController extends GetxController {
     return materials;
   }
 
+  RxList<Map<String, dynamic>> machines = <Map<String, dynamic>>[].obs;
+
+  void setBRM(String brmNo) {
+    selectedBRM.value = brmNo;
+    fetchMachinesByBRM(brmNo);
+  }
+
+  Future<void> fetchMachinesByBRM(String brmNo) async {
+    try {
+      final data = await Api.get("machines/by-brm/$brmNo");
+        // Assuming the response contains a 'machines' key with a list of machines
+        if (data['machines'] != null) {
+          machines.value = List<Map<String, dynamic>>.from(data['machines']);
+        } else {
+          machines.clear();
+          print("No machines data available.");
+        }
+    } catch (e) {
+      machines.clear();
+      print("Error fetching machines: $e");
+    }
+  }
+
+  Future<bool> submitQualificationDataAssySyringe(dynamic data) async {
+    try {
+      final response = await Api.post("form-b-assy-syringe", data);
+
+      return true;
+
+    } catch (e) {
+      print("Submit error: $e");
+      return false;
+    }
+  }
+
+  Future<void> fetchFormBAssySyringeData(String id) async {
+    final response = await Api.get("form-b-assy-syringe/$id");
+    final item = response['data']; // It's a single object
+
+    final machineId = item['machine_id'];
+    final terkualifikasi = item['terkualifikasi'];
+
+    if (terkualifikasi == true) {
+      selectedValues[machineId] = "Terkualifikasi";
+    } else if (terkualifikasi == false) {
+      selectedValues[machineId] = "Tidak Terkualifikasi";
+    } else {
+      selectedValues[machineId] = "N/A";
+    }
+
+    update(); // triggers UI refresh if using GetBuilder
+  }
+
+  Future<bool> submitQualificationDataBlister(dynamic data) async {
+    try {
+      final response = await Api.post("form-b-blister", data);
+        return true;
+
+    } catch (e) {
+      print("Submit error: $e");
+      return false;
+    }
+  }
+
+  Future<void> fetchFormBBlisterData(String id) async {
+    final response = await Api.get("form-b-blister/$id");
+    final item = response['data']; // It's a single object
+
+    final machineId = item['machine_id'];
+    final terkualifikasi = item['terkualifikasi'];
+
+    if (terkualifikasi == true) {
+      selectedValues[machineId] = "Terkualifikasi";
+    } else if (terkualifikasi == false) {
+      selectedValues[machineId] = "Tidak Terkualifikasi";
+    } else {
+      selectedValues[machineId] = "N/A";
+    }
+
+    update(); // triggers UI refresh if using GetBuilder
+  }
+
+
+  Future<bool> submitQualificationDataInjection(dynamic data) async {
+    try {
+      final response = await Api.post("form-b-injection", data);
+
+      return true;
+
+    } catch (e) {
+      print("Submit error: $e");
+      return false;
+    }
+  }
+
+  Future<void> fetchFormBInjectionData(String id) async {
+    final response = await Api.get("form-b-injection/$id");
+    final item = response['data']; // It's a single object
+
+    final machineId = item['machine_id'];
+    final terkualifikasi = item['terkualifikasi'];
+
+    if (terkualifikasi == true) {
+      selectedValues[machineId] = "Terkualifikasi";
+    } else if (terkualifikasi == false) {
+      selectedValues[machineId] = "Tidak Terkualifikasi";
+    } else {
+      selectedValues[machineId] = "N/A";
+    }
+
+    update(); // triggers UI refresh if using GetBuilder
+  }
+
+
+  Future<bool> submitQualificationDataNeedleAssy(dynamic data) async {
+    try {
+      final response = await Api.post("form-b-needle-assy", data);
+
+      return true;
+
+    } catch (e) {
+      print("Submit error: $e");
+      return false;
+    }
+  }
+
+  Future<void> fetchFormBNeedleAssyData(String id) async {
+    final response = await Api.get("form-b-needle-assy/$id");
+    final item = response['data']; // It's a single object
+
+    final machineId = item['machine_id'];
+    final terkualifikasi = item['terkualifikasi'];
+
+    if (terkualifikasi == true) {
+      selectedValues[machineId] = "Terkualifikasi";
+    } else if (terkualifikasi == false) {
+      selectedValues[machineId] = "Tidak Terkualifikasi";
+    } else {
+      selectedValues[machineId] = "N/A";
+    }
+
+    update(); // triggers UI refresh if using GetBuilder
+  }
 }
 

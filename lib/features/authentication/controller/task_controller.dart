@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
+import 'package:oji_1/common/api.dart';
 import '../models/task_model.dart';
 
 class TaskController extends GetxController {
   var tasks = <Task>[].obs;
+  Task? currentTask;
+
   final storage = GetStorage();
-  final String baseUrl = "http://127.0.0.1:8000/api/tasks";
 
   @override
   void onInit() {
@@ -17,28 +19,14 @@ class TaskController extends GetxController {
   }
 
   Future<void> fetchTasks() async {
-    String? token = storage.read("auth_token");
-
-    if (token == null) {
-      print("No token found");
-      return;
-    }
 
     try {
-      final response = await http.get(
-        Uri.parse("$baseUrl"),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+      final response = await Api.get("tasks");
+      tasks.value = (response as List)
+          .map((item) => Task.fromJson(item))
+          .toList();
 
-      if (response.statusCode == 200) {
-        List<dynamic> jsonData = json.decode(response.body);
-        tasks.value = jsonData.map((task) => Task.fromJson(task)).toList();
-      } else {
-        print("Failed to load tasks: ${response.body}");
-      }
+
     } catch (e) {
       print("Error fetching tasks: $e");
     }
@@ -53,12 +41,10 @@ class TaskController extends GetxController {
     }
 
     try {
-      final response = await http.put(
-        Uri.parse("$baseUrl/$taskCode/$status"), // Correct API for updating task status
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+      final response = await Api.put( "tasks/$taskCode/$status",
+          {
+            'status': status,
+          }
       );
 
       if (response.statusCode == 200) {

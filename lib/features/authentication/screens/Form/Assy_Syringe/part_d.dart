@@ -8,6 +8,8 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'dart:typed_data';
 import 'dart:html' as html;
 
+import 'material_reconciliation.dart';
+
 class PartD_Syringe extends StatefulWidget {
   final Task task;
   const PartD_Syringe({super.key, required this.task});
@@ -291,54 +293,38 @@ class _PartD_SyringeState extends State<PartD_Syringe> {
 
                   const SizedBox(height: 30),
 
-                  // Material Reconciliation Title
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Material Reconciliation',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Rekonsiliasi Material',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Repeated for each material type
-                      buildMaterialRow('Plunger', plungerDropdownItems, selectedPlungerItem, onPlungerChanged, plungerControllers),
-                      const Divider(height: 32),
-
-                      buildMaterialRow('Barrel', barrelDropdownItems, selectedBarrelItem, onBarrelChanged, barrelControllers),
-                      const Divider(height: 32),
-
-                      buildMaterialRow('Bulk Needle', needleDropdownItems, selectedNeedleItem, onNeedleChanged, needleControllers),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
                   const Divider(thickness: 1),
 
                   // Submit Button
-                  Center(
+                  SizedBox(
+                    width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _submitPartD,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+                      onPressed: (){
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MaterialReconciliationAssySyringe(
+                              onSubmit: _submitPartD,
+                              task: widget.task,
+                              plungerDropdownItems: plungerDropdownItems,
+                              selectedPlungerItem: selectedPlungerItem,
+                              onPlungerChanged: onPlungerChanged,
+                              plungerControllers: plungerControllers,
+                              barrelDropdownItems: barrelDropdownItems,
+                              selectedBarrelItem: selectedBarrelItem,
+                              onBarrelChanged: onBarrelChanged,
+                              barrelControllers: barrelControllers,
+                              needleDropdownItems: needleDropdownItems,
+                              selectedNeedleItem: selectedNeedleItem,
+                              onNeedleChanged: onNeedleChanged,
+                              needleControllers: needleControllers,
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text("Next",
+                          style: TextStyle(fontSize: 16)
                       ),
-                      child: const Text("Submit",
-                          style: TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],

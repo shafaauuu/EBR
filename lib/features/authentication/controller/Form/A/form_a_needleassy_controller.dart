@@ -3,10 +3,45 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../../common/api.dart';
 
 class FormANeedleassyController extends GetxController {
+  final responses = <String, bool?>{
+    "pallet_clean": null,
+    "floor_clean": null,
+    "under_machine_clean": null,
+    "above_machine_clean": null,
+    "grill_clean": null,
+
+    "no_product_left": null,
+    "no_hub_left": null,
+    "no_cap_left": null,
+    "no_cannula_left": null,
+    "no_output_left": null,
+    "no_reject_left": null,
+    "no_rework_left": null,
+
+    "no_docs_left": null,
+    "picking_list": null,
+    "document_related": null,
+  }.obs;
+
+  final numericResponses = <String, TextEditingController>{
+    'temperature': TextEditingController(),
+    'humidity': TextEditingController(),
+  };
+
+  final dateController = TextEditingController();
+  final productNameController = TextEditingController();
+  final batchController = TextEditingController();
+  final needleController = TextEditingController();
+  final capController = TextEditingController();
+
   Future<void> submitForm({
     required BuildContext context,
+    required int task_id,
     required String codeTask,
     required String tanggal,
     required String sebelumProduk,
@@ -16,10 +51,9 @@ class FormANeedleassyController extends GetxController {
     required Map<String, bool?> responses,
     required Map<String, TextEditingController> numericResponses,
   }) async {
-    final uri = Uri.parse('http://127.0.0.1:8000/api/form-a-needle-assy');
-
     // Initial form data
-    final Map<String, dynamic> formData = {
+    final formData = {
+      'task_id': task_id,
       'code_task': codeTask,
       'tanggal': tanggal,
       'sebelum_produk': sebelumProduk,
@@ -49,41 +83,19 @@ class FormANeedleassyController extends GetxController {
       'kelembapan': double.tryParse(numericResponses['humidity']?.text ?? '0') ?? 0.0,
     };
 
-    // Add all Yes/No boolean responses
-    responses.forEach((key, value) {
-      formData[key] = value ?? false; // default to false if null
-    });
-
     try {
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(formData),
+      final response = await Api.post(
+          "form-a-needle-assy", formData
       );
 
-      if (response.statusCode == 201) {
-        ArtSweetAlert.show(
-          context: context,
-          artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.success,
-            title: "Success",
-            text: "Form submitted successfully!",
-          ),
-        );
-      } else {
-        final body = jsonDecode(response.body);
-        ArtSweetAlert.show(
-          context: context,
-          artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.danger,
-            title: "Error",
-            text: "Submission failed: ${body['error'] ?? response.body}",
-          ),
-        );
-      }
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.success,
+          title: "Success",
+          text: "Form submitted successfully!",
+        ),
+      );
     } catch (e) {
       ArtSweetAlert.show(
         context: context,
@@ -94,5 +106,47 @@ class FormANeedleassyController extends GetxController {
         ),
       );
     }
+  }
+
+  Future<void> fetchFormANeedleAssy(String id) async {
+    final data = (await Api.get("form-a-needle-assy/$id"))['data'];
+    // convert from 2025-04-30T17:00:00.000000Z = dd/mm/yyyy
+    String rawDate = data['tanggal'] ?? '';
+    if (rawDate.isNotEmpty) {
+      DateTime parsedDate = DateTime.parse(rawDate);
+      String formattedDate = DateFormat('yyyy-MM-dd').format(parsedDate);
+      dateController.text = formattedDate;
+    } else {
+      dateController.text = '';
+    }
+    productNameController.text = data['sebelum_produk'] ?? '';
+    batchController.text = data['sebelum_bets'] ?? '';
+    needleController.text = data['sebelum_needle'] ?? '';
+    capController.text = data['sebelum_cap'] ?? '';
+
+    responses['pallet_clean'] = data['bersih_palet'];
+    responses['floor_clean'] = data['bersih_lantai'];
+    responses['under_machine_clean'] = data['bersih_kolong'];
+    responses['above_machine_clean'] = data['bersih_mesin'];
+    responses['grill_clean'] = data['bersih_grill'];
+
+    responses['no_product_left'] = data['sisa_lantai'];
+    responses['no_hub_left'] = data['sisa_hub'];
+    responses['no_cap_left'] = data['sisa_cap'];
+    responses['no_cannula_left'] = data['sisa_canula'];
+    responses['no_output_left'] = data['sisa_box'];
+    responses['no_reject_left'] = data['sisa_reject'];
+    responses['no_rework_left'] = data['sisa_rework'];
+
+    responses['no_docs_left'] = data['sebelum_dokumen'];
+    responses['picking_list'] = data['material_sesuai'];
+    responses['document_related'] = data['saat_dokumen'];
+
+    numericResponses['temperature']?.text = data['suhu']?.toString() ?? '';
+    numericResponses['humidity']?.text = data['kelembapan']?.toString() ?? '';
+
+    print(responses);
+
+    update();
   }
 }

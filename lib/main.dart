@@ -9,19 +9,14 @@ import 'features/authentication/controller/task_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
-
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-
-  final storage = GetStorage();
-  String? token = storage.read("auth_token");
-
-  Get.put(LoginController());
+  Get.put(AuthController());
   Get.put(TaskController());
 
-  runApp(MyApp(initialRoute: token == null ? '/login' : '/home'));
+  runApp(const MyApp(initialRoute: '/'));
 }
 
 

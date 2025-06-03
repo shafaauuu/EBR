@@ -1,16 +1,21 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:oji_1/common/api.dart';
+import 'package:oji_1/features/authentication/controller/task_controller.dart';
 import 'package:oji_1/features/authentication/screens/home/home.dart';
 import 'package:oji_1/features/authentication/screens/login/login.dart';
 import 'package:oji_1/utils/constants/text_strings.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
 
-class LoginController extends GetxController {
+class AuthController extends GetxController {
   var rememberMe = true.obs;
   var isPasswordHidden = true.obs;
+
+  var userData = {};
   final storage = GetStorage();
 
   final TextEditingController emailController = TextEditingController();
@@ -54,6 +59,20 @@ class LoginController extends GetxController {
     newPasswordController.clear();
     confirmPasswordController.clear();
   }
+  Future<void> checkUser(BuildContext context) async {
+    var data = await Api.get("user");
+    this.userData = data;
+
+    storage.write("user_email", data["email"]);
+    storage.write("first_name", data["first_name"]);
+    storage.write("last_name", data["last_name"]);
+    storage.write("nik", data["nik"]);
+    storage.write("divisi", data["div"]);
+    storage.write("department", data["dept"]);
+    storage.write("role", data["role"]);
+    storage.write("inisial", data['inisial']);
+    storage.write("group", data['group']);
+  }
 
   Future<void> signIn(BuildContext context) async {
     final email = emailController.text.trim();
@@ -84,19 +103,14 @@ class LoginController extends GetxController {
     }
 
     try {
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/login'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
-      );
+      final response = await Api.post("login", {"email": email, "password": password});
 
-      final data = jsonDecode(response.body);
+      final data = response;
 
-      if (response.statusCode == 200 && data["token"] != null) {
+      if (data["token"] != null) {
         storage.write("auth_token", data["token"]); // Save token
 
         clearFields();
-        fetchUserData();
 
         ArtSweetAlert.show(
           context: context,
@@ -106,6 +120,8 @@ class LoginController extends GetxController {
             text: Texts.loginSuccessMessage,
           ),
         );
+
+        Get.find<TaskController>().fetchTasks();
 
         Future.delayed(const Duration(seconds: 2), () {
           Get.offAll(() => const HomePage());
@@ -160,17 +176,11 @@ class LoginController extends GetxController {
         confirmButtonText: Texts.logoutButton,
         onConfirm: () async {
           try {
-            final response = await http.post(
-              Uri.parse('http://127.0.0.1:8000/api/logout'),
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer $token",
-              },
-            );
+            final response = await Api.post( "logout", {} );
 
             if (response.statusCode == 200) {
               storage.erase(); // Clear all stored user data
-              Get.offAll(() => const LoginScreen());
+              Get.offAll(() =>  LoginScreen());
             } else {
               ArtSweetAlert.show(
                 context: context,
@@ -196,44 +206,6 @@ class LoginController extends GetxController {
     );
   }
 
-  Future<void> fetchUserData() async {
-    final token = storage.read("auth_token");
-    if (token == null) {
-      print("No auth token found. User not logged in.");
-      return;
-    }
-
-    try {
-      final response = await http.get(
-        Uri.parse("http://127.0.0.1:8000/api/user"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Accept": "application/json",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        // Ensure these fields match the API response
-        storage.write("user_email", data["email"]);
-        storage.write("first_name", data["first_name"]);
-        storage.write("last_name", data["last_name"]);
-        storage.write("nik", data["nik"]);
-        storage.write("divisi", data["div"]);
-        storage.write("department", data["dept"]);
-        storage.write("role", data["role"]);
-        storage.write("inisial", data['inisial']);
-        storage.write("group", data['group']);
-
-        print("User data fetched successfully: $data");
-      } else {
-        print("Failed to fetch user data: ${response.body}");
-      }
-    } catch (e) {
-      print("Error fetching user data: $e");
-    }
-  }
 
   Future<void> changePassword(BuildContext context) async {
     final token = storage.read("auth_token");
@@ -267,17 +239,12 @@ class LoginController extends GetxController {
 
     ///in progress
     try {
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/change-password'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
+      final response = await Api.post( "/change-password",
+        {
           "current_password": currentPassword,
           "new_password": newPassword,
           "confirm_password": confirmPassword,
-        }),
+        },
       );
 
       final data = jsonDecode(response.body);

@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 import '../../../../../utils/constants/size.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 class PartB_Syringe extends StatefulWidget {
   final Task task;
-
   const PartB_Syringe({super.key, required this.task});
 
   @override
@@ -14,9 +14,25 @@ class PartB_Syringe extends StatefulWidget {
 }
 
 class _PartB_SyringeState extends State<PartB_Syringe> {
-  final TaskDetailsController controller = Get.put(TaskDetailsController());
-  Map<String, String?> selectedValues = {}; // Allowing null values
+  late final TaskDetailsController controller;
+  int counter = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(TaskDetailsController());
+    check();
+  }
+
+  void check() async {
+    await controller.fetchMachinesByBRM(widget.task.brmNo);
+    await controller.fetchFormBAssySyringeData(widget.task.id.toString());
+    setState(() {
+      counter++;
+    }); // triggers rebuild
+
+
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,7 +92,7 @@ class _PartB_SyringeState extends State<PartB_Syringe> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                          _buildAlignedText("BRM No.", widget.task.brmNo),
                           _buildAlignedText("Rev No.", ""),
                           _buildAlignedText("Eff. Date", ""),
                         ],
@@ -112,8 +128,70 @@ class _PartB_SyringeState extends State<PartB_Syringe> {
 
               Center(
                 child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
+                    onPressed: () async {
+                      final controller = Get.put(TaskDetailsController());
+
+                      List<Map<String, dynamic>> payload = [];
+
+                      for (var machine in controller.machines) {
+                        final machineCode = machine['machine_code'];
+                        final selected = controller.selectedValues[machineCode];
+
+                        if (selected != null) {
+                          payload.add({
+                            "task_id": widget.task.id,
+                            "code_task": widget.task.code,
+                            "machine_id": machineCode,
+                            "terkualifikasi": selected == "Terkualifikasi",
+                          });
+                        }
+                      }
+
+                      if (payload.isEmpty) {
+                        ArtSweetAlert.show(
+                          context: context,
+                          artDialogArgs: ArtDialogArgs(
+                            type: ArtSweetAlertType.warning,
+                            title: "Warning",
+                            text: "Please select qualification for at least one machine before submitting.",
+                          ),
+                        );
+                        return;
+                      }
+
+                      try {
+                        final response = await controller.submitQualificationDataAssySyringe(payload);
+                        if (response) {
+                          ArtSweetAlert.show(
+                            context: context,
+                            artDialogArgs: ArtDialogArgs(
+                              type: ArtSweetAlertType.success,
+                              title: "Success",
+                              text: "Data submitted successfully!",
+                            ),
+                          );
+                        } else {
+                          ArtSweetAlert.show(
+                            context: context,
+                            artDialogArgs: ArtDialogArgs(
+                              type: ArtSweetAlertType.danger,
+                              title: "Error",
+                              text: "Failed to submit data.",
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        ArtSweetAlert.show(
+                          context: context,
+                          artDialogArgs: ArtDialogArgs(
+                            type: ArtSweetAlertType.danger,
+                            title: "Exception",
+                            text: "Something went wrong: $e",
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -149,76 +227,81 @@ class _PartB_SyringeState extends State<PartB_Syringe> {
   }
 
   Widget _buildInspectionTable() {
-    return Table(
-      border: TableBorder.all(),
-      columnWidths: const {
-        0: FlexColumnWidth(3),
-        1: FlexColumnWidth(3),
-      },
-      children: [
-        TableRow(
+    return Obx(() {
+      if (controller.machines.isEmpty) {
+        return const Text("No machines found for selected BRM.");
+      }
+
+      List<TableRow> rows = [];
+
+      for (int i = 0; i < controller.machines.length; i += 2) {
+        List<Widget> rowChildren = [];
+
+        for (int j = i; j < i + 2 && j < controller.machines.length; j++) {
+          final machine = controller.machines[j];
+          final machineName = machine['machine_name'] ?? 'Unknown';
+          final machineCode = machine['machine_code'] ?? 'Unknown';
+
+          rowChildren.add(
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    machineName,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildRadioOptions(machineCode),
+                ],
+              ),
+            ),
+          );
+        }
+
+        while (rowChildren.length < 2) {
+          rowChildren.add(Container());
+        }
+
+        rows.add(TableRow(children: rowChildren));
+      }
+
+      return Table(
+        border: TableBorder.all(),
+        columnWidths: const {
+          0: FlexColumnWidth(3),
+          1: FlexColumnWidth(3),
+        },
+        children: rows,
+      );
+    });
+  }
+
+  Widget _buildRadioOptions(String machineId) {
+    return GetBuilder<TaskDetailsController>(
+      builder: (controller) {
+        return Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Blister Pack Hualian 1",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _buildRadioOptions("Blister Pack Hualian 1"), // key1
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Blister Pack Hualian 2",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _buildRadioOptions("Blister Pack Hualian 2"), // use different key
-                ],
-              ),
-            ),
+            _buildSingleRadioOption(machineId, "Terkualifikasi", "Qualified"),
+            _buildSingleRadioOption(machineId, "Tidak Terkualifikasi", "Unqualified"),
+            _buildSingleRadioOption(machineId, "N/A", "Not Applicable"),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildRadioOptions(String key) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        _buildSingleRadioOption(key, "Terkualifikasi", "(Qualified)"),
-        _buildSingleRadioOption(key, "Tidak Terkualifikasi", "(Not Qualified)"),
-        _buildSingleRadioOption(key, "N/A", "N/A"),
-      ],
-    );
-  }
-
-  Widget _buildSingleRadioOption(String key, String value, String translation) {
+  Widget _buildSingleRadioOption(String machineId, String value, String translation) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Radio<String?>(
           value: value,
-          groupValue: selectedValues[key],
+          groupValue: controller.selectedValues[machineId],
           onChanged: (selected) {
             setState(() {
-              selectedValues[key] = selected;
+              controller.selectedValues[machineId] = selected;
             });
           },
         ),
