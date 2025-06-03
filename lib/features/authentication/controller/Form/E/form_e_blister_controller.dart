@@ -19,6 +19,18 @@ class FormEBlisterController extends GetxController {
   final yieldValue = 0.obs;
   final totalProd = 0.obs;
 
+  FormEBlisterController() {
+    // Listen to changes in relevant fields and update total
+    ever(jmlReject, (_) => _calculateTotal());
+    ever(jmlSisa, (_) => _calculateTotal());
+    ever(sampleReleased, (_) => _calculateTotal());
+    ever(yieldValue, (_) => _calculateTotal());
+  }
+
+  void _calculateTotal() {
+    totalProd.value = (jmlReject.value + jmlSisa.value + sampleReleased.value + yieldValue.value);
+  }
+
   Future<void> submitForm({
     required BuildContext context,
     required int task_id,

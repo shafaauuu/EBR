@@ -278,6 +278,22 @@ class _PartE_BlisterState extends State<PartE_Blister> {
                                 if (text.isNotEmpty) {
                                   controller.selection = TextSelection.collapsed(offset: text.length);
                                 }
+
+                                // For total field (no. 6), make it read-only
+                                if (row["no"] == "8") {
+                                  return TextFormField(
+                                    enabled: false,
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      border: const OutlineInputBorder(),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                      filled: true,
+                                      fillColor: Colors.grey[200], // Light gray background to indicate it's not editable
+                                    ),
+                                  );
+
+                                }
+
                                 return TextFormField(
                                   enabled: isEnabled,
                                   keyboardType: TextInputType.number,

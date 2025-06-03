@@ -17,6 +17,18 @@ class FormEAssySyringeController extends GetxController {
   final hasilYield = 0.obs;
   final totalHasil = 0.obs;
 
+  FormEAssySyringeController() {
+    // Listen to changes in relevant fields and update total
+    ever(jmlReject, (_) => _calculateTotal());
+    ever(jmlSisa, (_) => _calculateTotal());
+    ever(sampleRelease, (_) => _calculateTotal());
+    ever(hasilYield, (_) => _calculateTotal());
+  }
+
+  void _calculateTotal() {
+    totalHasil.value = (jmlReject.value + jmlSisa.value + sampleRelease.value + hasilYield.value);
+  }
+
   Future<void> submitForm({
     required BuildContext context,
     required int task_id,

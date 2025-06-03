@@ -30,7 +30,7 @@ class _PartE_SyringeState extends State<PartE_Syringe> {
     {"no": "4.B.", "text": "Sampel QC (diisi QC)", "label": "unit/pcs", "key": "sample_qc"},
     {"no": "4.C.", "text": "Sampel (released) untuk keperluan lain/tidak dikembalikan ke Line (f)", "label": "unit/pcs", "key": "sample_release"},
     {"no": "5", "text": "Hasil / Yield Blister (g)", "label": "% (persen)", "key": "yield"},
-    {"no": "6", "text": "Total hasil produksi di tahap Blister-Packing ( d + e + f + g )", "label": "unit/pcs", "key": "total_hasil"},
+    {"no": "6", "text": "Total hasil produksi di tahap Blister-Packing (d + e + f + g)", "label": "unit/pcs", "key": "total_hasil"},
   ];
 
   @override
@@ -269,6 +269,23 @@ class _PartE_SyringeState extends State<PartE_Syringe> {
                                 if (text.isNotEmpty) {
                                   controller.selection = TextSelection.collapsed(offset: text.length);
                                 }
+                                
+                                // For total field (no. 6), make it read-only
+                                if (row["no"] == "6") {
+                                  return TextFormField(
+                                    enabled: false,
+                                    controller: controller,
+                                    decoration: InputDecoration(
+                                      border: const OutlineInputBorder(),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                      filled: true,
+                                      fillColor: Colors.grey[200], // Light gray background to indicate it's not editable
+                                    ),
+                                  );
+
+                                }
+                                
+                                // For other fields, keep them editable
                                 return TextFormField(
                                   enabled: isEnabled,
                                   keyboardType: TextInputType.number,
