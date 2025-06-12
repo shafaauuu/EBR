@@ -68,6 +68,42 @@ class _PartC_NeedleAssyState extends State<PartC_NeedleAssy> {
         });
       }
     });
+    
+    // Listen for existing materials data and update UI
+    ever(controller.existingMaterials, (materials) {
+      if (materials.isNotEmpty) {
+        setState(() {
+          for (var material in materials) {
+            final materialId = material['material']?['id_mat']?.toString() ?? '';
+            if (materialId.isNotEmpty) {
+              // Make sure controllers exist for this material
+              if (!batchControllers.containsKey(materialId)) {
+                batchControllers[materialId] = TextEditingController();
+              }
+              if (!qtyControllers.containsKey(materialId)) {
+                qtyControllers[materialId] = TextEditingController();
+              }
+              
+              // Set the values
+              batchControllers[materialId]?.text = material['batch_no'] ?? '';
+              qtyControllers[materialId]?.text = material['actual_qty']?.toString() ?? '';
+              
+              // Add to selected materials
+              if (!selectedMaterials.containsKey(materialId)) {
+                selectedMaterials[materialId] = {
+                  'id': materialId,
+                  'material_desc': material['material']?['material_desc'] ?? '',
+                  'material_code': material['material']?['material_code'] ?? '',
+                  'batch_no': material['batch_no'] ?? '',
+                  'actual_qty': material['actual_qty']?.toString() ?? '',
+                  'id_mat': material['material']?['id_mat'],
+                };
+              }
+            }
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -422,7 +458,7 @@ class _PartC_NeedleAssyState extends State<PartC_NeedleAssy> {
 
       // Check if there's existing data for this material
       final existingMaterialData = controller.existingMaterials
-          .where((m) => m['material']?['id'].toString() == materialId)
+          .where((m) => m['material']?['id_mat']?.toString() == materialId)
           .toList();
 
       // If we have existing data, pre-populate the fields
@@ -431,7 +467,7 @@ class _PartC_NeedleAssyState extends State<PartC_NeedleAssy> {
         batchControllers[materialId]?.text = latestData['batch_no'] ?? '';
         qtyControllers[materialId]?.text = latestData['actual_qty']?.toString() ?? '';
 
-        // Add to selected materials
+        // Add to selected materials if not already there
         if (!selectedMaterials.containsKey(materialId)) {
           selectedMaterials[materialId] = {
             'id': materialId,
@@ -471,7 +507,11 @@ class _PartC_NeedleAssyState extends State<PartC_NeedleAssy> {
     final isSelected = selectedMaterials.containsKey(materialId);
 
     // If selected, update the selectedMaterials map
-    if (isSelected && !selectedMaterials.containsKey(materialId)) {
+    if (isSelected && selectedMaterials.containsKey(materialId)) {
+      // Update with current values from controllers
+      selectedMaterials[materialId]!.update('batch_no', (_) => batchNoController.text);
+      selectedMaterials[materialId]!.update('actual_qty', (_) => actualQtyController.text);
+    } else if (isSelected) {
       selectedMaterials[materialId] = {
         'id': materialId,
         'material_desc': material['material_desc'],

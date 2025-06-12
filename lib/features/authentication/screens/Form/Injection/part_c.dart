@@ -16,7 +16,6 @@ class PartC_Injection extends StatefulWidget {
 class _PartC_InjectionState extends State<PartC_Injection> {
   late final FormCInjectionController controller;
 
-  // Form values
   final Map<String, dynamic> formValues = {
     'sesuai_picklist': true,
     'remarks_picklist': '',
@@ -26,7 +25,6 @@ class _PartC_InjectionState extends State<PartC_Injection> {
     'remarks_mat': '',
   };
 
-  // Store selected materials by material ID
   final Map<String, Map<String, dynamic>> selectedMaterials = {};
 
   @override
@@ -50,7 +48,6 @@ class _PartC_InjectionState extends State<PartC_Injection> {
       }
     });
 
-    // Listen for existing data and update UI accordingly
     ever(controller.existingFormData, (data) {
       if (data != null) {
         setState(() {
@@ -63,6 +60,47 @@ class _PartC_InjectionState extends State<PartC_Injection> {
           catatanControllers['1']?.text = data['remarks_picklist'] ?? '';
           catatanControllers['2']?.text = data['remarks_bets'] ?? '';
           catatanControllers['3']?.text = data['remarks_mat'] ?? '';
+        });
+      }
+    });
+
+    ever(controller.existingMaterials, (materials) {
+      if (materials.isNotEmpty) {
+        setState(() {
+          for (var material in materials) {
+            final materialId = material['material']?['id']?.toString() ?? '';
+            if (materialId.isNotEmpty) {
+              // Create controllers if they don't exist
+              if (!batchControllers.containsKey(materialId)) {
+                batchControllers[materialId] = TextEditingController();
+              }
+              if (!qtyControllers.containsKey(materialId)) {
+                qtyControllers[materialId] = TextEditingController();
+              }
+
+              // Set values
+              batchControllers[materialId]?.text = material['batch_no'] ?? '';
+              qtyControllers[materialId]?.text = material['actual_qty']?.toString() ?? '';
+
+              // Find matching material in the controller's materials list
+              final matchingMaterial = controller.materials.firstWhere(
+                (m) => m['id']?.toString() == materialId,
+                orElse: () => <String, dynamic>{},
+              );
+
+              if (matchingMaterial.isNotEmpty) {
+                // Add to selected materials
+                selectedMaterials[materialId] = {
+                  'id': materialId,
+                  'id_mat': material['id_mat'],
+                  'material_desc': matchingMaterial['material_desc'],
+                  'material_code': matchingMaterial['material_code'],
+                  'batch_no': material['batch_no'] ?? '',
+                  'actual_qty': material['actual_qty']?.toString() ?? '',
+                };
+              }
+            }
+          }
         });
       }
     });
@@ -581,9 +619,7 @@ class _PartC_InjectionState extends State<PartC_Injection> {
             'id': materialId,
             'material_desc': material['material_desc'],
             'material_code': material['material_code'],
-            'batch_no': latestData['batch_no'] ?? '',
-            'actual_qty': latestData['actual_qty']?.toString() ?? '',
-            'id_mat': material['id_mat'],
+            'id_mat': material['id_mat'], // Store id_mat for child material
           };
         }
       }
@@ -614,8 +650,30 @@ class _PartC_InjectionState extends State<PartC_Injection> {
     // Check if this material is selected
     final isSelected = selectedMaterials.containsKey(materialId);
 
+    // Check for existing data for this material
+    final existingMaterialData = controller.existingMaterials
+        .where((m) => m['material']?['id'].toString() == materialId)
+        .toList();
+
+    // If we have existing data, pre-populate the fields
+    if (existingMaterialData.isNotEmpty && !isSelected) {
+      final latestData = existingMaterialData.first;
+      batchNoController.text = latestData['batch_no'] ?? '';
+      actualQtyController.text = latestData['actual_qty']?.toString() ?? '';
+      
+      // Add to selected materials
+      selectedMaterials[materialId] = {
+        'id': materialId,
+        'material_desc': material['material_desc'],
+        'material_code': material['material_code'],
+        'batch_no': latestData['batch_no'] ?? '',
+        'actual_qty': latestData['actual_qty']?.toString() ?? '',
+        'id_mat': material['id_mat'], // Store id_mat for child material
+      };
+    }
+
     // If selected, update the selectedMaterials map
-    if (isSelected && !selectedMaterials.containsKey(materialId)) {
+    if (isSelected) {
       selectedMaterials[materialId] = {
         'id': materialId,
         'material_desc': material['material_desc'],

@@ -37,7 +37,6 @@ class FormCNeedleAssyController extends GetxController {
       noteControllers[id] = TextEditingController();
     });
     
-    // Use Future.wait with catchError to ensure loading state is reset even if both API calls fail
     Future.wait([
       fetchChildMaterials().catchError((e) {
         print("Child materials fetch failed: $e");
@@ -48,7 +47,6 @@ class FormCNeedleAssyController extends GetxController {
         return null; // Return null to allow Future.wait to continue
       })
     ]).then((_) {
-      // Ensure loading is set to false when both calls complete
       isLoading.value = false;
       print("Both API calls completed, loading set to false");
     }).catchError((error) {
@@ -76,7 +74,6 @@ class FormCNeedleAssyController extends GetxController {
     try {
       print("Starting to fetch child materials for Needle Assy");
 
-      // Try the new endpoint first
       try {
         final response = await Api.get('tasks/${task.id}/child-materials-needle-assy')
             .timeout(const Duration(seconds: 5));
@@ -106,7 +103,7 @@ class FormCNeedleAssyController extends GetxController {
             if (id.isNotEmpty) {
               batchControllers.putIfAbsent(id, () => TextEditingController());
               qtyControllers.putIfAbsent(id, () => TextEditingController());
-              selectedMaterials[id] = material; // Auto-select all materials
+              selectedMaterials[id] = material;
             }
           }
           return; // Exit early if successful
@@ -117,7 +114,6 @@ class FormCNeedleAssyController extends GetxController {
         print("Error with new endpoint, trying fallback: $e");
       }
 
-      // Fallback to the original endpoint if the new one fails
       print("Trying fallback endpoint: child-materials");
       final fallbackResponse = await Api.get('tasks/${task.id}/child-materials')
           .timeout(const Duration(seconds: 5));
@@ -204,6 +200,7 @@ class FormCNeedleAssyController extends GetxController {
                 if (materialEntries is List) {
                   for (var entry in materialEntries) {
                     if (entry is Map<String, dynamic>) {
+                      // Add the material ID to the entry for easier reference
                       flattenedMaterials.add({
                         'id_mat': materialId,
                         ...entry,
@@ -228,6 +225,7 @@ class FormCNeedleAssyController extends GetxController {
             print("Flattened ${flattenedMaterials.length} materials");
             existingMaterials.assignAll(flattenedMaterials);
 
+            // Pre-populate form fields with existing data
             if (existingFormData.value != null) {
               final data = existingFormData.value!;
               print("Pre-populating form fields with existing data");
@@ -239,6 +237,28 @@ class FormCNeedleAssyController extends GetxController {
               noteControllers['1']?.text = data['remarks_picklist'] ?? '';
               noteControllers['2']?.text = data['remarks_bets'] ?? '';
               noteControllers['3']?.text = data['remarks_mat'] ?? '';
+              
+              // Pre-populate material controllers
+              for (var material in flattenedMaterials) {
+                final id = material['material']?['id_mat']?.toString() ?? '';
+                if (id.isNotEmpty) {
+                  batchControllers.putIfAbsent(id, () => TextEditingController());
+                  qtyControllers.putIfAbsent(id, () => TextEditingController());
+                  
+                  batchControllers[id]?.text = material['batch_no'] ?? '';
+                  qtyControllers[id]?.text = material['actual_qty']?.toString() ?? '';
+                  
+                  // Add to selectedMaterials for form submission
+                  selectedMaterials[id] = {
+                    'id': id,
+                    'id_mat': material['material']?['id_mat'],
+                    'material_desc': material['material']?['material_desc'] ?? '',
+                    'material_code': material['material']?['material_code'] ?? '',
+                    'batch_no': material['batch_no'] ?? '',
+                    'actual_qty': material['actual_qty']?.toString() ?? '',
+                  };
+                }
+              }
             }
           } else {
             print("No materials data found in response");
@@ -374,28 +394,60 @@ class FormCNeedleAssyController extends GetxController {
 
       print('Submitting data: ${json.encode(dataToSubmit)}');
 
-      final response = await Api.post('form-c-needle-assy', dataToSubmit);
-
-      if (response != null) {
-        ArtSweetAlert.show(
-            context: Get.context!,
-            artDialogArgs: ArtDialogArgs(
-                type: ArtSweetAlertType.success,
-                title: "Berhasil",
-                text: "Form C berhasil disimpan"
-            )
-        );
-        return true;
+      // Check if we're updating existing data or creating new
+      if (existingFormData.value != null) {
+        // This is an update operation
+        print("Updating existing form data");
+        final response = await Api.put('form-c-needle-assy/${task.id}', dataToSubmit);
+        
+        if (response != null) {
+          ArtSweetAlert.show(
+              context: Get.context!,
+              artDialogArgs: ArtDialogArgs(
+                  type: ArtSweetAlertType.success,
+                  title: "Berhasil",
+                  text: "Form C berhasil diperbarui"
+              )
+          );
+          // Refresh data after update
+          fetchExistingData();
+          return true;
+        } else {
+          ArtSweetAlert.show(
+              context: Get.context!,
+              artDialogArgs: ArtDialogArgs(
+                  type: ArtSweetAlertType.danger,
+                  title: "Error",
+                  text: "Gagal memperbarui form. Silakan coba lagi."
+              )
+          );
+          return false;
+        }
       } else {
-        ArtSweetAlert.show(
-            context: Get.context!,
-            artDialogArgs: ArtDialogArgs(
-                type: ArtSweetAlertType.danger,
-                title: "Error",
-                text: "Gagal menyimpan form. Silakan coba lagi."
-            )
-        );
-        return false;
+        // This is a new submission
+        final response = await Api.post('form-c-needle-assy', dataToSubmit);
+
+        if (response != null) {
+          ArtSweetAlert.show(
+              context: Get.context!,
+              artDialogArgs: ArtDialogArgs(
+                  type: ArtSweetAlertType.success,
+                  title: "Berhasil",
+                  text: "Form C berhasil disimpan"
+              )
+          );
+          return true;
+        } else {
+          ArtSweetAlert.show(
+              context: Get.context!,
+              artDialogArgs: ArtDialogArgs(
+                  type: ArtSweetAlertType.danger,
+                  title: "Error",
+                  text: "Gagal menyimpan form. Silakan coba lagi."
+              )
+          );
+          return false;
+        }
       }
     } catch (e) {
       print('Error submitting form: $e');

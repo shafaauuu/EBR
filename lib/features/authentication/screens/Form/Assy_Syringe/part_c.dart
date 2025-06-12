@@ -8,7 +8,9 @@ import 'package:intl/intl.dart';
 
 class PartC_Syringe extends StatefulWidget {
   final Task task;
-  const PartC_Syringe({super.key, required this.task});
+  final String selectedMaterialCode;
+  final int requiredQuantity;
+  const PartC_Syringe({super.key, required this.task, required this.selectedMaterialCode, required this.requiredQuantity});
 
   @override
   _PartC_SyringeState createState() => _PartC_SyringeState();
@@ -33,7 +35,7 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(FormCAssySyringeController(widget.task));
+    controller = Get.put(FormCAssySyringeController(widget.task,widget.selectedMaterialCode));
 
     for (var item in criteriaList) {
       catatanControllers[item["id"]!] = TextEditingController();
@@ -412,19 +414,20 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
     // Group materials by their type or category if needed
     // For now, we'll show each material as a separate section
     for (var material in controller.materials) {
-      final materialId = material['id']?.toString() ?? '';
+      final materialId = material['id_bom']?.toString() ?? '';
       
       if (materialId.isEmpty) {
         print("Warning: Material without ID found: $material");
         continue;
       }
-      
-      print("Processing material: $materialId - ${material['material_desc']}");
+      material['qty'] = widget.requiredQuantity * double.parse(material['fact_index'] ?? '0');
+
+      print("Processing material: $materialId - ${material['child_material']['material_desc']}");
 
       // Initialize controllers if they don't exist
       if (!batchControllers.containsKey(materialId)) {
-        batchControllers[materialId] = TextEditingController();
-        qtyControllers[materialId] = TextEditingController();
+        batchControllers[materialId] = TextEditingController(text: controller.batchControllers[materialId]?.text ?? '');
+        qtyControllers[materialId] = TextEditingController(text: controller.qtyControllers[materialId]?.text ?? '');
       }
 
       // Check if there's existing data for this material
@@ -435,26 +438,24 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
       // If we have existing data, pre-populate the fields
       if (existingMaterialData.isNotEmpty) {
         final latestData = existingMaterialData.first;
-        batchControllers[materialId]?.text = latestData['batch_no'] ?? '';
-        qtyControllers[materialId]?.text = latestData['actual_qty']?.toString() ?? '';
 
         // Add to selected materials
         if (!selectedMaterials.containsKey(materialId)) {
           selectedMaterials[materialId] = {
             'id': materialId,
-            'material_desc': material['material_desc'],
-            'material_code': material['material_code'],
-            'batch_no': latestData['batch_no'] ?? '',
-            'actual_qty': latestData['actual_qty']?.toString() ?? '',
+            'material_desc': material['child_material']['material_desc'],
+            'material_code': material['child_material']['material_code'],
+            'batch_no': batchControllers[materialId]?.text ?? '',
+            'actual_qty': qtyControllers[materialId]?.text ?? '',
             'id_mat': material['id_mat'],
           };
         }
       }
-
+      print("Rendering $materialId with batch: ${batchControllers[materialId]?.text}, qty: ${qtyControllers[materialId]?.text}");
       sections.addAll([
         _sectionTitle("Material/Component Name"),
         _buildMaterialSection(
-          material['material_desc'] ?? 'Unnamed Material',
+          material['child_material']['material_desc'] ?? 'Unnamed Material',
           materialId,
           material,
           batchControllers[materialId]!,
@@ -481,8 +482,8 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
     if (isSelected && !selectedMaterials.containsKey(materialId)) {
       selectedMaterials[materialId] = {
         'id': materialId,
-        'material_desc': material['material_desc'],
-        'material_code': material['material_code'],
+        'material_desc': material['child_material']['material_desc'],
+        'material_code': material['child_material']['material_code'],
         'batch_no': batchNoController.text,
         'actual_qty': actualQtyController.text,
         'id_mat': material['id_mat'], // Store id_mat for child material
@@ -503,7 +504,7 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
         const SizedBox(height: 8),
         // Display material name directly since we're not using dropdown for selection
         TextFormField(
-          initialValue: material['material_desc'] ?? 'No Name',
+          initialValue: material['child_material']['material_desc'] ?? 'No Name',
           readOnly: true,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
@@ -515,13 +516,13 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
           children: [
             _buildDetailField(
                 "Component/Material Code",
-                material['material_code'] ?? '',
+                material['child_material']['material_code'] ?? '',
                 true,
                 fillColor: Colors.lightBlue[50]
             ),
             _buildDetailField(
                 "UoM",
-                material['material_uom'] ?? '',
+                material['child_material']['material_uom'] ?? '',
                 true,
                 fillColor: Colors.lightBlue[50]
             ),
@@ -545,8 +546,8 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
                   if (!selectedMaterials.containsKey(materialId)) {
                     selectedMaterials[materialId] = {
                       'id': materialId,
-                      'material_desc': material['material_desc'],
-                      'material_code': material['material_code'],
+                      'material_desc': material['child_material']['material_desc'],
+                      'material_code': material['child_material']['material_code'],
                       'id_mat': material['id_mat'], // Store id_mat for child material
                     };
                   }
@@ -567,8 +568,8 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
                   if (!selectedMaterials.containsKey(materialId)) {
                     selectedMaterials[materialId] = {
                       'id': materialId,
-                      'material_desc': material['material_desc'],
-                      'material_code': material['material_code'],
+                      'material_desc': material['child_material']['material_desc'],
+                      'material_code': material['child_material']['material_code'],
                       'id_mat': material['id_mat'], // Store id_mat for child material
                     };
                   }

@@ -110,13 +110,16 @@ class FormCInjectionController extends GetxController {
     try {
       isLoading.value = true;
       final response = await Api.get('form-c-injection/${task.id}');
+      print('Fetching existing data response: $response');
 
       if (response != null) {
         existingFormData.value = response['common_data'];
+        print('Existing form data: ${existingFormData.value}');
 
         // Process materials data
         if (response['materials'] != null) {
           final materialsMap = response['materials'] as Map<String, dynamic>;
+          print('Materials map: $materialsMap');
 
           // Flatten the nested structure for easier processing
           final flattenedMaterials = <Map<String, dynamic>>[];
@@ -134,6 +137,7 @@ class FormCInjectionController extends GetxController {
             }
           });
 
+          print('Flattened materials: $flattenedMaterials');
           existingMaterials.assignAll(flattenedMaterials);
 
           // Pre-populate form fields with existing data if available
@@ -149,6 +153,38 @@ class FormCInjectionController extends GetxController {
             noteControllers['1']?.text = data['remarks_picklist'] ?? '';
             noteControllers['2']?.text = data['remarks_bets'] ?? '';
             noteControllers['3']?.text = data['remarks_mat'] ?? '';
+          }
+
+          // Pre-populate material controllers with existing data
+          for (var material in existingMaterials) {
+            final materialId = material['material']?['id']?.toString() ?? '';
+            if (materialId.isNotEmpty) {
+              // Find matching material in the materials list
+              final matchingMaterial = materials.firstWhere(
+                (m) => m['id']?.toString() == materialId,
+                orElse: () => <String, dynamic>{},
+              );
+
+              if (matchingMaterial.isNotEmpty) {
+                // Create controllers if they don't exist
+                batchControllers.putIfAbsent(materialId, () => TextEditingController());
+                qtyControllers.putIfAbsent(materialId, () => TextEditingController());
+
+                // Set values
+                batchControllers[materialId]?.text = material['batch_no'] ?? '';
+                qtyControllers[materialId]?.text = material['actual_qty']?.toString() ?? '';
+
+                // Add to selected materials
+                selectedMaterials[materialId] = {
+                  'id': materialId,
+                  'id_mat': material['id_mat'],
+                  'material_desc': matchingMaterial['material_desc'],
+                  'material_code': matchingMaterial['material_code'],
+                  'batch_no': material['batch_no'] ?? '',
+                  'actual_qty': material['actual_qty']?.toString() ?? '',
+                };
+              }
+            }
           }
         }
       }
@@ -256,18 +292,40 @@ class FormCInjectionController extends GetxController {
 
       print('Submitting data: ${json.encode(dataToSubmit)}');
 
-      // Submit the data
-      final response = await Api.post('form-c-injection', dataToSubmit);
+      // Determine if we're creating a new record or updating an existing one
+      dynamic response;
+      if (existingFormData.value != null) {
+        // Update existing record
+        response = await Api.put('form-c-injection/${task.id}', dataToSubmit);
+        if (response != null) {
+          // Refresh data after successful update
+          await fetchExistingData();
+          
+          ArtSweetAlert.show(
+              context: Get.context!,
+              artDialogArgs: ArtDialogArgs(
+                  type: ArtSweetAlertType.success,
+                  title: "Berhasil",
+                  text: "Form C berhasil diperbarui"
+              )
+          );
+        }
+      } else {
+        // Create new record
+        response = await Api.post('form-c-injection', dataToSubmit);
+        if (response != null) {
+          ArtSweetAlert.show(
+              context: Get.context!,
+              artDialogArgs: ArtDialogArgs(
+                  type: ArtSweetAlertType.success,
+                  title: "Berhasil",
+                  text: "Form C berhasil disimpan"
+              )
+          );
+        }
+      }
 
       if (response != null) {
-        ArtSweetAlert.show(
-            context: Get.context!,
-            artDialogArgs: ArtDialogArgs(
-                type: ArtSweetAlertType.success,
-                title: "Berhasil",
-                text: "Form C berhasil disimpan"
-            )
-        );
         return true;
       } else {
         ArtSweetAlert.show(

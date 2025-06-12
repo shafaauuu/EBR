@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:oji_1/common/api.dart';
@@ -23,13 +22,12 @@ class FormCAssySyringeController extends GetxController {
   final Map<String, TextEditingController> qtyControllers = {};
   final Map<String, TextEditingController> noteControllers = {};
   final Map<String, String> radioSelections = {};
-
-  FormCAssySyringeController(this.task) : brmNo = task.brmNo ?? '';
+  final String? selectedMaterialCode;
+  FormCAssySyringeController(this.task, this.selectedMaterialCode) : brmNo = task.brmNo ?? '';
 
   @override
   void onInit() {
     super.onInit();
-    fetchChildMaterials();
     fetchExistingData(); // Add this line to fetch existing data
 
     // Initialize radio selections and note controllers
@@ -53,7 +51,7 @@ class FormCAssySyringeController extends GetxController {
       isLoading.value = true;
       print("Starting to fetch child materials for Assembly Syringe");
       
-      final response = await Api.get('tasks/${task.id}/child-materials-assy-syringe');
+      final response = await Api.get('tasks/${task.id}/child-materials-assy-syringe/${selectedMaterialCode}');
       print("Child materials API response received: ${response != null ? 'Success' : 'Null response'}");
       
       if (response is List) {
@@ -63,26 +61,24 @@ class FormCAssySyringeController extends GetxController {
         List<Map<String, dynamic>> materialsList = [];
         for (var item in response) {
           if (item is Map<String, dynamic>) {
-            // Generate a unique ID for each material if not present
-            if (!item.containsKey('id')) {
-              item['id'] = item['material_code'] ?? item['id_mat']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
+            // Use id_bom as the unique identifier for each material
+            final String materialId = item['id_bom']?.toString() ?? '';
+            if (materialId.isNotEmpty) {
+              materialsList.add(item);
+              // var lastData = selectedMaterials[materialId];
+              
+              // Initialize controllers for this material
+              batchControllers.putIfAbsent(materialId, () => TextEditingController(text: ''));
+              qtyControllers.putIfAbsent(materialId, () => TextEditingController());
+              
+              // Auto-select all materials using id_bom as key
+              selectedMaterials[materialId] = item;
             }
-            materialsList.add(item);
           }
         }
         
         materials.value = materialsList;
         print("Processed ${materials.length} materials from API response");
-
-        // Initialize controllers for materials
-        for (var material in materials) {
-          final id = material['id']?.toString() ?? '';
-          if (id.isNotEmpty) {
-            batchControllers.putIfAbsent(id, () => TextEditingController());
-            qtyControllers.putIfAbsent(id, () => TextEditingController());
-            selectedMaterials[id] = material; // Auto-select all materials
-          }
-        }
       } else {
         print("Response is not a List: ${response.runtimeType}");
         materials.value = []; // Set empty list to avoid null issues
@@ -126,24 +122,28 @@ class FormCAssySyringeController extends GetxController {
               for (var entry in materialEntries) {
                 if (entry is Map<String, dynamic>) {
                   flattenedMaterials.add({
-                    'id_mat': materialId,
+                    'id_bom': materialId, // Use id_bom consistently
                     ...entry,
                   });
                 }
               }
             }
           });
+
+          print(flattenedMaterials);
           
           existingMaterials.assignAll(flattenedMaterials);
           
-          // Pre-populate form fields with existing data if available
+          // Pre-populate form fields with existing data
+          materialsMap.forEach((materialId, value) {
+            var data = value is List ? value.first : {};
+            batchControllers.putIfAbsent(materialId, () => TextEditingController(text: data['batch_no'] ?? ''));
+            qtyControllers.putIfAbsent(materialId, () => TextEditingController(text: data['actual_qty']?.toString() ?? ''));
+          });
+          
+          // Set radio selections based on existing data
           if (existingFormData.value != null) {
             final data = existingFormData.value!;
-            
-            // Set radio selections based on existing data
-            radioSelections['1'] = data['sesuai_picklist'] == true ? 'Ya' : 'Tidak';
-            radioSelections['2'] = data['sesuai_bets'] == true ? 'Ya' : 'Tidak';
-            radioSelections['3'] = data['mat_lengkap'] == true ? 'Ya' : 'Tidak';
             
             // Set note controllers
             noteControllers['1']?.text = data['remarks_picklist'] ?? '';
@@ -158,6 +158,7 @@ class FormCAssySyringeController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+    fetchChildMaterials();
   }
 
   bool validateForm() {
@@ -231,10 +232,12 @@ class FormCAssySyringeController extends GetxController {
 
       // Prepare materials data - format to match backend API expectations
       final materialsData = selectedMaterials.entries.map((entry) {
-        final materialId = entry.key;
+        final materialId = entry.key; // This is now id_bom
         final material = entry.value;
+        
         return {
-          'id_mat': material['id_mat'] ?? material['id'], // Use id_mat if available, otherwise fall back to id
+          'id_mat': material['id_mat'] ?? '',
+          'id_bom': materialId, // Use the key directly as id_bom
           'batch_no': batchControllers[materialId]?.text ?? '',
           'actual_qty': int.tryParse(qtyControllers[materialId]?.text ?? '0') ?? 0,
         };

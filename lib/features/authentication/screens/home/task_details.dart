@@ -334,7 +334,9 @@ class _TaskDetailsState extends State<TaskDetails> {
         switch (key) {
           case "A": Get.to(() => PartA_Syringe(task: widget.task)); break;
           case "B": Get.to(() => PartB_Syringe(task: widget.task)); break;
-          case "C": Get.to(() => PartC_Syringe(task: widget.task)); break;
+          case "C": Get.to(() => PartC_Syringe(task: widget.task,
+                  selectedMaterialCode: controller.selectedMaterialCode.value,
+        requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
           case "D": Get.to(() => PartD_Syringe(task: widget.task)); break;
           case "E": Get.to(() => PartE_Syringe(task: widget.task)); break;
           case "F": Get.to(() => PartF_Syringe(task: widget.task)); break;

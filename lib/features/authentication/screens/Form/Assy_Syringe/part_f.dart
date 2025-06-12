@@ -5,33 +5,62 @@ import 'dart:io';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
+import '../../../controller/Form/F/form_f_assysyringe.dart';
 
 
 class PartF_Syringe extends StatefulWidget {
-  final Task? task;
+  final Task task;
 
-  const PartF_Syringe({super.key, this.task});
+  const PartF_Syringe({super.key, required this.task});
 
   @override
   _PartF_SyringeState createState() => _PartF_SyringeState();
 }
 
 class _PartF_SyringeState extends State<PartF_Syringe> {
-  final TaskDetailsController controller = Get.put(TaskDetailsController());
+  final TaskDetailsController taskController = Get.put(TaskDetailsController());
+  final FormFAssySyringeController formController = Get.put(FormFAssySyringeController());
 
-  File? _image;
+  File? _labelMesinImage;
+  File? _label2Image;
   final ImagePicker _picker = ImagePicker();
+  bool _isSubmitting = false;
 
-  Future<void> _pickImage(ImageSource source) async {
+  @override
+  void initState() {
+    super.initState();
+    formController.setTaskInfo(widget.task);
+    
+    ever(formController.existingFormData, (data) {
+      if (data != null) {
+        // If we have existing data, we can show it in the UI
+        // This would be useful for viewing or editing existing forms
+        // But for this form with images, we can't directly display the binary data
+      }
+    });
+  }
+
+  Future<void> _pickLabelMesinImage(ImageSource source) async {
     final XFile? pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        _labelMesinImage = File(pickedFile.path);
+        formController.setLabelMesin(_labelMesinImage!);
       });
     }
   }
 
-  void _showImageSourceDialog(BuildContext context) {
+  Future<void> _pickLabel2Image(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _label2Image = File(pickedFile.path);
+        formController.setLabel2(_label2Image!);
+      });
+    }
+  }
+
+  void _showImageSourceDialog(BuildContext context, bool isLabelMesin) {
     ArtSweetAlert.show(
       context: context,
       artDialogArgs: ArtDialogArgs(
@@ -42,18 +71,64 @@ class _PartF_SyringeState extends State<PartF_Syringe> {
         cancelButtonText: "Gallery",
         confirmButtonText: "Camera",
         onConfirm: () {
-          _pickImage(ImageSource.camera);
+          isLabelMesin ? _pickLabelMesinImage(ImageSource.camera) : _pickLabel2Image(ImageSource.camera);
           return true;
         },
         onCancel: () {
-          _pickImage(ImageSource.gallery);
+          isLabelMesin ? _pickLabelMesinImage(ImageSource.gallery) : _pickLabel2Image(ImageSource.gallery);
           return true;
         },
       ),
     );
   }
 
+  Future<void> _submitForm() async {
+    if (_labelMesinImage == null || _label2Image == null) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.warning,
+          title: "Missing Images",
+          text: "Please upload both required images",
+        ),
+      );
+      return;
+    }
 
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final result = await formController.submitForm();
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (result) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.success,
+          title: "Success",
+          text: formController.successMessage.value,
+          onConfirm: () {
+            Get.back();
+            return true;
+          },
+        ),
+      );
+    } else {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Error",
+          text: formController.errorMessage.value,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,116 +140,163 @@ class _PartF_SyringeState extends State<PartF_Syringe> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Sticky Header Section
-              Container(
+      body: Obx(() => formController.isLoading.value
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                color: Colors.white,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
                   children: [
-                    SizedBox(
-                      width: 250,
-                      child: Image.asset(
-                        'assets/logos/logo_oneject.png',
-                        height: 50,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Batch Record Details (Left)
-                    Expanded(
-                      flex: 2,
-                      child: Column(
+                    // Sticky Header Section
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      color: Colors.white,
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "BATCH RECORD",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          SizedBox(
+                            width: 250,
+                            child: Image.asset(
+                              'assets/logos/logo_oneject.png',
+                              height: 50,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          _buildAlignedText("P/C Code", widget.task?.code ?? "N/A"),
-                          _buildAlignedText("P/C Name", widget.task?.name ?? "N/A"),
+                          const SizedBox(width: 16),
+
+                          // Batch Record Details (Left)
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "BATCH RECORD",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                _buildAlignedText("P/C Code", widget.task.code ?? "N/A"),
+                                _buildAlignedText("P/C Name", widget.task.name ?? "N/A"),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Batch Record Details (Right)
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Obx(() => _buildAlignedText("BRM No.", taskController.selectedBRM.value)),
+                                _buildAlignedText("Rev No.", ""),
+                                _buildAlignedText("Eff. Date", ""),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
 
-                    // Batch Record Details (Right)
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
-                          _buildAlignedText("Rev No.", ""),
-                          _buildAlignedText("Eff. Date", ""),
-                        ],
+                    const Divider(thickness: 1),
+                    const SizedBox(height: 16),
+
+                    // Label Mesin Section
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Take Photo of Label Mesin",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Label Mesin Photo Field
+                    GestureDetector(
+                      onTap: () => _showImageSourceDialog(context, true),
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[200],
+                        ),
+                        child: _labelMesinImage == null
+                            ? const Center(
+                                child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                              )
+                            : Image.file(_labelMesinImage!, fit: BoxFit.cover),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Label 2 Section
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Take Photo of Second Label",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Label 2 Photo Field
+                    GestureDetector(
+                      onTap: () => _showImageSourceDialog(context, false),
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[200],
+                        ),
+                        child: _label2Image == null
+                            ? const Center(
+                                child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                              )
+                            : Image.file(_label2Image!, fit: BoxFit.cover),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Submit Button
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitForm,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text("Submit", style: TextStyle(fontSize: 16)),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const Divider(thickness: 1),
-              const SizedBox(height: 16),
-
-              // Title
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Take Photo of Label",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Photo Insert Field (Updated)
-              GestureDetector(
-                onTap: () => _showImageSourceDialog(context),
-                child: Container(
-                  height: 400,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[200],
-                  ),
-                  child: _image == null
-                      ? const Center(
-                    child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                  )
-                      : Image.file(_image!, fit: BoxFit.cover),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Submit Button
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text("Submit", style: TextStyle(fontSize: 16)),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
