@@ -176,28 +176,20 @@ class AuthController extends GetxController {
         confirmButtonText: Texts.logoutButton,
         onConfirm: () async {
           try {
-            final response = await Api.post( "logout", {} );
+            final response = await Api.post("logout", {});
 
-            if (response.statusCode == 200) {
-              storage.erase(); // Clear all stored user data
-              Get.offAll(() =>  LoginScreen());
-            } else {
-              ArtSweetAlert.show(
-                context: context,
-                artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.danger,
-                  title: "Logout Failed",
-                  text: "Failed to log out. Please try again.",
-                ),
-              );
-            }
+            await storage.erase(); // Clear all stored user data
+            Get.offAll(() => const LoginScreen());
           } catch (e) {
+            print("Logout error: $e");
             ArtSweetAlert.show(
               context: context,
               artDialogArgs: ArtDialogArgs(
                 type: ArtSweetAlertType.danger,
-                title: "Network Error",
-                text: "Failed to connect to the server.",
+                title: "Logout Error",
+                text: e.toString().contains("No Internet")
+                    ? "No internet connection. Please check your network."
+                    : "Failed to log out. Please try again.",
               ),
             );
           }

@@ -138,14 +138,6 @@ class _TaskDetailsState extends State<TaskDetails> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               children: [
-                Obx(() {
-                  if (controller.brmList.isEmpty) {
-                    return const CircularProgressIndicator();
-                  } else {
-                    return _buildBRMDropdown();
-                  }
-                }),
-
                 const SizedBox(height: 10),
 
                 buildMaterialSearchInput(),
@@ -186,42 +178,6 @@ class _TaskDetailsState extends State<TaskDetails> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildBRMDropdown() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          const Text(
-            "BRM:",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Obx(() => DropdownButton<String>(
-              isExpanded: true,
-              value: controller.selectedBRM.value.isNotEmpty
-                  ? controller.selectedBRM.value
-                  : null,
-              hint: const Text("Select BRM"),
-              items: controller.brmList.map((brm) {
-                return DropdownMenuItem(
-                  value: brm,
-                  child: Text(brm),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.selectedBRM.value = value;
-                  controller.selectedMaterialCode.value = ''; // reset material code selection
-                }
-              },
-            )),
-          ),
-        ],
-      ),
     );
   }
 

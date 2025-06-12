@@ -73,16 +73,15 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
       children: [
         Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedItem,
-          items: dropdownItems
-              .map((String value) =>
-              DropdownMenuItem<String>(value: value, child: Text(value)))
-              .toList(),
-          onChanged: onChanged,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Select Here',
+        // Material Description Field (read-only)
+        TextFormField(
+          initialValue: selectedItem ?? 'No Material Selected',
+          readOnly: true,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            filled: true,
+            fillColor: Colors.grey[100],
           ),
         ),
         const SizedBox(height: 8),

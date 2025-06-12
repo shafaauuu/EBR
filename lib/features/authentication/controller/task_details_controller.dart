@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:oji_1/common/api.dart';
 import '../models/material_model.dart';
+import '../models/task_model.dart';
+import '../screens/Form/Assy_Syringe/part_c.dart';
 
 class TaskDetailsController extends GetxController {
   var selectedMaterialCode = ''.obs;
