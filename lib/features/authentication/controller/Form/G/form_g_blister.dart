@@ -9,7 +9,7 @@ import 'dart:typed_data';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/services.dart';
 
-class FormGAssySyringeController extends GetxController {
+class FormGBlisterController extends GetxController {
   var isLoading = false.obs;
   var remarks = ''.obs;
   var inisial1 = ''.obs;
@@ -17,11 +17,11 @@ class FormGAssySyringeController extends GetxController {
   var inisial3 = ''.obs;
   var taskCode = ''.obs;
   var taskId = 0.obs;
-  
+
   Rx<Uint8List?> signature1 = Rx<Uint8List?>(null);
   Rx<Uint8List?> signature2 = Rx<Uint8List?>(null);
   Rx<Uint8List?> signature3 = Rx<Uint8List?>(null);
-  
+
   // Raw base64 strings for signatures
   Rx<String?> rawSignature1 = Rx<String?>(null);
   Rx<String?> rawSignature2 = Rx<String?>(null);
@@ -64,7 +64,7 @@ class FormGAssySyringeController extends GetxController {
     try {
       isLoading.value = true;
 
-      var url = Uri.parse('${ApiConfig.baseUrl}/form-g-assy-syringe');
+      var url = Uri.parse('${ApiConfig.baseUrl}/form-g-blister');
 
       Map<String, dynamic> requestBody = {
         'remarks': remarks.value,
@@ -106,7 +106,7 @@ class FormGAssySyringeController extends GetxController {
           artDialogArgs: ArtDialogArgs(
             type: ArtSweetAlertType.success,
             title: "Success",
-            text: "Form G Assy Syringe submitted successfully",
+            text: "Form G Blister submitted successfully",
           ),
         );
         return true;
@@ -119,8 +119,8 @@ class FormGAssySyringeController extends GetxController {
         } catch (e) {
           // If JSON parsing fails, use the raw response or a default message
           errorMessage = response.body.isNotEmpty ?
-              "Server error: ${response.statusCode}" :
-              "Failed to submit form with status: ${response.statusCode}";
+          "Server error: ${response.statusCode}" :
+          "Failed to submit form with status: ${response.statusCode}";
         }
 
         await ArtSweetAlert.show(
@@ -163,7 +163,7 @@ class FormGAssySyringeController extends GetxController {
 
       // Make API request
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/form-g-assy-syringe/$taskId?is_task_id=true'),
+        Uri.parse('${ApiConfig.baseUrl}/form-g-blister/$taskId?is_task_id=true'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -174,7 +174,7 @@ class FormGAssySyringeController extends GetxController {
         try {
           final jsonResponse = json.decode(response.body);
           print('Form G response: $jsonResponse');
-          
+
           if (jsonResponse['data'] != null && jsonResponse['data'].isNotEmpty) {
             var formData = jsonResponse['data'][0];
 
@@ -186,17 +186,17 @@ class FormGAssySyringeController extends GetxController {
                 if (base64String.contains(',')) {
                   base64String = base64String.split(',')[1];
                 }
-                
+
                 // Store the raw base64 string
                 rawSignature1.value = base64String;
-                
+
                 // Try to decode the base64 string
                 try {
                   signature1.value = base64Decode(base64String);
                   print('Signature 1 decoded successfully');
                 } catch (e) {
                   print('Error in standard base64 decode for signature 1: $e');
-                  
+
                   // Try with padding adjustment if needed
                   try {
                     // Add padding if needed
@@ -221,16 +221,16 @@ class FormGAssySyringeController extends GetxController {
                 if (base64String.contains(',')) {
                   base64String = base64String.split(',')[1];
                 }
-                
+
                 // Store the raw base64 string
                 rawSignature2.value = base64String;
-                
+
                 try {
                   signature2.value = base64Decode(base64String);
                   print('Signature 2 decoded successfully');
                 } catch (e) {
                   print('Error in standard base64 decode for signature 2: $e');
-                  
+
                   try {
                     // Add padding if needed
                     String paddedBase64 = base64String;
@@ -254,16 +254,16 @@ class FormGAssySyringeController extends GetxController {
                 if (base64String.contains(',')) {
                   base64String = base64String.split(',')[1];
                 }
-                
+
                 // Store the raw base64 string
                 rawSignature3.value = base64String;
-                
+
                 try {
                   signature3.value = base64Decode(base64String);
                   print('Signature 3 decoded successfully');
                 } catch (e) {
                   print('Error in standard base64 decode for signature 3: $e');
-                  
+
                   try {
                     // Add padding if needed
                     String paddedBase64 = base64String;

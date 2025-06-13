@@ -12,9 +12,9 @@ import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class PartG_Syringe extends StatefulWidget {
-  final Task? task;
+  final Task task;
 
-  const PartG_Syringe({super.key, this.task});
+  const PartG_Syringe({super.key, required this.task});
 
   @override
   _PartG_SyringeState createState() => _PartG_SyringeState();
@@ -131,8 +131,8 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
-                          _buildAlignedText("P/C Code", widget.task?.code ?? ""),
-                          _buildAlignedText("P/C Name", widget.task?.name ?? ""),
+                          _buildAlignedText("P/C Code", widget.task.code),
+                          _buildAlignedText("P/C Name", widget.task.name),
                         ],
                       ),
                     ),
@@ -142,7 +142,7 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                          _buildAlignedText("BRM No.", widget.task.brmNo),
                           _buildAlignedText("Rev No.", ""),
                           _buildAlignedText("Eff. Date", ""),
                         ],
