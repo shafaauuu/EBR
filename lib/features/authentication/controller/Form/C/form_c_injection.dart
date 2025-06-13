@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:oji_1/common/api.dart';
@@ -23,8 +22,8 @@ class FormCInjectionController extends GetxController {
   final Map<String, TextEditingController> qtyControllers = {};
   final Map<String, TextEditingController> noteControllers = {};
   final Map<String, String> radioSelections = {};
-
-  FormCInjectionController(this.task) : brmNo = task.brmNo ?? '';
+  final String? selectedMaterialCode;
+  FormCInjectionController(this.task, this.selectedMaterialCode) : brmNo = task.brmNo ?? '';
 
   @override
   void onInit() {
@@ -53,36 +52,34 @@ class FormCInjectionController extends GetxController {
       isLoading.value = true;
       print("Starting to fetch child materials for Injection");
       
-      final response = await Api.get('tasks/${task.id}/child-materials-injection');
+      final response = await Api.get('tasks/${task.id}/child-materials-injection/${selectedMaterialCode}');
       print("Child materials API response received: ${response != null ? 'Success' : 'Null response'}");
-      
+
       if (response is List) {
         print("Response is a List with ${response.length} items");
-        
+
         // Convert each item in the response to a Map<String, dynamic>
         List<Map<String, dynamic>> materialsList = [];
         for (var item in response) {
           if (item is Map<String, dynamic>) {
-            // Generate a unique ID for each material if not present
-            if (!item.containsKey('id')) {
-              item['id'] = item['material_code'] ?? item['id_mat']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
+            // Use id_bom as the unique identifier for each material
+            final String materialId = item['id_bom']?.toString() ?? '';
+            if (materialId.isNotEmpty) {
+              materialsList.add(item);
+              // var lastData = selectedMaterials[materialId];
+
+              // Initialize controllers for this material
+              batchControllers.putIfAbsent(materialId, () => TextEditingController(text: ''));
+              qtyControllers.putIfAbsent(materialId, () => TextEditingController());
+
+              // Auto-select all materials using id_bom as key
+              selectedMaterials[materialId] = item;
             }
-            materialsList.add(item);
           }
         }
-        
+
         materials.value = materialsList;
         print("Processed ${materials.length} materials from API response");
-
-        // Initialize controllers for materials
-        for (var material in materials) {
-          final id = material['id']?.toString() ?? '';
-          if (id.isNotEmpty) {
-            batchControllers.putIfAbsent(id, () => TextEditingController());
-            qtyControllers.putIfAbsent(id, () => TextEditingController());
-            selectedMaterials[id] = material; // Auto-select all materials
-          }
-        }
       } else {
         print("Response is not a List: ${response.runtimeType}");
         materials.value = []; // Set empty list to avoid null issues
@@ -90,7 +87,7 @@ class FormCInjectionController extends GetxController {
     } catch (e) {
       print("Error fetching child materials: $e");
       materials.value = [];
-      
+
       if (Get.context != null) {
         ArtSweetAlert.show(
             context: Get.context!,
@@ -110,16 +107,22 @@ class FormCInjectionController extends GetxController {
     try {
       isLoading.value = true;
       final response = await Api.get('form-c-injection/${task.id}');
-      print('Fetching existing data response: $response');
 
       if (response != null) {
         existingFormData.value = response['common_data'];
-        print('Existing form data: ${existingFormData.value}');
+
+        // Debug: Print the data types of boolean fields
+        if (response['common_data'] != null) {
+          final data = response['common_data'];
+          print('DEBUG - Data types:');
+          print('sesuai_picklist: ${data['sesuai_picklist']} (${data['sesuai_picklist'].runtimeType})');
+          print('sesuai_bets: ${data['sesuai_bets']} (${data['sesuai_bets'].runtimeType})');
+          print('mat_lengkap: ${data['mat_lengkap']} (${data['mat_lengkap'].runtimeType})');
+        }
 
         // Process materials data
         if (response['materials'] != null) {
           final materialsMap = response['materials'] as Map<String, dynamic>;
-          print('Materials map: $materialsMap');
 
           // Flatten the nested structure for easier processing
           final flattenedMaterials = <Map<String, dynamic>>[];
@@ -129,7 +132,7 @@ class FormCInjectionController extends GetxController {
               for (var entry in materialEntries) {
                 if (entry is Map<String, dynamic>) {
                   flattenedMaterials.add({
-                    'id_mat': materialId,
+                    'id_bom': materialId, // Use id_bom consistently
                     ...entry,
                   });
                 }
@@ -137,54 +140,25 @@ class FormCInjectionController extends GetxController {
             }
           });
 
-          print('Flattened materials: $flattenedMaterials');
+          print(flattenedMaterials);
+
           existingMaterials.assignAll(flattenedMaterials);
 
-          // Pre-populate form fields with existing data if available
+          // Pre-populate form fields with existing data
+          materialsMap.forEach((materialId, value) {
+            var data = value is List ? value.first : {};
+            batchControllers.putIfAbsent(materialId, () => TextEditingController(text: data['batch_no'] ?? ''));
+            qtyControllers.putIfAbsent(materialId, () => TextEditingController(text: data['actual_qty']?.toString() ?? ''));
+          });
+
+          // Set radio selections based on existing data
           if (existingFormData.value != null) {
             final data = existingFormData.value!;
-
-            // Set radio selections based on existing data
-            radioSelections['1'] = data['sesuai_picklist'] == true ? 'Ya' : 'Tidak';
-            radioSelections['2'] = data['sesuai_bets'] == true ? 'Ya' : 'Tidak';
-            radioSelections['3'] = data['mat_lengkap'] == true ? 'Ya' : 'Tidak';
 
             // Set note controllers
             noteControllers['1']?.text = data['remarks_picklist'] ?? '';
             noteControllers['2']?.text = data['remarks_bets'] ?? '';
             noteControllers['3']?.text = data['remarks_mat'] ?? '';
-          }
-
-          // Pre-populate material controllers with existing data
-          for (var material in existingMaterials) {
-            final materialId = material['material']?['id']?.toString() ?? '';
-            if (materialId.isNotEmpty) {
-              // Find matching material in the materials list
-              final matchingMaterial = materials.firstWhere(
-                (m) => m['id']?.toString() == materialId,
-                orElse: () => <String, dynamic>{},
-              );
-
-              if (matchingMaterial.isNotEmpty) {
-                // Create controllers if they don't exist
-                batchControllers.putIfAbsent(materialId, () => TextEditingController());
-                qtyControllers.putIfAbsent(materialId, () => TextEditingController());
-
-                // Set values
-                batchControllers[materialId]?.text = material['batch_no'] ?? '';
-                qtyControllers[materialId]?.text = material['actual_qty']?.toString() ?? '';
-
-                // Add to selected materials
-                selectedMaterials[materialId] = {
-                  'id': materialId,
-                  'id_mat': material['id_mat'],
-                  'material_desc': matchingMaterial['material_desc'],
-                  'material_code': matchingMaterial['material_code'],
-                  'batch_no': material['batch_no'] ?? '',
-                  'actual_qty': material['actual_qty']?.toString() ?? '',
-                };
-              }
-            }
           }
         }
       }
@@ -194,6 +168,7 @@ class FormCInjectionController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+    fetchChildMaterials();
   }
 
   bool validateForm() {
@@ -267,10 +242,12 @@ class FormCInjectionController extends GetxController {
 
       // Prepare materials data - format to match backend API expectations
       final materialsData = selectedMaterials.entries.map((entry) {
-        final materialId = entry.key;
+        final materialId = entry.key; // This is now id_bom
         final material = entry.value;
+
         return {
-          'id_mat': material['id_mat'] ?? material['id'], // Use id_mat if available, otherwise fall back to id
+          'id_mat': material['id_mat'] ?? '',
+          'id_bom': materialId, // Use the key directly as id_bom
           'batch_no': batchControllers[materialId]?.text ?? '',
           'actual_qty': int.tryParse(qtyControllers[materialId]?.text ?? '0') ?? 0,
         };
@@ -292,40 +269,18 @@ class FormCInjectionController extends GetxController {
 
       print('Submitting data: ${json.encode(dataToSubmit)}');
 
-      // Determine if we're creating a new record or updating an existing one
-      dynamic response;
-      if (existingFormData.value != null) {
-        // Update existing record
-        response = await Api.put('form-c-injection/${task.id}', dataToSubmit);
-        if (response != null) {
-          // Refresh data after successful update
-          await fetchExistingData();
-          
-          ArtSweetAlert.show(
-              context: Get.context!,
-              artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.success,
-                  title: "Berhasil",
-                  text: "Form C berhasil diperbarui"
-              )
-          );
-        }
-      } else {
-        // Create new record
-        response = await Api.post('form-c-injection', dataToSubmit);
-        if (response != null) {
-          ArtSweetAlert.show(
-              context: Get.context!,
-              artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.success,
-                  title: "Berhasil",
-                  text: "Form C berhasil disimpan"
-              )
-          );
-        }
-      }
+      // Submit the data
+      final response = await Api.post('form-c-injection', dataToSubmit);
 
       if (response != null) {
+        ArtSweetAlert.show(
+            context: Get.context!,
+            artDialogArgs: ArtDialogArgs(
+                type: ArtSweetAlertType.success,
+                title: "Berhasil",
+                text: "Form C berhasil disimpan"
+            )
+        );
         return true;
       } else {
         ArtSweetAlert.show(

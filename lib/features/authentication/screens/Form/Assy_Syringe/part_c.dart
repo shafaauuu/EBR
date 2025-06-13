@@ -901,16 +901,28 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
         Text("Code Task: ${data['code_task'] ?? 'N/A'}"),
         Text("BRM No: ${data['id_brm'] ?? 'N/A'}"),
         const SizedBox(height: 8),
-        Text("Sesuai Picklist: ${data['sesuai_picklist'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Sesuai Picklist: ${_getBooleanText(data['sesuai_picklist'])}"),
         if (data['remarks_picklist']?.isNotEmpty ?? false)
           Text("Catatan Picklist: ${data['remarks_picklist']}"),
-        Text("Sesuai Bets: ${data['sesuai_bets'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Sesuai Bets: ${_getBooleanText(data['sesuai_bets'])}"),
         if (data['remarks_bets']?.isNotEmpty ?? false)
           Text("Catatan Bets: ${data['remarks_bets']}"),
-        Text("Material Lengkap: ${data['mat_lengkap'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Material Lengkap: ${_getBooleanText(data['mat_lengkap'])}"),
         if (data['remarks_mat']?.isNotEmpty ?? false)
           Text("Catatan Material: ${data['remarks_mat']}"),
       ],
     );
+  }
+
+  String _getBooleanText(dynamic value) {
+    if (value is bool) {
+      return value ? 'Ya' : 'Tidak';
+    } else if (value is int) {
+      return value == 1 ? 'Ya' : 'Tidak';
+    } else if (value is String) {
+      return value.toLowerCase() == 'true' ? 'Ya' : 'Tidak';
+    } else {
+      return 'Tidak';
+    }
   }
 }

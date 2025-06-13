@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:oji_1/common/api.dart';
@@ -24,42 +23,19 @@ class FormCNeedleAssyController extends GetxController {
   final Map<String, TextEditingController> noteControllers = {};
   final Map<String, String> radioSelections = {};
 
-  FormCNeedleAssyController(this.task) : brmNo = task.brmNo ?? '';
+  final String? selectedMaterialCode;
+  FormCNeedleAssyController(this.task, this.selectedMaterialCode) : brmNo = task.brmNo ?? '';
 
   @override
   void onInit() {
     super.onInit();
-    isLoading.value = true;
-    
-    // Initialize radio selections and note controllers first
+    fetchExistingData(); // Add this line to fetch existing data
+
+    // Initialize radio selections and note controllers
     ['1', '2', '3'].forEach((id) {
       radioSelections[id] = '';
       noteControllers[id] = TextEditingController();
     });
-    
-    Future.wait([
-      fetchChildMaterials().catchError((e) {
-        print("Child materials fetch failed: $e");
-        return null; // Return null to allow Future.wait to continue
-      }),
-      fetchExistingData().catchError((e) {
-        print("Existing data fetch failed: $e");
-        return null; // Return null to allow Future.wait to continue
-      })
-    ]).then((_) {
-      isLoading.value = false;
-      print("Both API calls completed, loading set to false");
-    }).catchError((error) {
-      print("Error during initialization: $error");
-      isLoading.value = false;
-    }).timeout(
-      const Duration(seconds: 10),
-      onTimeout: () {
-        print("API calls timed out after 10 seconds");
-        isLoading.value = false;
-        return null;
-      }
-    );
   }
 
   @override
@@ -72,86 +48,43 @@ class FormCNeedleAssyController extends GetxController {
 
   Future<void> fetchChildMaterials() async {
     try {
-      print("Starting to fetch child materials for Needle Assy");
+      isLoading.value = true;
+      print("Starting to fetch child materials for Assembly Needle");
 
-      try {
-        final response = await Api.get('tasks/${task.id}/child-materials-needle-assy')
-            .timeout(const Duration(seconds: 5));
+      final response = await Api.get('tasks/${task.id}/child-materials-needle-assy/${selectedMaterialCode}');
+      print("Child materials API response received: ${response != null ? 'Success' : 'Null response'}");
 
-        print("Child materials API response received from new endpoint: ${response != null ? 'Success' : 'Null response'}");
+      if (response is List) {
+        print("Response is a List with ${response.length} items");
 
-        if (response is List) {
-          print("Response is a List with ${response.length} items");
-          // Convert each item in the response to a Map<String, dynamic>
-          List<Map<String, dynamic>> materialsList = [];
-          for (var item in response) {
-            if (item is Map<String, dynamic>) {
-              // Generate a unique ID for each material if not present
-              if (!item.containsKey('id')) {
-                item['id'] = item['material_code'] ?? item['id_mat']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
-              }
-              materialsList.add(item);
-            }
-          }
-          
-          materials.value = materialsList;
-          print("Processed ${materials.length} materials from API response");
-
-          // Initialize controllers for materials
-          for (var material in materials) {
-            final id = material['id']?.toString() ?? '';
-            if (id.isNotEmpty) {
-              batchControllers.putIfAbsent(id, () => TextEditingController());
-              qtyControllers.putIfAbsent(id, () => TextEditingController());
-              selectedMaterials[id] = material;
-            }
-          }
-          return; // Exit early if successful
-        } else {
-          print("Response from new endpoint is not a List: ${response.runtimeType}");
-        }
-      } catch (e) {
-        print("Error with new endpoint, trying fallback: $e");
-      }
-
-      print("Trying fallback endpoint: child-materials");
-      final fallbackResponse = await Api.get('tasks/${task.id}/child-materials')
-          .timeout(const Duration(seconds: 5));
-
-      print("Child materials API fallback response received: ${fallbackResponse != null ? 'Success' : 'Null response'}");
-
-      if (fallbackResponse is List) {
-        print("Fallback response is a List with ${fallbackResponse.length} items");
         // Convert each item in the response to a Map<String, dynamic>
         List<Map<String, dynamic>> materialsList = [];
-        for (var item in fallbackResponse) {
+        for (var item in response) {
           if (item is Map<String, dynamic>) {
-            // Generate a unique ID for each material if not present
-            if (!item.containsKey('id')) {
-              item['id'] = item['material_code'] ?? item['id_mat']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
-            }
-            materialsList.add(item);
-          }
-        }
-        
-        materials.value = materialsList;
-        print("Processed ${materials.length} materials from fallback API response");
+            // Use id_bom as the unique identifier for each material
+            final String materialId = item['id_bom']?.toString() ?? '';
+            if (materialId.isNotEmpty) {
+              materialsList.add(item);
+              // var lastData = selectedMaterials[materialId];
 
-        // Initialize controllers for materials
-        for (var material in materials) {
-          final id = material['id']?.toString() ?? '';
-          if (id.isNotEmpty) {
-            batchControllers.putIfAbsent(id, () => TextEditingController());
-            qtyControllers.putIfAbsent(id, () => TextEditingController());
-            selectedMaterials[id] = material; // Auto-select all materials
+              // Initialize controllers for this material
+              batchControllers.putIfAbsent(materialId, () => TextEditingController(text: ''));
+              qtyControllers.putIfAbsent(materialId, () => TextEditingController());
+
+              // Auto-select all materials using id_bom as key
+              selectedMaterials[materialId] = item;
+            }
           }
         }
+
+        materials.value = materialsList;
+        print("Processed ${materials.length} materials from API response");
       } else {
-        print("Fallback response is not a List: ${fallbackResponse.runtimeType}");
+        print("Response is not a List: ${response.runtimeType}");
         materials.value = []; // Set empty list to avoid null issues
       }
     } catch (e) {
-      print("Error fetching child materials (all attempts failed): $e");
+      print("Error fetching child materials: $e");
       materials.value = [];
 
       if (Get.context != null) {
@@ -164,146 +97,81 @@ class FormCNeedleAssyController extends GetxController {
             )
         );
       }
+    } finally {
+      isLoading.value = false;
     }
   }
 
   Future<void> fetchExistingData() async {
     try {
-      print("Starting to fetch existing data for Needle Assy");
+      isLoading.value = true;
+      final response = await Api.get('form-c-needle-ass/${task.id}');
 
-      // Try the specific endpoint first
-      try {
-        final response = await Api.get('form-c-needle-assy/${task.id}')
-            .timeout(const Duration(seconds: 5));
+      if (response != null) {
+        existingFormData.value = response['common_data'];
 
-        print("Existing data API response received: ${response != null ? 'Success' : 'Null response'}");
+        // Debug: Print the data types of boolean fields
+        if (response['common_data'] != null) {
+          final data = response['common_data'];
+          print('DEBUG - Data types:');
+          print('sesuai_picklist: ${data['sesuai_picklist']} (${data['sesuai_picklist'].runtimeType})');
+          print('sesuai_bets: ${data['sesuai_bets']} (${data['sesuai_bets'].runtimeType})');
+          print('mat_lengkap: ${data['mat_lengkap']} (${data['mat_lengkap'].runtimeType})');
+        }
 
-        if (response != null) {
-          if (response['common_data'] != null) {
-            existingFormData.value = response['common_data'];
-            print("Common data: ${existingFormData.value != null ? 'Found' : 'Not found'}");
-          } else {
-            print("No common_data found in response");
-            existingFormData.value = null;
-          }
+        // Process materials data
+        if (response['materials'] != null) {
+          final materialsMap = response['materials'] as Map<String, dynamic>;
 
-          if (response['materials'] != null) {
-            print("Materials data found in response");
-            final flattenedMaterials = <Map<String, dynamic>>[];
+          // Flatten the nested structure for easier processing
+          final flattenedMaterials = <Map<String, dynamic>>[];
 
-            // Check if materials is a Map or a List
-            if (response['materials'] is Map<String, dynamic>) {
-              print("Materials is a Map");
-              final materialsMap = response['materials'] as Map<String, dynamic>;
-
-              materialsMap.forEach((materialId, materialEntries) {
-                if (materialEntries is List) {
-                  for (var entry in materialEntries) {
-                    if (entry is Map<String, dynamic>) {
-                      // Add the material ID to the entry for easier reference
-                      flattenedMaterials.add({
-                        'id_mat': materialId,
-                        ...entry,
-                      });
-                    }
-                  }
-                }
-              });
-            } else if (response['materials'] is List) {
-              print("Materials is a List with ${(response['materials'] as List).length} items");
-              final materialsList = response['materials'] as List;
-
-              for (var entry in materialsList) {
+          materialsMap.forEach((materialId, materialEntries) {
+            if (materialEntries is List) {
+              for (var entry in materialEntries) {
                 if (entry is Map<String, dynamic>) {
-                  flattenedMaterials.add(entry);
-                }
-              }
-            } else {
-              print("Materials is neither a Map nor a List: ${response['materials'].runtimeType}");
-            }
-
-            print("Flattened ${flattenedMaterials.length} materials");
-            existingMaterials.assignAll(flattenedMaterials);
-
-            // Pre-populate form fields with existing data
-            if (existingFormData.value != null) {
-              final data = existingFormData.value!;
-              print("Pre-populating form fields with existing data");
-
-              radioSelections['1'] = data['sesuai_picklist'] == true ? 'Ya' : 'Tidak';
-              radioSelections['2'] = data['sesuai_bets'] == true ? 'Ya' : 'Tidak';
-              radioSelections['3'] = data['mat_lengkap'] == true ? 'Ya' : 'Tidak';
-
-              noteControllers['1']?.text = data['remarks_picklist'] ?? '';
-              noteControllers['2']?.text = data['remarks_bets'] ?? '';
-              noteControllers['3']?.text = data['remarks_mat'] ?? '';
-              
-              // Pre-populate material controllers
-              for (var material in flattenedMaterials) {
-                final id = material['material']?['id_mat']?.toString() ?? '';
-                if (id.isNotEmpty) {
-                  batchControllers.putIfAbsent(id, () => TextEditingController());
-                  qtyControllers.putIfAbsent(id, () => TextEditingController());
-                  
-                  batchControllers[id]?.text = material['batch_no'] ?? '';
-                  qtyControllers[id]?.text = material['actual_qty']?.toString() ?? '';
-                  
-                  // Add to selectedMaterials for form submission
-                  selectedMaterials[id] = {
-                    'id': id,
-                    'id_mat': material['material']?['id_mat'],
-                    'material_desc': material['material']?['material_desc'] ?? '',
-                    'material_code': material['material']?['material_code'] ?? '',
-                    'batch_no': material['batch_no'] ?? '',
-                    'actual_qty': material['actual_qty']?.toString() ?? '',
-                  };
+                  flattenedMaterials.add({
+                    'id_bom': materialId, // Use id_bom consistently
+                    ...entry,
+                  });
                 }
               }
             }
-          } else {
-            print("No materials data found in response");
-            existingMaterials.clear();
-          }
+          });
 
-          return; // Exit early if successful
-        }
-      } catch (e) {
-        print("Error with specific endpoint: $e");
-        // Continue to fallback
-      }
+          print(flattenedMaterials);
 
-      // If we get here, the specific endpoint failed, so we'll try a generic one
-      print("Trying generic form-c endpoint");
-      try {
-        final fallbackResponse = await Api.get('form-c/${task.id}')
-            .timeout(const Duration(seconds: 5));
+          existingMaterials.assignAll(flattenedMaterials);
 
-        print("Generic form-c API response received: ${fallbackResponse != null ? 'Success' : 'Null response'}");
+          // Pre-populate form fields with existing data
+          materialsMap.forEach((materialId, value) {
+            var data = value is List ? value.first : {};
+            batchControllers.putIfAbsent(materialId, () => TextEditingController(text: data['batch_no'] ?? ''));
+            qtyControllers.putIfAbsent(materialId, () => TextEditingController(text: data['actual_qty']?.toString() ?? ''));
+          });
 
-        // Process the fallback response similar to above...
-        if (fallbackResponse != null) {
-          if (fallbackResponse['common_data'] != null) {
-            existingFormData.value = fallbackResponse['common_data'];
-          }
+          // Set radio selections based on existing data
+          if (existingFormData.value != null) {
+            final data = existingFormData.value!;
 
-          // Process materials if available...
-          if (fallbackResponse['materials'] != null) {
-            // Similar processing as above
+            // Set note controllers
+            noteControllers['1']?.text = data['remarks_picklist'] ?? '';
+            noteControllers['2']?.text = data['remarks_bets'] ?? '';
+            noteControllers['3']?.text = data['remarks_mat'] ?? '';
           }
         }
-      } catch (e) {
-        print("Error with generic endpoint: $e");
-        // Both attempts failed, continue to the catch block
-        throw e;
       }
     } catch (e) {
-      print('Error fetching existing data (all attempts failed): $e');
-      existingFormData.value = null;
-      existingMaterials.clear();
+      print('Error fetching existing data: $e');
+      // Don't show error alert here as it's not critical
+    } finally {
+      isLoading.value = false;
     }
+    fetchChildMaterials();
   }
 
   bool validateForm() {
+    // Validate radio selections
     for (var id in radioSelections.keys) {
       if (radioSelections[id]?.isEmpty ?? true) {
         ArtSweetAlert.show(
@@ -317,6 +185,7 @@ class FormCNeedleAssyController extends GetxController {
         return false;
       }
 
+      // Validate notes for "Tidak" answers
       if (radioSelections[id] == "Tidak" &&
           (noteControllers[id]?.text.isEmpty ?? true)) {
         ArtSweetAlert.show(
@@ -331,6 +200,7 @@ class FormCNeedleAssyController extends GetxController {
       }
     }
 
+    // Validate materials
     for (var entry in selectedMaterials.entries) {
       final materialId = entry.key;
       final batchNo = batchControllers[materialId]?.text ?? '';
@@ -369,16 +239,20 @@ class FormCNeedleAssyController extends GetxController {
     try {
       isLoading.value = true;
 
+      // Prepare materials data - format to match backend API expectations
       final materialsData = selectedMaterials.entries.map((entry) {
-        final materialId = entry.key;
+        final materialId = entry.key; // This is now id_bom
         final material = entry.value;
+
         return {
-          'id_mat': material['id_mat'] ?? material['id'], // Use id_mat if available, otherwise fall back to id
+          'id_mat': material['id_mat'] ?? '',
+          'id_bom': materialId, // Use the key directly as id_bom
           'batch_no': batchControllers[materialId]?.text ?? '',
           'actual_qty': int.tryParse(qtyControllers[materialId]?.text ?? '0') ?? 0,
         };
       }).toList();
 
+      // Prepare the data for submission according to backend API structure
       final dataToSubmit = {
         'code_task': task.code,
         'id_brm': task.brmNo ?? '',
@@ -394,60 +268,29 @@ class FormCNeedleAssyController extends GetxController {
 
       print('Submitting data: ${json.encode(dataToSubmit)}');
 
-      // Check if we're updating existing data or creating new
-      if (existingFormData.value != null) {
-        // This is an update operation
-        print("Updating existing form data");
-        final response = await Api.put('form-c-needle-assy/${task.id}', dataToSubmit);
-        
-        if (response != null) {
-          ArtSweetAlert.show(
-              context: Get.context!,
-              artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.success,
-                  title: "Berhasil",
-                  text: "Form C berhasil diperbarui"
-              )
-          );
-          // Refresh data after update
-          fetchExistingData();
-          return true;
-        } else {
-          ArtSweetAlert.show(
-              context: Get.context!,
-              artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.danger,
-                  title: "Error",
-                  text: "Gagal memperbarui form. Silakan coba lagi."
-              )
-          );
-          return false;
-        }
-      } else {
-        // This is a new submission
-        final response = await Api.post('form-c-needle-assy', dataToSubmit);
+      // Submit the data
+      final response = await Api.post('form-c-needle-assy', dataToSubmit);
 
-        if (response != null) {
-          ArtSweetAlert.show(
-              context: Get.context!,
-              artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.success,
-                  title: "Berhasil",
-                  text: "Form C berhasil disimpan"
-              )
-          );
-          return true;
-        } else {
-          ArtSweetAlert.show(
-              context: Get.context!,
-              artDialogArgs: ArtDialogArgs(
-                  type: ArtSweetAlertType.danger,
-                  title: "Error",
-                  text: "Gagal menyimpan form. Silakan coba lagi."
-              )
-          );
-          return false;
-        }
+      if (response != null) {
+        ArtSweetAlert.show(
+            context: Get.context!,
+            artDialogArgs: ArtDialogArgs(
+                type: ArtSweetAlertType.success,
+                title: "Berhasil",
+                text: "Form C berhasil disimpan"
+            )
+        );
+        return true;
+      } else {
+        ArtSweetAlert.show(
+            context: Get.context!,
+            artDialogArgs: ArtDialogArgs(
+                type: ArtSweetAlertType.danger,
+                title: "Error",
+                text: "Gagal menyimpan form. Silakan coba lagi."
+            )
+        );
+        return false;
       }
     } catch (e) {
       print('Error submitting form: $e');

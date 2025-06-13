@@ -321,7 +321,9 @@ class _TaskDetailsState extends State<TaskDetails> {
         switch (key) {
           case "A": Get.to(() => PartA_Blister(task: widget.task)); break;
           case "B": Get.to(() => PartB_Blister(task: widget.task)); break;
-          case "C": Get.to(() => PartC_Blister(task: widget.task)); break;
+          case "C": Get.to(() => PartC_Blister(task: widget.task,
+                                              selectedMaterialCode: controller.selectedMaterialCode.value,
+                                              requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
           case "D": Get.to(() => PartD_Blister(task: widget.task)); break;
           case "E": Get.to(() => PartE_Blister(task: widget.task)); break;
           case "F": Get.to(() => PartF_Blister(task: widget.task)); break;
@@ -349,7 +351,9 @@ class _TaskDetailsState extends State<TaskDetails> {
         switch (key) {
           case "A": Get.to(() => PartA_Injection(task: widget.task)); break;
           case "B": Get.to(() => PartB_Injection(task: widget.task)); break;
-          case "C": Get.to(() => PartC_Injection(task: widget.task)); break;
+          case "C": Get.to(() => PartC_Injection(task: widget.task,
+              selectedMaterialCode: controller.selectedMaterialCode.value,
+              requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
           case "D": Get.to(() => PartD_Injection(task: widget.task)); break;
           case "E": Get.to(() => PartE_Injection(task: widget.task)); break;
           case "F": Get.to(() => PartF_Injection(task: widget.task)); break;
@@ -362,7 +366,9 @@ class _TaskDetailsState extends State<TaskDetails> {
         switch (key) {
           case "A": Get.to(() => PartA_NeedleAssy(task: widget.task)); break;
           case "B": Get.to(() => PartB_NeedleAssy(task: widget.task)); break;
-          case "C": Get.to(() => PartC_NeedleAssy(task: widget.task)); break;
+          case "C": Get.to(() => PartC_NeedleAssy(task: widget.task,
+              selectedMaterialCode: controller.selectedMaterialCode.value,
+              requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
           case "D": Get.to(() => PartD_NeedleAssy(task: widget.task)); break;
           case "E": Get.to(() => PartE_NeedleAssy(task: widget.task)); break;
           case "F": Get.to(() => PartF_NeedleAssy(task: widget.task)); break;

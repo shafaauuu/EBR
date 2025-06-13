@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 
 class PartC_Injection extends StatefulWidget {
   final Task task;
-  const PartC_Injection({super.key, required this.task});
+  final String selectedMaterialCode;
+  final int requiredQuantity;
+  const PartC_Injection({super.key, required this.task, required this.selectedMaterialCode, required this.requiredQuantity});
 
   @override
   _PartC_InjectionState createState() => _PartC_InjectionState();
@@ -30,7 +32,7 @@ class _PartC_InjectionState extends State<PartC_Injection> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(FormCInjectionController(widget.task));
+    controller = Get.put(FormCInjectionController(widget.task,widget.selectedMaterialCode));
 
     for (var item in criteriaList) {
       catatanControllers[item["id"]!] = TextEditingController();
@@ -169,20 +171,20 @@ class _PartC_InjectionState extends State<PartC_Injection> {
           Expanded(
             child: Obx(() {
               print("Rebuilding with loading: ${controller.isLoading.value}, materials: ${controller.materials.length}");
-              
+
               if (controller.isLoading.value) {
                 return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text("Loading materials...")
-                    ],
-                  )
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text("Loading materials...")
+                      ],
+                    )
                 );
               }
-              
+
               if (controller.materials.isEmpty) {
                 return Center(
                   child: Column(
@@ -214,7 +216,7 @@ class _PartC_InjectionState extends State<PartC_Injection> {
                   ),
                 );
               }
-              
+
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -317,7 +319,6 @@ class _PartC_InjectionState extends State<PartC_Injection> {
                               }
                             }
 
-
                             if (hasValidationError) return;
 
                             // Show confirmation dialog using ArtSweetAlert
@@ -413,6 +414,230 @@ class _PartC_InjectionState extends State<PartC_Injection> {
           ),
         ),
       ],
+    );
+  }
+
+  List<Widget> _buildDynamicMaterialSections() {
+    final List<Widget> sections = [];
+
+    print("Building material sections with ${controller.materials.length} materials");
+
+    if (controller.materials.isEmpty) {
+      // Add a message if no materials are found
+      sections.add(
+          Container(
+            padding: const EdgeInsets.all(16),
+            alignment: Alignment.center,
+            child: const Text(
+              "No materials found. Please check your API endpoint.",
+              style: TextStyle(color: Colors.red),
+            ),
+          )
+      );
+      return sections;
+    }
+
+    // Group materials by their type or category if needed
+    // For now, we'll show each material as a separate section
+    for (var material in controller.materials) {
+      final materialId = material['id_bom']?.toString() ?? '';
+
+      if (materialId.isEmpty) {
+        print("Warning: Material without ID found: $material");
+        continue;
+      }
+      material['qty'] = widget.requiredQuantity * double.parse(material['fact_index'] ?? '0');
+
+      print("Processing material: $materialId - ${material['child_material']['material_desc']}");
+
+      // Initialize controllers if they don't exist
+      if (!batchControllers.containsKey(materialId)) {
+        batchControllers[materialId] = TextEditingController(text: controller.batchControllers[materialId]?.text ?? '');
+        qtyControllers[materialId] = TextEditingController(text: controller.qtyControllers[materialId]?.text ?? '');
+      }
+
+      // Check if there's existing data for this material
+      final existingMaterialData = controller.existingMaterials
+          .where((m) => m['material']?['id'].toString() == materialId)
+          .toList();
+
+      // If we have existing data, pre-populate the fields
+      if (existingMaterialData.isNotEmpty) {
+        final latestData = existingMaterialData.first;
+
+        // Add to selected materials
+        if (!selectedMaterials.containsKey(materialId)) {
+          selectedMaterials[materialId] = {
+            'id': materialId,
+            'material_desc': material['child_material']['material_desc'],
+            'material_code': material['child_material']['material_code'],
+            'batch_no': batchControllers[materialId]?.text ?? '',
+            'actual_qty': qtyControllers[materialId]?.text ?? '',
+            'id_mat': material['id_mat'],
+          };
+        }
+      }
+      print("Rendering $materialId with batch: ${batchControllers[materialId]?.text}, qty: ${qtyControllers[materialId]?.text}");
+      sections.addAll([
+        _sectionTitle("Material/Component Name"),
+        _buildMaterialSection(
+          material['child_material']['material_desc'] ?? 'Unnamed Material',
+          materialId,
+          material,
+          batchControllers[materialId]!,
+          qtyControllers[materialId]!,
+        ),
+        const SizedBox(height: 10),
+      ]);
+    }
+
+    return sections;
+  }
+
+  Widget _buildMaterialSection(
+      String title,
+      String materialId,
+      Map<String, dynamic> material,
+      TextEditingController batchNoController,
+      TextEditingController actualQtyController,
+      ) {
+    // Check if this material is selected
+    final isSelected = selectedMaterials.containsKey(materialId);
+
+    // If selected, update the selectedMaterials map
+    if (isSelected && !selectedMaterials.containsKey(materialId)) {
+      selectedMaterials[materialId] = {
+        'id': materialId,
+        'material_desc': material['child_material']['material_desc'],
+        'material_code': material['child_material']['material_code'],
+        'batch_no': batchNoController.text,
+        'actual_qty': actualQtyController.text,
+        'id_mat': material['id_mat'], // Store id_mat for child material
+      };
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+            title,
+            style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black,
+                fontWeight: FontWeight.bold
+            )
+        ),
+        const SizedBox(height: 8),
+        // Display material name directly since we're not using dropdown for selection
+        TextFormField(
+          initialValue: material['child_material']['material_desc'] ?? 'No Name',
+          readOnly: true,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _buildDetailField(
+                "Component/Material Code",
+                material['child_material']['material_code'] ?? '',
+                true,
+                fillColor: Colors.lightBlue[50]
+            ),
+            _buildDetailField(
+                "UoM",
+                material['child_material']['material_uom'] ?? '',
+                true,
+                fillColor: Colors.lightBlue[50]
+            ),
+            _buildDetailField(
+                "Required Qty",
+                material['qty']?.toString() ?? '',
+                true,
+                fillColor: Colors.lightBlue[50]
+            ),
+            _buildDetailField(
+                "Actual Qty",
+                "",
+                false,
+                controller: actualQtyController,
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  // Update the form values and selected materials
+                  formValues['${materialId}_actual_qty'] = int.tryParse(value) ?? 0;
+
+                  // Update or create the selected material entry
+                  if (!selectedMaterials.containsKey(materialId)) {
+                    selectedMaterials[materialId] = {
+                      'id': materialId,
+                      'material_desc': material['child_material']['material_desc'],
+                      'material_code': material['child_material']['material_code'],
+                      'id_mat': material['id_mat'], // Store id_mat for child material
+                    };
+                  }
+
+                  // Update the actual quantity
+                  selectedMaterials[materialId]!['actual_qty'] = value;
+                }
+            ),
+            _buildDetailField(
+                "Batch No",
+                "",
+                false,
+                controller: batchNoController,
+                onChanged: (value) {
+                  formValues['${materialId}_batch'] = value;
+
+                  // Update or create the selected material entry
+                  if (!selectedMaterials.containsKey(materialId)) {
+                    selectedMaterials[materialId] = {
+                      'id': materialId,
+                      'material_desc': material['child_material']['material_desc'],
+                      'material_code': material['child_material']['material_code'],
+                      'id_mat': material['id_mat'], // Store id_mat for child material
+                    };
+                  }
+
+                  // Update the batch number
+                  selectedMaterials[materialId]!['batch_no'] = value;
+                }
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildDetailField(
+      String label,
+      String value,
+      bool readOnly, {
+        TextEditingController? controller,
+        Color? fillColor,
+        Function(String)? onChanged,
+        TextInputType keyboardType = TextInputType.text,
+      }) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: TextFormField(
+          controller: controller ?? TextEditingController(text: value),
+          readOnly: readOnly,
+          onChanged: onChanged,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            filled: fillColor != null,
+            fillColor: fillColor,
+            isDense: true,
+          ),
+        ),
+      ),
     );
   }
 
@@ -564,251 +789,7 @@ class _PartC_InjectionState extends State<PartC_Injection> {
     );
   }
 
-  List<Widget> _buildDynamicMaterialSections() {
-    final List<Widget> sections = [];
-    
-    print("Building material sections with ${controller.materials.length} materials");
-    
-    if (controller.materials.isEmpty) {
-      // Add a message if no materials are found
-      sections.add(
-        Container(
-          padding: const EdgeInsets.all(16),
-          alignment: Alignment.center,
-          child: const Text(
-            "No materials found. Please check your API endpoint.",
-            style: TextStyle(color: Colors.red),
-          ),
-        )
-      );
-      return sections;
-    }
-
-    // Group materials by their type or category if needed
-    // For now, we'll show each material as a separate section
-    for (var material in controller.materials) {
-      final materialId = material['id']?.toString() ?? '';
-      
-      if (materialId.isEmpty) {
-        print("Warning: Material without ID found: $material");
-        continue;
-      }
-      
-      print("Processing material: $materialId - ${material['material_desc']}");
-
-      // Initialize controllers if they don't exist
-      if (!batchControllers.containsKey(materialId)) {
-        batchControllers[materialId] = TextEditingController();
-        qtyControllers[materialId] = TextEditingController();
-      }
-
-      // Check if there's existing data for this material
-      final existingMaterialData = controller.existingMaterials
-          .where((m) => m['material']?['id'].toString() == materialId)
-          .toList();
-
-      // If we have existing data, pre-populate the fields
-      if (existingMaterialData.isNotEmpty) {
-        final latestData = existingMaterialData.first;
-        batchControllers[materialId]?.text = latestData['batch_no'] ?? '';
-        qtyControllers[materialId]?.text = latestData['actual_qty']?.toString() ?? '';
-
-        // Add to selected materials
-        if (!selectedMaterials.containsKey(materialId)) {
-          selectedMaterials[materialId] = {
-            'id': materialId,
-            'material_desc': material['material_desc'],
-            'material_code': material['material_code'],
-            'id_mat': material['id_mat'], // Store id_mat for child material
-          };
-        }
-      }
-
-      sections.addAll([
-        _sectionTitle("Material/Component Name"),
-        _buildMaterialSection(
-          material['material_desc'] ?? 'Unnamed Material',
-          materialId,
-          material,
-          batchControllers[materialId]!,
-          qtyControllers[materialId]!,
-        ),
-        const SizedBox(height: 10),
-      ]);
-    }
-
-    return sections;
-  }
-
-  Widget _buildMaterialSection(
-      String title,
-      String materialId,
-      Map<String, dynamic> material,
-      TextEditingController batchNoController,
-      TextEditingController actualQtyController,
-      ) {
-    // Check if this material is selected
-    final isSelected = selectedMaterials.containsKey(materialId);
-
-    // Check for existing data for this material
-    final existingMaterialData = controller.existingMaterials
-        .where((m) => m['material']?['id'].toString() == materialId)
-        .toList();
-
-    // If we have existing data, pre-populate the fields
-    if (existingMaterialData.isNotEmpty && !isSelected) {
-      final latestData = existingMaterialData.first;
-      batchNoController.text = latestData['batch_no'] ?? '';
-      actualQtyController.text = latestData['actual_qty']?.toString() ?? '';
-      
-      // Add to selected materials
-      selectedMaterials[materialId] = {
-        'id': materialId,
-        'material_desc': material['material_desc'],
-        'material_code': material['material_code'],
-        'batch_no': latestData['batch_no'] ?? '',
-        'actual_qty': latestData['actual_qty']?.toString() ?? '',
-        'id_mat': material['id_mat'], // Store id_mat for child material
-      };
-    }
-
-    // If selected, update the selectedMaterials map
-    if (isSelected) {
-      selectedMaterials[materialId] = {
-        'id': materialId,
-        'material_desc': material['material_desc'],
-        'material_code': material['material_code'],
-        'batch_no': batchNoController.text,
-        'actual_qty': actualQtyController.text,
-        'id_mat': material['id_mat'], // Store id_mat for child material
-      };
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-            title,
-            style: const TextStyle(
-                fontSize: 12,
-                color: Colors.black,
-                fontWeight: FontWeight.bold
-            )
-        ),
-        const SizedBox(height: 8),
-        // Display material name directly since we're not using dropdown for selection
-        TextFormField(
-          initialValue: material['material_desc'] ?? 'No Name',
-          readOnly: true,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _buildDetailField(
-                "Component/Material Code",
-                material['material_code'] ?? '',
-                true,
-                fillColor: Colors.lightBlue[50]
-            ),
-            _buildDetailField(
-                "UoM",
-                material['material_uom'] ?? '',
-                true,
-                fillColor: Colors.lightBlue[50]
-            ),
-            _buildDetailField(
-                "Required Qty",
-                material['qty']?.toString() ?? '',
-                true,
-                fillColor: Colors.lightBlue[50]
-            ),
-            _buildDetailField(
-                "Actual Qty",
-                "",
-                false,
-                controller: actualQtyController,
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  // Update the form values and selected materials
-                  formValues['${materialId}_actual_qty'] = int.tryParse(value) ?? 0;
-
-                  // Update or create the selected material entry
-                  if (!selectedMaterials.containsKey(materialId)) {
-                    selectedMaterials[materialId] = {
-                      'id': materialId,
-                      'material_desc': material['material_desc'],
-                      'material_code': material['material_code'],
-                      'id_mat': material['id_mat'], // Store id_mat for child material
-                    };
-                  }
-
-                  // Update the actual quantity
-                  selectedMaterials[materialId]!['actual_qty'] = value;
-                }
-            ),
-            _buildDetailField(
-                "Batch No",
-                "",
-                false,
-                controller: batchNoController,
-                onChanged: (value) {
-                  formValues['${materialId}_batch'] = value;
-
-                  // Update or create the selected material entry
-                  if (!selectedMaterials.containsKey(materialId)) {
-                    selectedMaterials[materialId] = {
-                      'id': materialId,
-                      'material_desc': material['material_desc'],
-                      'material_code': material['material_code'],
-                      'id_mat': material['id_mat'], // Store id_mat for child material
-                    };
-                  }
-
-                  // Update the batch number
-                  selectedMaterials[materialId]!['batch_no'] = value;
-                }
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildDetailField(
-      String label,
-      String value,
-      bool readOnly, {
-        TextEditingController? controller,
-        Color? fillColor,
-        Function(String)? onChanged,
-        TextInputType keyboardType = TextInputType.text,
-      }) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: TextFormField(
-          controller: controller ?? TextEditingController(text: value),
-          readOnly: readOnly,
-          onChanged: onChanged,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            filled: fillColor != null,
-            fillColor: fillColor,
-            isDense: true,
-          ),
-        ),
-      ),
-    );
-  }
-
+  // Add this method to show history dialog
   void _showHistoryDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -928,6 +909,7 @@ class _PartC_InjectionState extends State<PartC_Injection> {
     );
   }
 
+  // Helper method to build common data section in history dialog
   Widget _buildHistoryCommonData() {
     final data = controller.existingFormData.value!;
 
@@ -945,16 +927,28 @@ class _PartC_InjectionState extends State<PartC_Injection> {
         Text("Code Task: ${data['code_task'] ?? 'N/A'}"),
         Text("BRM No: ${data['id_brm'] ?? 'N/A'}"),
         const SizedBox(height: 8),
-        Text("Sesuai Picklist: ${data['sesuai_picklist'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Sesuai Picklist: ${_getBooleanText(data['sesuai_picklist'])}"),
         if (data['remarks_picklist']?.isNotEmpty ?? false)
           Text("Catatan Picklist: ${data['remarks_picklist']}"),
-        Text("Sesuai Bets: ${data['sesuai_bets'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Sesuai Bets: ${_getBooleanText(data['sesuai_bets'])}"),
         if (data['remarks_bets']?.isNotEmpty ?? false)
           Text("Catatan Bets: ${data['remarks_bets']}"),
-        Text("Material Lengkap: ${data['mat_lengkap'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Material Lengkap: ${_getBooleanText(data['mat_lengkap'])}"),
         if (data['remarks_mat']?.isNotEmpty ?? false)
           Text("Catatan Material: ${data['remarks_mat']}"),
       ],
     );
+  }
+
+  String _getBooleanText(dynamic value) {
+    if (value is bool) {
+      return value ? 'Ya' : 'Tidak';
+    } else if (value is int) {
+      return value == 1 ? 'Ya' : 'Tidak';
+    } else if (value is String) {
+      return value.toLowerCase() == 'true' ? 'Ya' : 'Tidak';
+    } else {
+      return 'Tidak';
+    }
   }
 }

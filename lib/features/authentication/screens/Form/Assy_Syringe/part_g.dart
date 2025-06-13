@@ -6,6 +6,10 @@ import 'package:signature/signature.dart';
 import '../../../controller/Form/G/form_g_assysyringe.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class PartG_Syringe extends StatefulWidget {
   final Task? task;
@@ -43,6 +47,14 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
     penColor: Colors.black,
     exportBackgroundColor: Colors.white,
   );
+  
+  // Variables to store the latest signature images
+  Uint8List? latestSignature1;
+  Uint8List? latestSignature2;
+  Uint8List? latestSignature3;
+  
+  // Variables to store the latest form data
+  Map<String, dynamic>? latestFormData;
 
   @override
   void initState() {
@@ -70,8 +82,14 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
       final formData = await formController.getFormByTaskId(widget.task!.id!);
       if (formData != null) {
         setState(() {
+          latestFormData = formData;
           remarksController.text = formData['remarks'] ?? '';
           formController.setRemarks(remarksController.text);
+          
+          // Store the latest signatures from the controller
+          latestSignature1 = formController.signature1.value;
+          latestSignature2 = formController.signature2.value;
+          latestSignature3 = formController.signature3.value;
         });
       }
     }
@@ -381,10 +399,182 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
             ),
           ],
         ),
+        
+        // Display the latest signature if available
+        _buildSignatureDisplay(signatureIndex),
       ],
     );
   }
-
+  
+  // Custom widget to display signature with fallback mechanisms
+  Widget _buildSignatureDisplay(int signatureIndex) {
+    Uint8List? signatureBytes;
+    String? rawBase64;
+    
+    // Get the appropriate signature data based on index
+    switch (signatureIndex) {
+      case 1:
+        signatureBytes = latestSignature1;
+        rawBase64 = formController.rawSignature1.value;
+        break;
+      case 2:
+        signatureBytes = latestSignature2;
+        rawBase64 = formController.rawSignature2.value;
+        break;
+      case 3:
+        signatureBytes = latestSignature3;
+        rawBase64 = formController.rawSignature3.value;
+        break;
+    }
+    
+    // If no signature data available, return empty container
+    if (signatureBytes == null && rawBase64 == null) {
+      return Container();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        const Text(
+          "Previous Signature:",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: _buildSignatureImageWithFallback(signatureBytes, rawBase64),
+        ),
+        if (latestFormData != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            "Date: ${_formatDateTime(latestFormData!['created_at'])}",
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ],
+    );
+  }
+  
+  // Build signature image with fallback mechanisms
+  Widget _buildSignatureImageWithFallback(Uint8List? signatureBytes, String? rawBase64) {
+    // First try: Use the decoded Uint8List if available
+    if (signatureBytes != null) {
+      return Image.memory(
+        signatureBytes,
+        height: 150,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          print("Error displaying signature from bytes: $error");
+          // If Image.memory fails, try with base64 string
+          return _buildBase64Image(rawBase64);
+        },
+      );
+    } 
+    // Second try: Use the raw base64 string
+    else if (rawBase64 != null) {
+      return _buildBase64Image(rawBase64);
+    } 
+    // Fallback: Show placeholder
+    else {
+      return Container(
+        height: 150,
+        alignment: Alignment.center,
+        child: const Text("Signature not available", style: TextStyle(color: Colors.grey)),
+      );
+    }
+  }
+  
+  // Build image from base64 string
+  Widget _buildBase64Image(String? base64String) {
+    if (base64String == null) {
+      return Container(
+        height: 150,
+        alignment: Alignment.center,
+        child: const Text("Signature data not available", style: TextStyle(color: Colors.grey)),
+      );
+    }
+    
+    // For web platform, use HTML approach which can handle problematic base64 data better
+    if (kIsWeb) {
+      // Create a data URL for the image
+      final dataUrl = 'data:image/png;base64,$base64String';
+      
+      // Create a unique ID for this image
+      final imageId = 'signature-image-${DateTime.now().millisecondsSinceEpoch}';
+      
+      // Create an HTML image element
+      final imageElement = html.ImageElement()
+        ..id = imageId
+        ..src = dataUrl
+        ..style.height = '150px'
+        ..style.objectFit = 'contain';
+      
+      // Add the image to the DOM temporarily
+      html.document.body?.append(imageElement);
+      
+      // Use HtmlElementView to display the HTML element in Flutter
+      return SizedBox(
+        height: 150,
+        child: Builder(
+          builder: (BuildContext context) {
+            // Schedule to remove the element when this widget is disposed
+            Future.delayed(Duration.zero, () {
+              // Create a canvas to draw the image to
+              try {
+                final canvas = html.CanvasElement(width: imageElement.width, height: imageElement.height);
+                final ctx = canvas.context2D;
+                
+                // Draw the image to the canvas
+                ctx.drawImage(imageElement, 0, 0);
+                
+                // Replace the original image with the canvas-rendered version
+                imageElement.src = canvas.toDataUrl('image/png');
+              } catch (e) {
+                print('Error rendering image through canvas: $e');
+              }
+            });
+            
+            return HtmlElementView(viewType: imageId);
+          },
+        ),
+      );
+    }
+    
+    // For non-web platforms, use the standard Flutter approach
+    return Container(
+      height: 150,
+      alignment: Alignment.center,
+      child: Image.memory(
+        base64Decode(base64String),
+        height: 150,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          print("Error displaying signature from base64: $error");
+          // Final fallback: Show placeholder with error message
+          return Container(
+            height: 150,
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.error_outline, color: Colors.red, size: 40),
+                SizedBox(height: 8),
+                Text(
+                  "Could not display signature",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
   Widget _buildDisabledSignatureSection({
     required String title,
   }) {
@@ -435,12 +625,15 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
   void _updateSignatureInController(int signatureIndex, Uint8List? imageData) {
     switch (signatureIndex) {
       case 1:
+        latestSignature1 = imageData;
         formController.setSignature1(imageData);
         break;
       case 2:
+        latestSignature2 = imageData;
         formController.setSignature2(imageData);
         break;
       case 3:
+        latestSignature3 = imageData;
         formController.setSignature3(imageData);
         break;
     }
@@ -489,5 +682,16 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
         ),
       ],
     );
+  }
+
+  // Helper method to format date time
+  String _formatDateTime(String? dateTimeStr) {
+    if (dateTimeStr == null) return 'N/A';
+    try {
+      final dateTime = DateTime.parse(dateTimeStr);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeStr;
+    }
   }
 }

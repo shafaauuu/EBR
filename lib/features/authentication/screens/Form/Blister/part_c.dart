@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controller/task_details_controller.dart';
-import '../../../models/task_model.dart';
 import '../../../controller/Form/C/form_c_blister.dart';
+import '../../../models/task_model.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:intl/intl.dart';
 
 class PartC_Blister extends StatefulWidget {
   final Task task;
-  const PartC_Blister({super.key, required this.task});
+  final String selectedMaterialCode;
+  final int requiredQuantity;
+  const PartC_Blister({super.key, required this.task, required this.selectedMaterialCode, required this.requiredQuantity});
 
   @override
   _PartC_BlisterState createState() => _PartC_BlisterState();
@@ -33,7 +34,7 @@ class _PartC_BlisterState extends State<PartC_Blister> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(FormCBlisterController(widget.task));
+    controller = Get.put(FormCBlisterController(widget.task,widget.selectedMaterialCode));
 
     for (var item in criteriaList) {
       catatanControllers[item["id"]!] = TextEditingController();
@@ -132,20 +133,20 @@ class _PartC_BlisterState extends State<PartC_Blister> {
           Expanded(
             child: Obx(() {
               print("Rebuilding with loading: ${controller.isLoading.value}, materials: ${controller.materials.length}");
-              
+
               if (controller.isLoading.value) {
                 return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text("Loading materials...")
-                    ],
-                  )
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text("Loading materials...")
+                      ],
+                    )
                 );
               }
-              
+
               if (controller.materials.isEmpty) {
                 return Center(
                   child: Column(
@@ -177,7 +178,7 @@ class _PartC_BlisterState extends State<PartC_Blister> {
                   ),
                 );
               }
-              
+
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -279,7 +280,6 @@ class _PartC_BlisterState extends State<PartC_Blister> {
                                 break;
                               }
                             }
-
 
                             if (hasValidationError) return;
 
@@ -383,20 +383,20 @@ class _PartC_BlisterState extends State<PartC_Blister> {
   // Build dynamic material sections based on fetched materials
   List<Widget> _buildDynamicMaterialSections() {
     final List<Widget> sections = [];
-    
+
     print("Building material sections with ${controller.materials.length} materials");
-    
+
     if (controller.materials.isEmpty) {
       // Add a message if no materials are found
       sections.add(
-        Container(
-          padding: const EdgeInsets.all(16),
-          alignment: Alignment.center,
-          child: const Text(
-            "No materials found. Please check your API endpoint.",
-            style: TextStyle(color: Colors.red),
-          ),
-        )
+          Container(
+            padding: const EdgeInsets.all(16),
+            alignment: Alignment.center,
+            child: const Text(
+              "No materials found. Please check your API endpoint.",
+              style: TextStyle(color: Colors.red),
+            ),
+          )
       );
       return sections;
     }
@@ -404,19 +404,20 @@ class _PartC_BlisterState extends State<PartC_Blister> {
     // Group materials by their type or category if needed
     // For now, we'll show each material as a separate section
     for (var material in controller.materials) {
-      final materialId = material['id']?.toString() ?? '';
-      
+      final materialId = material['id_bom']?.toString() ?? '';
+
       if (materialId.isEmpty) {
         print("Warning: Material without ID found: $material");
         continue;
       }
-      
-      print("Processing material: $materialId - ${material['material_desc']}");
+      material['qty'] = widget.requiredQuantity * double.parse(material['fact_index'] ?? '0');
+
+      print("Processing material: $materialId - ${material['child_material']['material_desc']}");
 
       // Initialize controllers if they don't exist
       if (!batchControllers.containsKey(materialId)) {
-        batchControllers[materialId] = TextEditingController();
-        qtyControllers[materialId] = TextEditingController();
+        batchControllers[materialId] = TextEditingController(text: controller.batchControllers[materialId]?.text ?? '');
+        qtyControllers[materialId] = TextEditingController(text: controller.qtyControllers[materialId]?.text ?? '');
       }
 
       // Check if there's existing data for this material
@@ -427,26 +428,24 @@ class _PartC_BlisterState extends State<PartC_Blister> {
       // If we have existing data, pre-populate the fields
       if (existingMaterialData.isNotEmpty) {
         final latestData = existingMaterialData.first;
-        batchControllers[materialId]?.text = latestData['batch_no'] ?? '';
-        qtyControllers[materialId]?.text = latestData['actual_qty']?.toString() ?? '';
 
         // Add to selected materials
         if (!selectedMaterials.containsKey(materialId)) {
           selectedMaterials[materialId] = {
             'id': materialId,
-            'material_desc': material['material_desc'],
-            'material_code': material['material_code'],
-            'batch_no': latestData['batch_no'] ?? '',
-            'actual_qty': latestData['actual_qty']?.toString() ?? '',
+            'material_desc': material['child_material']['material_desc'],
+            'material_code': material['child_material']['material_code'],
+            'batch_no': batchControllers[materialId]?.text ?? '',
+            'actual_qty': qtyControllers[materialId]?.text ?? '',
             'id_mat': material['id_mat'],
           };
         }
       }
-
+      print("Rendering $materialId with batch: ${batchControllers[materialId]?.text}, qty: ${qtyControllers[materialId]?.text}");
       sections.addAll([
         _sectionTitle("Material/Component Name"),
         _buildMaterialSection(
-          material['material_desc'] ?? 'Unnamed Material',
+          material['child_material']['material_desc'] ?? 'Unnamed Material',
           materialId,
           material,
           batchControllers[materialId]!,
@@ -473,8 +472,8 @@ class _PartC_BlisterState extends State<PartC_Blister> {
     if (isSelected && !selectedMaterials.containsKey(materialId)) {
       selectedMaterials[materialId] = {
         'id': materialId,
-        'material_desc': material['material_desc'],
-        'material_code': material['material_code'],
+        'material_desc': material['child_material']['material_desc'],
+        'material_code': material['child_material']['material_code'],
         'batch_no': batchNoController.text,
         'actual_qty': actualQtyController.text,
         'id_mat': material['id_mat'], // Store id_mat for child material
@@ -495,7 +494,7 @@ class _PartC_BlisterState extends State<PartC_Blister> {
         const SizedBox(height: 8),
         // Display material name directly since we're not using dropdown for selection
         TextFormField(
-          initialValue: material['material_desc'] ?? 'No Name',
+          initialValue: material['child_material']['material_desc'] ?? 'No Name',
           readOnly: true,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
@@ -507,13 +506,13 @@ class _PartC_BlisterState extends State<PartC_Blister> {
           children: [
             _buildDetailField(
                 "Component/Material Code",
-                material['material_code'] ?? '',
+                material['child_material']['material_code'] ?? '',
                 true,
                 fillColor: Colors.lightBlue[50]
             ),
             _buildDetailField(
                 "UoM",
-                material['material_uom'] ?? '',
+                material['child_material']['material_uom'] ?? '',
                 true,
                 fillColor: Colors.lightBlue[50]
             ),
@@ -537,8 +536,8 @@ class _PartC_BlisterState extends State<PartC_Blister> {
                   if (!selectedMaterials.containsKey(materialId)) {
                     selectedMaterials[materialId] = {
                       'id': materialId,
-                      'material_desc': material['material_desc'],
-                      'material_code': material['material_code'],
+                      'material_desc': material['child_material']['material_desc'],
+                      'material_code': material['child_material']['material_code'],
                       'id_mat': material['id_mat'], // Store id_mat for child material
                     };
                   }
@@ -559,8 +558,8 @@ class _PartC_BlisterState extends State<PartC_Blister> {
                   if (!selectedMaterials.containsKey(materialId)) {
                     selectedMaterials[materialId] = {
                       'id': materialId,
-                      'material_desc': material['material_desc'],
-                      'material_code': material['material_code'],
+                      'material_desc': material['child_material']['material_desc'],
+                      'material_code': material['child_material']['material_code'],
                       'id_mat': material['id_mat'], // Store id_mat for child material
                     };
                   }
@@ -892,16 +891,28 @@ class _PartC_BlisterState extends State<PartC_Blister> {
         Text("Code Task: ${data['code_task'] ?? 'N/A'}"),
         Text("BRM No: ${data['id_brm'] ?? 'N/A'}"),
         const SizedBox(height: 8),
-        Text("Sesuai Picklist: ${data['sesuai_picklist'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Sesuai Picklist: ${_getBooleanText(data['sesuai_picklist'])}"),
         if (data['remarks_picklist']?.isNotEmpty ?? false)
           Text("Catatan Picklist: ${data['remarks_picklist']}"),
-        Text("Sesuai Bets: ${data['sesuai_bets'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Sesuai Bets: ${_getBooleanText(data['sesuai_bets'])}"),
         if (data['remarks_bets']?.isNotEmpty ?? false)
           Text("Catatan Bets: ${data['remarks_bets']}"),
-        Text("Material Lengkap: ${data['mat_lengkap'] == true ? 'Ya' : 'Tidak'}"),
+        Text("Material Lengkap: ${_getBooleanText(data['mat_lengkap'])}"),
         if (data['remarks_mat']?.isNotEmpty ?? false)
           Text("Catatan Material: ${data['remarks_mat']}"),
       ],
     );
+  }
+
+  String _getBooleanText(dynamic value) {
+    if (value is bool) {
+      return value ? 'Ya' : 'Tidak';
+    } else if (value is int) {
+      return value == 1 ? 'Ya' : 'Tidak';
+    } else if (value is String) {
+      return value.toLowerCase() == 'true' ? 'Ya' : 'Tidak';
+    } else {
+      return 'Tidak';
+    }
   }
 }

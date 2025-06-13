@@ -110,6 +110,15 @@ class FormCAssySyringeController extends GetxController {
       if (response != null) {
         existingFormData.value = response['common_data'];
         
+        // Debug: Print the data types of boolean fields
+        if (response['common_data'] != null) {
+          final data = response['common_data'];
+          print('DEBUG - Data types:');
+          print('sesuai_picklist: ${data['sesuai_picklist']} (${data['sesuai_picklist'].runtimeType})');
+          print('sesuai_bets: ${data['sesuai_bets']} (${data['sesuai_bets'].runtimeType})');
+          print('mat_lengkap: ${data['mat_lengkap']} (${data['mat_lengkap'].runtimeType})');
+        }
+        
         // Process materials data
         if (response['materials'] != null) {
           final materialsMap = response['materials'] as Map<String, dynamic>;
