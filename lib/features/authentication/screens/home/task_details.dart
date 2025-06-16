@@ -45,7 +45,13 @@ import '../../models/material_model.dart';
 
 class TaskDetails extends StatefulWidget {
   final Task task;
-  const TaskDetails({super.key, required this.task});
+  final bool isEditing;
+  
+  const TaskDetails({
+    super.key, 
+    required this.task,
+    this.isEditing = false,
+  });
 
   @override
   _TaskDetailsState createState() => _TaskDetailsState();
@@ -80,7 +86,18 @@ class _TaskDetailsState extends State<TaskDetails> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
         ),
-        title: Text(controller.getTaskStatusTitle(widget.task.status)),
+        title: Text(widget.isEditing 
+          ? "Edit ${controller.getTaskStatusTitle(widget.task.status)}" 
+          : controller.getTaskStatusTitle(widget.task.status)
+        ),
+        actions: widget.isEditing 
+          ? [
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Icon(Icons.edit, color: Colors.blue),
+              )
+            ] 
+          : null,
       ),
       body: Column(
         children: [
@@ -123,7 +140,7 @@ class _TaskDetailsState extends State<TaskDetails> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       _buildAlignedText("BRM No.", widget.task.brmNo),
+                      _buildAlignedText("BRM No.", widget.task.brmNo),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],

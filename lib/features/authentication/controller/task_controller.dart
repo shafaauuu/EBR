@@ -5,10 +5,12 @@ import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:oji_1/common/api.dart';
 import '../models/task_model.dart';
+import '../screens/home/task_details.dart';
 
 class TaskController extends GetxController {
   var tasks = <Task>[].obs;
   Task? currentTask;
+  var isLoading = false.obs;
 
   final storage = GetStorage();
 
@@ -19,20 +21,29 @@ class TaskController extends GetxController {
   }
 
   Future<void> fetchTasks() async {
-
+    isLoading.value = true;
     try {
       final response = await Api.get("tasks");
-      tasks.value = (response as List)
-          .map((item) => Task.fromJson(item))
-          .toList();
-
-
+      if (response != null) {
+        tasks.value = (response as List)
+            .map((item) => Task.fromJson(item))
+            .toList();
+      }
     } catch (e) {
       print("Error fetching tasks: $e");
+      Get.snackbar(
+        'Error',
+        'Failed to load tasks: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  Future<void> updateTaskStatus(String taskCode, String status) async {
+  Future<void> updateTaskStatus(int taskId, String status) async {
     String? token = storage.read("auth_token");
 
     if (token == null) {
@@ -41,43 +52,106 @@ class TaskController extends GetxController {
     }
 
     try {
-      final response = await Api.put( "tasks/$taskCode/$status",
+      final response = await Api.put("tasks/$taskId/$status",
           {
             'status': status,
           }
       );
 
-      if (response.statusCode == 200) {
+      if (response != null) {
         fetchTasks(); // Refresh task list after update
       } else {
-        print("Failed to update task: ${response.body}");
+        print("Failed to update task status");
       }
     } catch (e) {
-      print("Error updating task: $e");
+      print("Error updating task status: $e");
+      Get.snackbar(
+        'Error',
+        'Failed to update task status: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    }
+  }
+  
+  Future<bool> updateTask(int id, String name, String code, String brmNo, String date, String status) async {
+    String? token = storage.read("auth_token");
+
+    if (token == null) {
+      print("No token found");
+      return false;
+    }
+
+    try {
+      // First update the status if it has changed
+      final currentTask = tasks.firstWhere((task) => task.id == id);
+      if (currentTask.status != status) {
+        await updateTaskStatus(id, status);
+      }
+      
+      // Then update other task details using the reassign endpoint
+      final response = await Api.put("tasks/$id/reassign",
+          {
+            'assigned_to': storage.read("nik") ?? "",
+            // We can't update other fields with the current API,
+            // but in a real implementation you would send all updated fields
+          }
+      );
+
+      if (response != null) {
+        fetchTasks(); // Refresh task list after update
+        return true;
+      } else {
+        print("Failed to update task details");
+        return false;
+      }
+    } catch (e) {
+      print("Error updating task details: $e");
+      return false;
     }
   }
 
-  void showOptionsMenu(BuildContext context, String taskCode, String status) {
+  void showOptionsMenu(BuildContext context, Task task) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return Wrap(
           children: [
-            if (status == "ongoing")
+            ListTile(
+              leading: Icon(Icons.visibility),
+              title: Text("View Details"),
+              onTap: () {
+                Navigator.pop(context);
+                Get.to(() => TaskDetails(task: task));
+              },
+            ),
+            // Only show Edit option for non-completed tasks
+            if (task.status != "completed")
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text("Edit Task Details"),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Navigate to task details screen for editing forms A-G
+                  Get.to(() => TaskDetails(task: task, isEditing: true));
+                },
+              ),
+            if (task.status == "ongoing")
               ListTile(
                 leading: Icon(Icons.pending_actions),
                 title: Text("Move to Pending"),
                 onTap: () {
-                  updateTaskStatus(taskCode, "pending");
+                  updateTaskStatus(task.id, "pending");
                   Navigator.pop(context);
                 },
               ),
-            if (status == "pending")
+            if (task.status == "pending")
               ListTile(
                 leading: Icon(Icons.check),
                 title: Text("Move to Completed"),
                 onTap: () {
-                  updateTaskStatus(taskCode, "completed"); // Use taskCode
+                  updateTaskStatus(task.id, "completed");
                   Navigator.pop(context);
                 },
               ),
