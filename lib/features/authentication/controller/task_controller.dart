@@ -28,6 +28,17 @@ class TaskController extends GetxController {
         tasks.value = (response as List)
             .map((item) => Task.fromJson(item))
             .toList();
+        
+        // Sort tasks by created date (newest first)
+        tasks.sort((a, b) {
+          // If either task doesn't have a createdAt date, use a fallback comparison
+          if (a.createdAt == null || b.createdAt == null) {
+            if (a.createdAt == null && b.createdAt == null) return 0;
+            return a.createdAt == null ? 1 : -1; // Null dates go to the end
+          }
+          // Compare dates in reverse order (newest first)
+          return b.createdAt!.compareTo(a.createdAt!);
+        });
       }
     } catch (e) {
       print("Error fetching tasks: $e");

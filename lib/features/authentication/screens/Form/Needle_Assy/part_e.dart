@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oji_1/features/authentication/controller/Form/E/form_e_needleassy_controller.dart';
+import 'package:oji_1/features/authentication/controller/Form/E/form_e_needle_assy_controller.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 

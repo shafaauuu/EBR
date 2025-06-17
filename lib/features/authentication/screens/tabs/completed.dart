@@ -59,7 +59,7 @@ class _CompletedPageState extends State<CompletedPage> {
                   icon: const Icon(Icons.date_range, color: Colors.white),
                   label: Text(
                     selectedDate == null
-                        ? 'Filter by Date'
+                        ? 'Filter by Creation Date'
                         : selectedDate.toString().substring(0, 10),
                     style: const TextStyle(color: Colors.white),
                   ),

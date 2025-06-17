@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:signature/signature.dart';
-import '../../../controller/Form/G/form_g_needle_assy.dart';
+import '../../../controller/Form/G/form_g_needle_assy_controller.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:convert';

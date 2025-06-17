@@ -420,20 +420,11 @@ class _TaskDetailsState extends State<TaskDetails> {
   }
 
   Widget _buildShiftButton() {
-    final storage = GetStorage();
-    final firstName = storage.read("first_name") ?? "First Name";
-    final inisial = storage.read("inisial") ?? "-";
-    final group = storage.read("group") ?? "-";
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
         onTap: () {
-          controller.showShiftInputDialog(
-            firstName: widget.task.firstName ?? firstName,
-            inisial: widget.task.inisial ?? inisial,
-            group: widget.task.group ?? group,
-          );
+          controller.showShiftInputDialog();
         },
         child: Align(
           alignment: Alignment.center,
@@ -449,15 +440,31 @@ class _TaskDetailsState extends State<TaskDetails> {
                   Colors.orange.shade400,
                 ],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: const Text(
-              "Transfer Record To Next Shift",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-              softWrap: true,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.swap_horiz,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "Shift Transfer",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

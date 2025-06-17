@@ -5,33 +5,62 @@ import 'dart:io';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
+import '../../../controller/Form/F/form_f_needle_assy_controller.dart';
 
 
 class PartF_NeedleAssy extends StatefulWidget {
-  final Task? task;
+  final Task task;
 
-  const PartF_NeedleAssy({super.key, this.task});
+  const PartF_NeedleAssy({super.key, required this.task});
 
   @override
   _PartF_NeedleAssyState createState() => _PartF_NeedleAssyState();
 }
 
 class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
-  final TaskDetailsController controller = Get.put(TaskDetailsController());
+  final TaskDetailsController taskController = Get.put(TaskDetailsController());
+  final FormFNeedleAssyController formController = Get.put(FormFNeedleAssyController());
 
-  File? _image;
+  File? _labelMesinImage;
+  File? _label2Image;
   final ImagePicker _picker = ImagePicker();
+  bool _isSubmitting = false;
 
-  Future<void> _pickImage(ImageSource source) async {
+  @override
+  void initState() {
+    super.initState();
+    formController.setTaskInfo(widget.task);
+
+    ever(formController.existingFormData, (data) {
+      if (data != null) {
+        // If we have existing data, we can show it in the UI
+        // This would be useful for viewing or editing existing forms
+        // But for this form with images, we can't directly display the binary data
+      }
+    });
+  }
+
+  Future<void> _pickLabelMesinImage(ImageSource source) async {
     final XFile? pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        _labelMesinImage = File(pickedFile.path);
+        formController.setLabelMesin(_labelMesinImage!);
       });
     }
   }
 
-  void _showImageSourceDialog(BuildContext context) {
+  Future<void> _pickLabel2Image(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _label2Image = File(pickedFile.path);
+        formController.setLabel2(_label2Image!);
+      });
+    }
+  }
+
+  void _showImageSourceDialog(BuildContext context, bool isLabelMesin) {
     ArtSweetAlert.show(
       context: context,
       artDialogArgs: ArtDialogArgs(
@@ -42,15 +71,63 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
         cancelButtonText: "Gallery",
         confirmButtonText: "Camera",
         onConfirm: () {
-          _pickImage(ImageSource.camera);
+          isLabelMesin ? _pickLabelMesinImage(ImageSource.camera) : _pickLabel2Image(ImageSource.camera);
           return true;
         },
         onCancel: () {
-          _pickImage(ImageSource.gallery);
+          isLabelMesin ? _pickLabelMesinImage(ImageSource.gallery) : _pickLabel2Image(ImageSource.gallery);
           return true;
         },
       ),
     );
+  }
+
+  Future<void> _submitForm() async {
+    if (_labelMesinImage == null || _label2Image == null) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.warning,
+          title: "Missing Images",
+          text: "Please upload both required images",
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final result = await formController.submitForm();
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (result) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.success,
+          title: "Success",
+          text: formController.successMessage.value,
+          onConfirm: () {
+            Get.back();
+            return true;
+          },
+        ),
+      );
+    } else {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Error",
+          text: formController.errorMessage.value,
+        ),
+      );
+    }
   }
 
   @override
@@ -63,7 +140,9 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
+      body: Obx(() => formController.isLoading.value
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -98,8 +177,8 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          _buildAlignedText("P/C Code", widget.task?.code ?? "N/A"),
-                          _buildAlignedText("P/C Name", widget.task?.name ?? "N/A"),
+                          _buildAlignedText("P/C Code", widget.task.code ?? "N/A"),
+                          _buildAlignedText("P/C Name", widget.task.name ?? "N/A"),
                         ],
                       ),
                     ),
@@ -111,7 +190,7 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                          Obx(() => _buildAlignedText("BRM No.", taskController.selectedBRM.value)),
                           _buildAlignedText("Rev No.", ""),
                           _buildAlignedText("Eff. Date", ""),
                         ],
@@ -124,11 +203,11 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
               const Divider(thickness: 1),
               const SizedBox(height: 16),
 
-              // Title
+              // Label Mesin Section
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Take Photo of Label",
+                  "Take Photo of Label Mesin",
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.blue,
@@ -138,41 +217,86 @@ class _PartF_NeedleAssyState extends State<PartF_NeedleAssy> {
               ),
               const SizedBox(height: 8),
 
-              // Photo Insert Field (Updated)
+              // Label Mesin Photo Field
               GestureDetector(
-                onTap: () => _showImageSourceDialog(context),
+                onTap: () => _showImageSourceDialog(context, true),
                 child: Container(
-                  height: 400,
+                  height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(8),
                     color: Colors.grey[200],
                   ),
-                  child: _image == null
+                  child: _labelMesinImage == null
                       ? const Center(
                     child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
                   )
-                      : Image.file(_image!, fit: BoxFit.cover),
+                      : Image.file(_labelMesinImage!, fit: BoxFit.cover),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+
+              // Label 2 Section
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Take Photo of Second Label",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Label 2 Photo Field
+              GestureDetector(
+                onTap: () => _showImageSourceDialog(context, false),
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[200],
+                  ),
+                  child: _label2Image == null
+                      ? const Center(
+                    child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                  )
+                      : Image.file(_label2Image!, fit: BoxFit.cover),
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               // Submit Button
               Center(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isSubmitting ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text("Submit", style: TextStyle(fontSize: 16)),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                      : const Text("Submit", style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:oji_1/common/api.dart';
 import '../models/material_model.dart';
-import '../models/task_model.dart';
-import '../screens/Form/Assy_Syringe/part_c.dart';
+import 'package:get_storage/get_storage.dart';
 
 class TaskDetailsController extends GetxController {
   var selectedMaterialCode = ''.obs;
@@ -18,6 +15,35 @@ class TaskDetailsController extends GetxController {
   var isLoading = false.obs; // To track loading state
   var errorMessage = ''.obs; // To show error messages if any
   Map<String, String?> selectedValues = {};
+
+  // For shift management
+  var selectedGroup = ''.obs;
+  var selectedPerson = ''.obs;
+  var availableGroups = ['Group A', 'Group B', 'Group C', 'Group D'].obs;
+  
+  // Mock data for people in each group
+  final Map<String, List<Map<String, String>>> groupPeople = {
+    'Group A': [
+      {'name': 'John Doe', 'inisial': 'JD'},
+      {'name': 'Jane Smith', 'inisial': 'JS'},
+      {'name': 'Alex Johnson', 'inisial': 'AJ'},
+    ],
+    'Group B': [
+      {'name': 'Robert Brown', 'inisial': 'RB'},
+      {'name': 'Mary Williams', 'inisial': 'MW'},
+      {'name': 'David Miller', 'inisial': 'DM'},
+    ],
+    'Group C': [
+      {'name': 'Sarah Davis', 'inisial': 'SD'},
+      {'name': 'Michael Wilson', 'inisial': 'MW'},
+      {'name': 'Emily Taylor', 'inisial': 'ET'},
+    ],
+    'Group D': [
+      {'name': 'James Anderson', 'inisial': 'JA'},
+      {'name': 'Patricia Thomas', 'inisial': 'PT'},
+      {'name': 'Richard Jackson', 'inisial': 'RJ'},
+    ],
+  };
 
   var sectionCompletion = <String, bool>{
     "A": false,
@@ -46,70 +72,127 @@ class TaskDetailsController extends GetxController {
     sectionCompletion[key] = true;
   }
 
-
-  void showShiftInputDialog({
-    required String firstName,
-    required String inisial,
-    required String group,
-  }) {
+  void showShiftInputDialog() {
+    final storage = GetStorage();
+    final firstName = storage.read("first_name") ?? "First Name";
+    final inisial = storage.read("inisial") ?? "-";
+    final group = storage.read("group") ?? "-";
+    
+    // Reset selections
+    selectedGroup.value = '';
+    selectedPerson.value = '';
+    
     Get.dialog(
       AlertDialog(
-        title: const Text("Shift Transfer"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Name: $firstName"),
-            Text("Inisial: $inisial"),
-            Text("Group: $group"),
-            const SizedBox(height: 12),
-            TextField(
-              controller: shiftController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(1),
-              ],
-              decoration: const InputDecoration(
-                labelText: "Enter Shift Group",
-                border: OutlineInputBorder(),
+        title: const Text("Shift Transfer", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Current user info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Current User", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+                    const SizedBox(height: 8),
+                    Text("Name: $firstName"),
+                    Text("Inisial: $inisial"),
+                    Text("Group: $group"),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              const Text("Transfer to:", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              
+              // Group dropdown
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: 'Select Group',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                value: selectedGroup.value.isEmpty ? null : selectedGroup.value,
+                items: availableGroups.map((String group) {
+                  return DropdownMenuItem<String>(
+                    value: group,
+                    child: Text(group),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    selectedGroup.value = newValue;
+                    selectedPerson.value = ''; // Reset person selection
+                  }
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Person dropdown (only shown if group is selected)
+              Obx(() => selectedGroup.value.isNotEmpty
+                ? DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Select Person',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    value: selectedPerson.value.isEmpty ? null : selectedPerson.value,
+                    items: groupPeople[selectedGroup.value]?.map((person) {
+                      return DropdownMenuItem<String>(
+                        value: person['name'],
+                        child: Text("${person['name']} (${person['inisial']})"),
+                      );
+                    }).toList() ?? [],
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        selectedPerson.value = newValue;
+                      }
+                    },
+                  )
+                : const SizedBox.shrink()
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
             child: const Text("Cancel"),
           ),
-          TextButton(
-            onPressed: () {
-              String shiftName = shiftController.text;
-              if (shiftName.isNotEmpty) {
-                Get.back();
-                Get.snackbar(
-                  "Success",
-                  "Shift transferred to Group $shiftName",
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                );
-              } else {
-                Get.snackbar(
-                  "Error",
-                  "Shift name cannot be empty",
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.red,
-                  colorText: Colors.white,
-                );
-              }
-            },
-            child: const Text("Confirm"),
-          ),
+          Obx(() => ElevatedButton(
+            onPressed: selectedGroup.value.isNotEmpty && selectedPerson.value.isNotEmpty
+              ? () {
+                  // Here you would handle the shift transfer
+                  // For now, just show a success message
+                  Get.back();
+                  Get.snackbar(
+                    'Success',
+                    'Shift transferred to ${selectedPerson.value} from ${selectedGroup.value}',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                }
+              : null,
+            child: const Text("Transfer"),
+          )),
         ],
       ),
     );
   }
+
+  // Observable BRM List
+  RxList<String> brmList = <String>[].obs;
 
   String getTaskStatusTitle(String status) {
     switch (status.toLowerCase()) {
@@ -123,9 +206,6 @@ class TaskDetailsController extends GetxController {
         return "Task Details";
     }
   }
-
-  // Observable BRM List
-  RxList<String> brmList = <String>[].obs;
 
   // Selected BRM
   RxString selectedBRM = ''.obs;
@@ -393,4 +473,3 @@ class TaskDetailsController extends GetxController {
     update(); // triggers UI refresh if using GetBuilder
   }
 }
-
