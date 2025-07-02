@@ -86,6 +86,7 @@ class _PartDState extends State<PartD> {
      parameterRows = [
        {'name': 'Print Machine Speed', 'code': 'print_match_speed', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Assy Machine Speed', 'code': 'assy_match_speed', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Silicon Spray', 'code': 'silicon_spray', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Actual Running', 'code': 'actual_running', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Run Awal', 'code': 'run_awal', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'list', 'type': 'number'},
