@@ -46,29 +46,10 @@ class _PartDState extends State<PartD> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
-  // Dropdown data and states
-  List<String> plungerDropdownItems = ['Item A', 'Item B'];
-  String? selectedPlungerItem;
-  void onPlungerChanged(String? val) => setState(() => selectedPlungerItem = val);
-
-  List<String> barrelDropdownItems = ['Item C', 'Item D'];
-  String? selectedBarrelItem;
-  void onBarrelChanged(String? val) => setState(() => selectedBarrelItem = val);
-
-  List<String> needleDropdownItems = ['Item E', 'Item F'];
-  String? selectedNeedleItem;
-  void onNeedleChanged(String? val) => setState(() => selectedNeedleItem = val);
-
-  // Controllers for each field (5 fields per item)
-  List<TextEditingController> plungerControllers = List.generate(8, (_) => TextEditingController());
-  List<TextEditingController> barrelControllers = List.generate(8, (_) => TextEditingController());
-  List<TextEditingController> needleControllers = List.generate(8, (_) => TextEditingController());
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Get the BRM number from the task controller
       String brmNo = controller.selectedBRM.value;
       // Fetch machines by task
       getForm();
@@ -79,18 +60,24 @@ class _PartDState extends State<PartD> {
    displayData = await formDController.getForm(widget.task.id.toString());
    if (displayData["machine_type"] == "fcs_shi") {
      parameterRows = [
-       {'name': 'Temp Nozzle Z1', 'code': 'temp_nozzle_z1', 'controller': null},
-       {'name': 'Temp Nozzle Z2', 'code': 'temp_nozzle_z2', 'controller': null},
-       {'name': 'Temp Nozzle Z3', 'code': 'temp_nozzle_z3', 'controller': null},
-       {'name': 'Temp Nozzle Z4', 'code': 'temp_nozzle_z4', 'controller': null},
-       {'name': 'Temp Nozzle Z5', 'code': 'temp_nozzle_z5', 'controller': null},
-       {'name': 'Temp Mold', 'code': 'temp_mold', 'controller': null},
-       {'name': 'Inject Pressure', 'code': 'inject_pressure', 'controller': null},
-       {'name': 'Inject Time', 'code': 'inject_time', 'controller': null},
-       {'name': 'Holding Pressure', 'code': 'holding_pressure', 'controller': null},
-       {'name': 'Holding Time', 'code': 'holding_time', 'controller': null},
-       {'name': 'Eject Counter', 'code': 'eject_counter', 'controller': null},
-       {'name': 'Cycle Time', 'code': 'cycle_time', 'controller': null},
+       {'name': 'Temp Nozzle Z1', 'code': 'temp_nozzle_z1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temp Nozzle Z2', 'code': 'temp_nozzle_z2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temp Nozzle Z3', 'code': 'temp_nozzle_z3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temp Nozzle Z4', 'code': 'temp_nozzle_z4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temp Nozzle Z5', 'code': 'temp_nozzle_z5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temp Mold', 'code': 'temp_mold', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Inject Pressure', 'code': 'inject_pressure', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Inject Time', 'code': 'inject_time', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure', 'code': 'holding_pressure', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Time', 'code': 'holding_time', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Eject Counter', 'code': 'eject_counter', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Cycle Time', 'code': 'cycle_time', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Master Batch', 'code': 'masterbatch', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Product', 'code': 'berat_produk', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Runner', 'code': 'berat_runner', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'list', 'type': 'number'},
      ];
 
 
@@ -112,115 +99,298 @@ class _PartDState extends State<PartD> {
    } else if (displayData["machine_type"] == "blister") {
      // Add Blister parameters
      parameterRows = [
-       {'name': 'Forming Time', 'code': 'forming_time', 'controller': null},
-       {'name': 'Forming Temperature', 'code': 'forming_temperature', 'controller': null},
-       {'name': 'Forming Pressure', 'code': 'forming_pressure', 'controller': null},
-       {'name': 'Sealing Temperature', 'code': 'sealing_temperature', 'controller': null},
-       {'name': 'Sealing Pressure', 'code': 'sealing_pressure', 'controller': null},
-       {'name': 'Sealing Time', 'code': 'sealing_time', 'controller': null},
-       {'name': 'Cycle Time', 'code': 'cycle_time', 'controller': null},
-       {'name': 'Manufacturing Date', 'code': 'mfg_date', 'controller': null},
-       {'name': 'Expiration Date', 'code': 'exp_date', 'controller': null},
-       {'name': 'Needle Size', 'code': 'needle_size', 'controller': null},
-       {'name': 'NIE', 'code': 'nie', 'controller': null},
+       {'name': 'Forming Time', 'code': 'forming_time', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Forming Temperature', 'code': 'forming_temperature', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Forming Pressure', 'code': 'forming_pressure', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Sealing Temperature', 'code': 'sealing_temperature', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Sealing Pressure', 'code': 'sealing_pressure', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Sealing Time', 'code': 'sealing_time', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Cycle Time', 'code': 'cycle_time', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Manufacturing Date', 'code': 'mfg_date', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Expiration Date', 'code': 'exp_date', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Needle Size', 'code': 'needle_size', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'NIE', 'code': 'nie', 'controller': null,'position': 'table', 'type': 'number'},
      ];
 
 
-   // } else if (isSgp || machineType == 'sgp') {
-   //   // Add SGP parameters
-   //   parameterRows = [
-   //     {'name': 'Material Type', 'code': 'material_type', 'controller': null},
-   //     {'name': 'Mold Temperature', 'code': 'mold_temperature', 'controller': null},
-   //     {'name': 'Injection Pressure', 'code': 'injection_pressure', 'controller': null},
-   //     {'name': 'Injection Speed', 'code': 'injection_speed', 'controller': null},
-   //     {'name': 'Holding Pressure', 'code': 'holding_pressure', 'controller': null},
-   //     {'name': 'Holding Time', 'code': 'holding_time', 'controller': null},
-   //     {'name': 'Cooling Time', 'code': 'cooling_time', 'controller': null},
-   //     {'name': 'Temperature 1', 'code': 'temp1', 'controller': null},
-   //     {'name': 'Temperature 2', 'code': 'temp2', 'controller': null},
-   //     {'name': 'Temperature 3', 'code': 'temp3', 'controller': null},
-   //     {'name': 'Temperature 4', 'code': 'temp4', 'controller': null},
-   //   ];
-   //
-   //   // Set controller values
-   // } else if (isShi1 || isShi2) {
-   //   // Add SHI-1 or SHI-2 parameters
-   //   parameterRows = [
-   //     // Open Position parameters
-   //     {'name': 'Open Position - Open Limit', 'code': 'open_position_openlimit', 'controller': null},
-   //     {'name': 'Open Position - Second', 'code': 'open_position_second', 'controller': null},
-   //     {'name': 'Open Position - First', 'code': 'open_position_first', 'controller': null},
-   //
-   //     // Open Velocity parameters
-   //     {'name': 'Open Velocity - Open Limit', 'code': 'open_velocity_openlimit', 'controller': null},
-   //     {'name': 'Open Velocity - Second', 'code': 'open_velocity_second', 'controller': null},
-   //     {'name': 'Open Velocity - First', 'code': 'open_velocity_first', 'controller': null},
-   //
-   //     // Close Position parameters
-   //     {'name': 'Close Position - Clamp', 'code': 'close_position_clamp', 'controller': null},
-   //     {'name': 'Close Position - Second', 'code': 'close_position_second', 'controller': null},
-   //     {'name': 'Close Position - First', 'code': 'close_position_first', 'controller': null},
-   //
-   //     // Close Velocity parameters
-   //     {'name': 'Close Velocity - Clamp', 'code': 'close_velocity_clamp', 'controller': null},
-   //     {'name': 'Close Velocity - Second', 'code': 'close_velocity_second', 'controller': null},
-   //     {'name': 'Close Velocity - First', 'code': 'close_velocity_first', 'controller': null},
-   //
-   //     // Ejector parameters
-   //     {'name': 'Ejector Position - Eject', 'code': 'ejector_position_eject', 'controller': null},
-   //     {'name': 'Ejector Position - First', 'code': 'ejector_position_first', 'controller': null},
-   //     {'name': 'Ejector Velocity - Eject', 'code': 'ejector_velocity_eject', 'controller': null},
-   //     {'name': 'Ejector Velocity - First', 'code': 'ejector_velocity_first', 'controller': null},
-   //
-   //     // Temperature parameters
-   //     {'name': 'Temperature Z1', 'code': 'temperature_z1', 'controller': null},
-   //     {'name': 'Temperature Z2', 'code': 'temperature_z2', 'controller': null},
-   //     {'name': 'Temperature Z3', 'code': 'temperature_z3', 'controller': null},
-   //     {'name': 'Temperature Z4', 'code': 'temperature_z4', 'controller': null},
-   //     {'name': 'Temperature Z5', 'code': 'temperature_z5', 'controller': null},
-   //     {'name': 'Temperature Feeder', 'code': 'temperature_feeder', 'controller': null},
-   //
-   //     // Purging parameters
-   //     {'name': 'Purging Z1', 'code': 'purging_z1', 'controller': null},
-   //     {'name': 'Purging Z2', 'code': 'purging_z2', 'controller': null},
-   //     {'name': 'Purging Z3', 'code': 'purging_z3', 'controller': null},
-   //     {'name': 'Purging Z4', 'code': 'purging_z4', 'controller': null},
-   //     {'name': 'Purging Z5', 'code': 'purging_z5', 'controller': null},
-   //     {'name': 'Purging Feeder', 'code': 'purging_feeder', 'controller': null},
-   //
-   //     // Filling parameters
-   //     {'name': 'Filling Position VP', 'code': 'filling_position_vp', 'controller': null},
-   //     {'name': 'Filling Position First', 'code': 'filling_position_first', 'controller': null},
-   //     {'name': 'Filling Velocity VP', 'code': 'filling_velocity_vp', 'controller': null},
-   //     {'name': 'Filling Velocity First', 'code': 'filling_velocity_first', 'controller': null},
-   //     {'name': 'Filling Pressure', 'code': 'filling_pressure', 'controller': null},
-   //     {'name': 'Fill Time Limit', 'code': 'fill_time_limit', 'controller': null},
-   //
-   //     // Holding parameters
-   //     {'name': 'Holding Time Second', 'code': 'holding_time_second', 'controller': null},
-   //     {'name': 'Holding Time First', 'code': 'holding_time_first', 'controller': null},
-   //     {'name': 'Holding Pressure Second', 'code': 'holding_pressure_second', 'controller': null},
-   //     {'name': 'Holding Pressure First', 'code': 'holding_pressure_first', 'controller': null},
-   //     {'name': 'Holding Velocity', 'code': 'holding_velocity', 'controller': null},
-   //
-   //     // Plasticizing parameters
-   //     {'name': 'Plasticizing Pullback Position', 'code': 'plastictizing_pullback_position', 'controller': null},
-   //     {'name': 'Plasticizing Pullback Velocity', 'code': 'plastictizing_pullback_velocity', 'controller': null},
-   //     {'name': 'Plasticizing Dose1 Position', 'code': 'plastictizing_dose1_position', 'controller': null},
-   //     {'name': 'Plasticizing Dose1 Backpress', 'code': 'plastictizing_dose1_backpress', 'controller': null},
-   //     {'name': 'Plasticizing Dose1 Rotation', 'code': 'plastictizing_dose1_rotation', 'controller': null},
-   //     {'name': 'Plasticizing Dose2 Position', 'code': 'plastictizing_dose2_position', 'controller': null},
-   //     {'name': 'Plasticizing Dose2 Backpress', 'code': 'plastictizing_dose2_backpress', 'controller': null},
-   //     {'name': 'Plasticizing Dose2 Rotation', 'code': 'plastictizing_dose2_rotation', 'controller': null},
-   //     {'name': 'Plasticizing End Position', 'code': 'plastictizing_end_position', 'controller': null},
-   //     {'name': 'Plasticizing End Backpress', 'code': 'plastictizing_end_backpress', 'controller': null},
-   //     {'name': 'Plasticizing End Rotation', 'code': 'plastictizing_end_rotation', 'controller': null},
-   //     {'name': 'Plasticizing Forward Position', 'code': 'plastictizing_forward_position', 'controller': null},
-   //     {'name': 'Plasticizing Forward Velocity', 'code': 'plastictizing_forward_velocity', 'controller': null},
-   //     {'name': 'Plasticizing Cooling', 'code': 'plastictizing_cooling', 'controller': null},
-   //     {'name': 'Plasticizing Time Limit', 'code': 'plastictizing_time_limit', 'controller': null},
-   //   ];
-   //
+   } else if (displayData["machine_type"] == "sgp") {
+     parameterRows = [
+       {'name': 'Temperature 1', 'code': 'temp1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature 2', 'code': 'temp2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature 3', 'code': 'temp3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature 4', 'code': 'temp4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Load Cap', 'code': 'load_cap', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Load Hub', 'code': 'load_hub', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Load Needle', 'code': 'load_needle', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Hasil Epoxy', 'code': 'hasil_epoxy', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Pressure Actual', 'code': 'pressure_actual', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Pressure Status', 'code': 'pressure_status', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Low Epoxy 1', 'code': 'low_epoxy1', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Low Epoxy 2', 'code': 'low_epoxy2', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Low Epoxy 3', 'code': 'low_epoxy3', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Hub Cannula 1', 'code': 'hub_cannula1', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Hub Cannula 2', 'code': 'hub_cannula2', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Hub Cannula 3', 'code': 'hub_cannula3', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Exc Epoxy 1', 'code': 'exc_epoxy1', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Exc Epoxy 2', 'code': 'exc_epoxy2', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Exc Epoxy 3', 'code': 'exc_epoxy3', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Tumpul 1', 'code': 'needle_tumpul1', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Tumpul 2', 'code': 'needle_tumpul2', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Tumpul 3', 'code': 'needle_tumpul3', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Balik 1', 'code': 'needle_balik1', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Balik 2', 'code': 'needle_balik2', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Balik 3', 'code': 'needle_balik3', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Tersumbat 1', 'code': 'needle_tersumbat1', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Tersumbat 2', 'code': 'needle_tersumbat2', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Needle Tersumbat 3', 'code': 'needle_tersumbat3', 'controller': null, 'position': 'table', 'type': 'bool'},
+       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Berat Product', 'code': 'berat_product', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'table', 'type': 'number'},
+     ];
+
+   } else if (displayData["machine_type"] == "fcs") {
+     parameterRows = [
+       {'name': 'Open Position Slow', 'code': 'open_position_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Fast', 'code': 'open_position_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Mid', 'code': 'open_position_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Dec', 'code': 'open_position_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Speed Slow', 'code': 'open_speed_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Speed Fast', 'code': 'open_speed_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Speed Mid', 'code': 'open_speed_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Speed Dec', 'code': 'open_speed_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Sealing Temperature', 'code': 'sealing_temperature', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Pressure Slow', 'code': 'open_pressure_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Pressure Fast', 'code': 'open_pressure_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Pressure Mid', 'code': 'open_pressure_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Pressure Dec', 'code': 'open_pressure_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Slow', 'code': 'close_position_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Fast', 'code': 'close_position_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Mid', 'code': 'close_position_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Dec', 'code': 'close_position_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Slow', 'code': 'close_speed_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Fast', 'code': 'close_speed_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Mid', 'code': 'close_speed_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Dec', 'code': 'close_speed_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Slow', 'code': 'close_pressure_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Fast', 'code': 'close_pressure_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Mid', 'code': 'close_pressure_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Dec', 'code': 'close_pressure_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Slow', 'code': 'close_position_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Fast', 'code': 'close_position_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Mid', 'code': 'close_position_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Dec', 'code': 'close_position_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Slow', 'code': 'close_speed_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Fast', 'code': 'close_speed_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Mid', 'code': 'close_speed_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Speed Dec', 'code': 'close_speed_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Slow', 'code': 'close_pressure_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Fast', 'code': 'close_pressure_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Mid', 'code': 'close_pressure_mid', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Pressure Dec', 'code': 'close_pressure_dec', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Position Ret2', 'code': 'ejector_position_ret2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Position Ret1', 'code': 'ejector_position_ret1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Position Adv2', 'code': 'ejector_position_adv2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Position Adv1', 'code': 'ejector_position_adv1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Speed Ret2', 'code': 'ejector_speed_ret2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Speed Ret1', 'code': 'ejector_speed_ret1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Speed Adv2', 'code': 'ejector_speed_adv2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Speed Adv1', 'code': 'ejector_speed_adv1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Pressure Ret2', 'code': 'ejector_pressure_ret2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Pressure Ret1', 'code': 'ejector_pressure_ret1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Pressure Adv2', 'code': 'ejector_pressure_adv2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Ejector Pressure Adv1', 'code': 'ejector_pressure_adv1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Sv Sect1', 'code': 'temperature_sv_sect1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Sv Sect2', 'code': 'temperature_sv_sect2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Sv Sect3', 'code': 'temperature_sv_sect3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Sv Sect4', 'code': 'temperature_sv_sect4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Sv Sect5', 'code': 'temperature_sv_sect5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Sv Sect6', 'code': 'temperature_sv_sect6', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pv Sect1', 'code': 'temperature_pv_sect1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pv Sect2', 'code': 'temperature_pv_sect2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pv Sect3', 'code': 'temperature_pv_sect3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pv Sect4', 'code': 'temperature_pv_sect4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pv Sect5', 'code': 'temperature_pv_sect5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pv Sect6', 'code': 'temperature_pv_sect6', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pre Sect1', 'code': 'temperature_pre_sect1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pre Sect2', 'code': 'temperature_pre_sect2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pre Sect3', 'code': 'temperature_pre_sect3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pre Sect4', 'code': 'temperature_pre_sect4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pre Sect5', 'code': 'temperature_pre_sect5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Pre Sect6', 'code': 'temperature_pre_sect6', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Max Sect1', 'code': 'temperature_max_sect1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Max Sect2', 'code': 'temperature_max_sect2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Max Sect3', 'code': 'temperature_max_sect3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Max Sect4', 'code': 'temperature_max_sect4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Max Sect5', 'code': 'temperature_max_sect5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Max Sect6', 'code': 'temperature_max_sect6', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Low Sect1', 'code': 'temperature_low_sect1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Low Sect2', 'code': 'temperature_low_sect2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Low Sect3', 'code': 'temperature_low_sect3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Low Sect4', 'code': 'temperature_low_sect4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Low Sect5', 'code': 'temperature_low_sect5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Low Sect6', 'code': 'temperature_low_sect6', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position Inj5', 'code': 'filling_position_inj5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position Inj4', 'code': 'filling_position_inj4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position Inj3', 'code': 'filling_position_inj3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position Inj2', 'code': 'filling_position_inj2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position Inj1', 'code': 'filling_position_inj1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity Inj5', 'code': 'filling_velocity_inj5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity Inj4', 'code': 'filling_velocity_inj4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity Inj3', 'code': 'filling_velocity_inj3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity Inj2', 'code': 'filling_velocity_inj2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity Inj1', 'code': 'filling_velocity_inj1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Pressure Inj5', 'code': 'filling_pressure_inj5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Pressure Inj4', 'code': 'filling_pressure_inj4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Pressure Inj3', 'code': 'filling_pressure_inj3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Pressure Inj2', 'code': 'filling_pressure_inj2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Pressure Inj1', 'code': 'filling_pressure_inj1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Time Inj5', 'code': 'filling_time_inj5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Time Inj4', 'code': 'filling_time_inj4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Time Inj3', 'code': 'filling_time_inj3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Time Inj2', 'code': 'filling_time_inj2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Time Inj1', 'code': 'filling_time_inj1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Speed Hdp4', 'code': 'holding_speed_hdp4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Speed Hdp3', 'code': 'holding_speed_hdp3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Speed Hdp2', 'code': 'holding_speed_hdp2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Speed Hdp1', 'code': 'holding_speed_hdp1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure Hdp4', 'code': 'holding_pressure_hdp4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure Hdp3', 'code': 'holding_pressure_hdp3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure Hdp2', 'code': 'holding_pressure_hdp2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure Hdp1', 'code': 'holding_pressure_hdp1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Back Pre', 'code': 'charging_back_pre', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Back Charge1', 'code': 'charging_back_charge1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Back Charge2', 'code': 'charging_back_charge2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Back Charge3', 'code': 'charging_back_charge3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Back Post', 'code': 'charging_back_post', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Speed Pre', 'code': 'charging_speed_pre', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Speed Charge1', 'code': 'charging_speed_charge1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Speed Charge2', 'code': 'charging_speed_charge2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Speed Charge3', 'code': 'charging_speed_charge3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Speed Post', 'code': 'charging_speed_post', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Pressure Pre', 'code': 'charging_pressure_pre', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Pressure Charge1', 'code': 'charging_pressure_charge1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Pressure Charge2', 'code': 'charging_pressure_charge2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Pressure Charge3', 'code': 'charging_pressure_charge3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Pressure Post', 'code': 'charging_pressure_post', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Position Pre', 'code': 'charging_position_pre', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Position Charge1', 'code': 'charging_position_charge1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Position Charge2', 'code': 'charging_position_charge2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Position Charge3', 'code': 'charging_position_charge3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Charging Position Post', 'code': 'charging_position_post', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Velocity Slow', 'code': 'purge_velocity_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Velocity Fast', 'code': 'purge_velocity_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Velocity Back', 'code': 'purge_velocity_back', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Pressure Slow', 'code': 'purge_pressure_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Pressure Back', 'code': 'purge_pressure_back', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Pressure Fast', 'code': 'purge_pressure_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Position Slow', 'code': 'purge_position_slow', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Position Fast', 'code': 'purge_position_fast', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Purge Position Back', 'code': 'purge_position_back', 'controller': null, 'position': 'table', 'type': 'number'},
+     ];
+
+     } else if (displayData["machine_type"] == "shi1") {
+     parameterRows = [
+       {'name': 'Open Position Openlimit', 'code': 'open_position_openlimit', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Second', 'code': 'open_position_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position First', 'code': 'open_position_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity Openlimit', 'code': 'open_velocity_openlimit', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity Second', 'code': 'open_velocity_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity First', 'code': 'open_velocity_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Clamp', 'code': 'close_position_clamp', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Second', 'code': 'close_position_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position First', 'code': 'close_position_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity Clamp', 'code': 'close_velocity_clamp', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity Second', 'code': 'close_velocity_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity First', 'code': 'close_velocity_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z1', 'code': 'temperature_z1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z2', 'code': 'temperature_z2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z3', 'code': 'temperature_z3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z4', 'code': 'temperature_z4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z5', 'code': 'temperature_z5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Feeder', 'code': 'temperature_feeder', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position VP', 'code': 'filling_position_vp', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position First', 'code': 'filling_position_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity VP', 'code': 'filling_velocity_vp', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity First', 'code': 'filling_velocity_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Time Second', 'code': 'holding_time_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Time First', 'code': 'holding_time_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure Second', 'code': 'holding_pressure_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure First', 'code': 'holding_pressure_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Pullback Position', 'code': 'plastictizing_pullback_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Pullback Velocity', 'code': 'plastictizing_pullback_velocity', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Dose1 Position', 'code': 'plastictizing_dose1_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Dose1 Backpress', 'code': 'plastictizing_dose1_backpress', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Dose1 Rotation', 'code': 'plastictizing_dose1_rotation', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing End Position', 'code': 'plastictizing_end_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing End Backpress', 'code': 'plastictizing_end_backpress', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing End Rotation', 'code': 'plastictizing_end_rotation', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Forward Position', 'code': 'plastictizing_forward_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Forward Velocity', 'code': 'plastictizing_forward_velocity', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Cooling', 'code': 'plastictizing_cooling', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Berat Runner', 'code': 'berat_runner', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'list', 'type': 'number'},
+     ];
+
+   } else if (displayData["machine_type"] == "shi2") {
+     parameterRows = [
+       {'name': 'Open Position Openlimit', 'code': 'open_position_openlimit', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Forth', 'code': 'open_position_forth', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Third', 'code': 'open_position_third', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position Second', 'code': 'open_position_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Position First', 'code': 'open_position_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity Limit', 'code': 'open_velocity_limit', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity Forth', 'code': 'open_velocity_forth', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity Third', 'code': 'open_velocity_third', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity Second', 'code': 'open_velocity_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Open Velocity First', 'code': 'open_velocity_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Limit', 'code': 'close_position_limit', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Forth', 'code': 'close_position_forth', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Third', 'code': 'close_position_third', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position Second', 'code': 'close_position_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Position First', 'code': 'close_position_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity Limit', 'code': 'close_velocity_limit', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity Forth', 'code': 'close_velocity_forth', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity Third', 'code': 'close_velocity_third', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity Second', 'code': 'close_velocity_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Close Velocity First', 'code': 'close_velocity_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z1', 'code': 'temperature_z1', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z2', 'code': 'temperature_z2', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z3', 'code': 'temperature_z3', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z4', 'code': 'temperature_z4', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Temperature Z5', 'code': 'temperature_z5', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position VP', 'code': 'filling_position_vp', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Position First', 'code': 'filling_position_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity VP', 'code': 'filling_velocity_vp', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Filling Velocity First', 'code': 'filling_velocity_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Time Second', 'code': 'holding_time_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Time First', 'code': 'holding_time_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure Second', 'code': 'holding_pressure_second', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Holding Pressure First', 'code': 'holding_pressure_first', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Pullback Position', 'code': 'plastictizing_pullback_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Pullback Velocity', 'code': 'plastictizing_pullback_velocity', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Dose1 Position', 'code': 'plastictizing_dose1_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Dose1 Backpress', 'code': 'plastictizing_dose1_backpress', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Dose1 Rotation', 'code': 'plastictizing_dose1_rotation', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing End Position', 'code': 'plastictizing_end_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing End Backpress', 'code': 'plastictizing_end_backpress', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing End Rotation', 'code': 'plastictizing_end_rotation', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Forward Position', 'code': 'plastictizing_forward_position', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Forward Velocity', 'code': 'plastictizing_forward_velocity', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Plastictizing Cooling', 'code': 'plastictizing_cooling', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Runner', 'code': 'berat_runner', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'list', 'type': 'number'},
+     ];
    }
    for (var row in parameterRows) {
      String code = row['code'];
@@ -414,68 +584,6 @@ class _PartDState extends State<PartD> {
                     ],
                   ),
                   const SizedBox(height: 30),
-
-                  // const Text(
-                  //   "Mesin yang Digunakan:",
-                  //   style: TextStyle(
-                  //     fontSize: 16,
-                  //     color: Colors.blue,
-                  //     fontWeight: FontWeight.bold,
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 8),
-                  // Obx(() {
-                  //   return DropdownButtonFormField<String>(
-                  //     value: _selectedMachine,
-                  //     items: formDController.machineList.map((machine) {
-                  //       return DropdownMenuItem(
-                  //         value: machine['id_machine'].toString(),
-                  //         child: Text(machine['machine_name'] ?? 'Unknown Machine'),
-                  //       );
-                  //     }).toList(),
-                  //     onChanged: (value) {
-                  //       setState(() {
-                  //         _selectedMachine = value;
-                  //
-                  //         if (value != null) {
-                  //           // Reset status checks and actual values when machine changes
-                  //           formDController.statusChecks.clear();
-                  //           formDController.actualValues.clear();
-                  //
-                  //           // Fetch machine display data when machine is selected
-                  //           formDController.getMachineDisplayData(
-                  //             int.parse(value),
-                  //             controller.selectedBRM.value
-                  //           ).then((_) {
-                  //             // Update controllers with the fetched display data
-                  //             actualRunningController.text = formDController.actualRunning.value;
-                  //             runAwalController.text = formDController.runAwal.value;
-                  //             defectController.text = formDController.defect.value;
-                  //             goodsOkController.text = formDController.goodsOk.value;
-                  //             goodsRejectController.text = formDController.goodsReject.value;
-                  //
-                  //             // Update checkbox states
-                  //             setState(() {
-                  //               _siapRunningChecks[0] = formDController.loadBarrel.value;
-                  //               _siapRunningChecks[1] = formDController.loadPlunger.value;
-                  //               _siapRunningChecks[2] = formDController.loadGasket.value;
-                  //             });
-                  //           });
-                  //         }
-                  //       },
-                  //     },
-                  //     decoration: InputDecoration(
-                  //       border: OutlineInputBorder(
-                  //           borderRadius: BorderRadius.circular(8)),
-                  //       contentPadding: const EdgeInsets.symmetric(
-                  //           horizontal: 12, vertical: 16),
-                  //     ),
-                  //     hint: const Text("Pilih Mesin"),
-                  //   );
-                  // }),
-                  // const SizedBox(height: 30),
-
-                  // Material Used - Only show after machine is selected
                   if (displayData != null) ...[
                     const Text(
                       "Material yang Digunakan:",
@@ -518,18 +626,6 @@ class _PartDState extends State<PartD> {
                     ),
                     const SizedBox(height: 8),
                     Obx(() {
-                      // if (formDController.isLoading.value) {
-                      //   return const Center(child: CircularProgressIndicator());
-                      // }
-                      
-                      // // Find the selected machine in the filtered list
-                      // final selectedMachineId = int.parse(_selectedMachine!);
-                      // final selectedMachineData = formDController.filteredMachineDisplays
-                      //     .firstWhere(
-                      //       (machine) => machine['machine_id'] == selectedMachineId,
-                      //       orElse: () => {},
-                      //     );
-                      
                       if (displayData == null) {
                         return const Center(
                           child: Text("No parameter data available for this machine"),

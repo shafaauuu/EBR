@@ -300,8 +300,6 @@ class FormDAssySyringeController extends GetxController {
   Future<void> getMachinesByBrm(String brmNo) async {
 
     try {
-
-      // Try to get blister machines by BRM
       final blisterByBrmResponse = await Api.get('display-machine-blister/brm/$brmNo');
       if (blisterByBrmResponse != null) {
         List<dynamic> blisterDisplays = blisterByBrmResponse;
@@ -328,7 +326,6 @@ class FormDAssySyringeController extends GetxController {
         }
       }
 
-      // Try to get SGP machines by BRM
       final sgpByBrmResponse = await Api.get('display-machine-sgp/brm/$brmNo');
       if (sgpByBrmResponse != null) {
         List<dynamic> sgpDisplays = sgpByBrmResponse;
