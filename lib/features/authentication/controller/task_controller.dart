@@ -23,11 +23,30 @@ class TaskController extends GetxController {
   Future<void> fetchTasks() async {
     isLoading.value = true;
     try {
+      print("Fetching tasks from API...");
       final response = await Api.get("tasks");
       if (response != null) {
-        tasks.value = (response as List)
+        print("Tasks response: $response");
+        
+        // Get current user's NIK from storage
+        final String? currentUserNik = storage.read("nik");
+        print("Current user NIK: $currentUserNik");
+        
+        // Convert all tasks from JSON
+        List<Task> allTasks = (response as List)
             .map((item) => Task.fromJson(item))
             .toList();
+        
+        // Filter tasks by current user's NIK if available
+        if (currentUserNik != null && currentUserNik.isNotEmpty) {
+          tasks.value = allTasks.where((task) => 
+            task.assignedTo == currentUserNik
+          ).toList();
+          print("Filtered to ${tasks.length} tasks assigned to current user");
+        } else {
+          tasks.value = allTasks;
+          print("No user NIK found, showing all ${tasks.length} tasks");
+        }
         
         // Sort tasks by created date (newest first)
         tasks.sort((a, b) {
@@ -137,8 +156,7 @@ class TaskController extends GetxController {
                 Get.to(() => TaskDetails(task: task));
               },
             ),
-            // Only show Edit option for non-completed tasks
-            if (task.status != "completed")
+            if (task.status == "ongoing")
               ListTile(
                 leading: Icon(Icons.edit),
                 title: Text("Edit Task Details"),

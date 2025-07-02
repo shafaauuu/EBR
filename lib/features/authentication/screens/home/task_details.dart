@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'dart:async';
+
 import 'package:oji_1/features/authentication/controller/task_controller.dart';
 
 import 'package:oji_1/features/authentication/models/task_model.dart';
@@ -42,7 +44,6 @@ import 'package:oji_1/features/authentication/screens/Form/Injection/part_g.dart
 
 import '../../models/material_model.dart';
 
-
 class TaskDetails extends StatefulWidget {
   final Task task;
   final bool isEditing;
@@ -60,7 +61,21 @@ class TaskDetails extends StatefulWidget {
 class _TaskDetailsState extends State<TaskDetails> {
   final TaskDetailsController controller = Get.put(TaskDetailsController());
   final TaskController taskController = Get.find<TaskController>();
+  final storage = GetStorage();
 
+  @override
+  void initState() {
+    super.initState();
+    // Store the current task ID in GetStorage for use in shift transfer
+    storage.write("current_task_id", widget.task.id);
+  }
+
+  @override
+  void dispose() {
+    // Clear the current task ID when leaving the screen
+    storage.remove("current_task_id");
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,6 +345,12 @@ class _TaskDetailsState extends State<TaskDetails> {
   }
 
   void _navigateToSection(String key) {
+    // Check if BRM data is still loading
+    if (controller.isBrmLoading.value) {
+      _showLoadingDialog();
+      return;
+    }
+
     final category = controller.selectedCategory.value;
 
     switch (category) {
@@ -339,13 +360,13 @@ class _TaskDetailsState extends State<TaskDetails> {
           case "A": Get.to(() => PartA_Blister(task: widget.task)); break;
           case "B": Get.to(() => PartB_Blister(task: widget.task)); break;
           case "C": Get.to(() => PartC_Blister(task: widget.task,
-                                              selectedMaterialCode: controller.selectedMaterialCode.value,
-                                              requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
-          case "D": Get.to(() => PartD_Blister(task: widget.task)); break;
+                                             selectedMaterialCode: controller.selectedMaterialCode.value,
+                                             requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
+          case "D": Get.to(() => PartD(task: widget.task, selectedMaterialCode: controller.selectedMaterialCode.value)); break;
           case "E": Get.to(() => PartE_Blister(task: widget.task)); break;
           case "F": Get.to(() => PartF_Blister(task: widget.task)); break;
           case "G": Get.to(() => PartG_Blister(task: widget.task)); break;
-          default: _showSweetAlert();
+          default: _showNotAvailableAlert();
         }
         break;
 
@@ -356,11 +377,11 @@ class _TaskDetailsState extends State<TaskDetails> {
           case "C": Get.to(() => PartC_Syringe(task: widget.task,
                   selectedMaterialCode: controller.selectedMaterialCode.value,
         requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
-          case "D": Get.to(() => PartD_Syringe(task: widget.task)); break;
+          case "D": Get.to(() => PartD(task: widget.task, selectedMaterialCode: controller.selectedMaterialCode.value)); break;
           case "E": Get.to(() => PartE_Syringe(task: widget.task)); break;
           case "F": Get.to(() => PartF_Syringe(task: widget.task)); break;
           case "G": Get.to(() => PartG_Syringe(task: widget.task)); break;
-          default: _showSweetAlert();
+          default: _showNotAvailableAlert();
         }
         break;
 
@@ -371,11 +392,11 @@ class _TaskDetailsState extends State<TaskDetails> {
           case "C": Get.to(() => PartC_Injection(task: widget.task,
               selectedMaterialCode: controller.selectedMaterialCode.value,
               requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
-          case "D": Get.to(() => PartD_Injection(task: widget.task)); break;
+          case "D": Get.to(() => PartD(task: widget.task, selectedMaterialCode: controller.selectedMaterialCode.value)); break;
           case "E": Get.to(() => PartE_Injection(task: widget.task)); break;
           case "F": Get.to(() => PartF_Injection(task: widget.task)); break;
           case "G": Get.to(() => PartG_Injection(task: widget.task)); break;
-          default: _showSweetAlert();
+          default: _showNotAvailableAlert();
         }
         break;
 
@@ -386,21 +407,57 @@ class _TaskDetailsState extends State<TaskDetails> {
           case "C": Get.to(() => PartC_NeedleAssy(task: widget.task,
               selectedMaterialCode: controller.selectedMaterialCode.value,
               requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
-          case "D": Get.to(() => PartD_NeedleAssy(task: widget.task)); break;
+          case "D": Get.to(() => PartD(task: widget.task, selectedMaterialCode: controller.selectedMaterialCode.value)); break;
           case "E": Get.to(() => PartE_NeedleAssy(task: widget.task)); break;
           case "F": Get.to(() => PartF_NeedleAssy(task: widget.task)); break;
           case "G": Get.to(() => PartG_NeedleAssy(task: widget.task)); break;
-          default: _showSweetAlert();
+          default: _showNotAvailableAlert();
         }
         break;
 
       default:
-        _showSweetAlert();
+        _showNotAvailableAlert();
     }
   }
 
+  // Show loading dialog when BRM data is being fetched
+  void _showLoadingDialog() {
+    Get.dialog(
+      WillPopScope(
+        onWillPop: () async => false, // Prevent dialog from being dismissed by back button
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              const Text(
+                "Loading BRM data...",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Please wait while we fetch the necessary data for this form.",
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false, // Prevent dialog from being dismissed by tapping outside
+    );
 
-  void _showSweetAlert() {
+    // Check periodically if BRM loading is complete
+    Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (!controller.isBrmLoading.value) {
+        timer.cancel();
+        Get.back(); // Close the dialog
+      }
+    });
+  }
+
+  // Show alert for features that are not available
+  void _showNotAvailableAlert() {
     Get.dialog(
       AlertDialog(
         title: const Text(
@@ -423,8 +480,33 @@ class _TaskDetailsState extends State<TaskDetails> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: GestureDetector(
-        onTap: () {
-          controller.showShiftInputDialog();
+        onTap: () async {
+          print("Shift button tapped");
+          final result = await controller.showShiftInputDialog();
+          print("Dialog result: $result");
+          
+          if (result == true) {
+            print("Task transferred successfully, navigating to home");
+            // First refresh tasks list to ensure it's up-to-date
+            await taskController.fetchTasks();
+            
+            // Force clear the task list cache
+            taskController.tasks.clear();
+            
+            // Navigate back to home view
+            // First close any open snackbars
+            Get.closeAllSnackbars();
+            
+            // Navigate back to home screen
+            Get.offNamedUntil('/home', (route) => false);
+            
+            // Refresh task list after navigation
+            Future.delayed(const Duration(milliseconds: 300), () async {
+              print("Refreshing tasks after navigation");
+              await taskController.fetchTasks();
+              taskController.update();
+            });
+          }
         },
         child: Align(
           alignment: Alignment.center,

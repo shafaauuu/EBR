@@ -42,15 +42,16 @@ class _PartC_BlisterState extends State<PartC_Blister> {
     }
 
     // Initialize material controllers when materials are loaded
-    ever(controller.materials, (materials) {
-      for (var material in materials) {
-        final id = material['id']?.toString() ?? '';
-        if (id.isNotEmpty && !batchControllers.containsKey(id)) {
-          batchControllers[id] = TextEditingController();
-          qtyControllers[id] = TextEditingController();
-        }
-      }
-    });
+    // This is causing double initialization - removing the ever listener
+    // ever(controller.materials, (materials) {
+    //   for (var material in materials) {
+    //     final id = material['id']?.toString() ?? '';
+    //     if (id.isNotEmpty && !batchControllers.containsKey(id)) {
+    //       batchControllers[id] = TextEditingController();
+    //       qtyControllers[id] = TextEditingController();
+    //     }
+    //   }
+    // });
 
     // Listen for existing data and update UI accordingly
     ever(controller.existingFormData, (data) {

@@ -19,7 +19,7 @@ class Task {
   // Adding these fields to prevent errors in TaskDetails
   final String? firstName;
   final String? inisial;
-  final String? group;
+  final String group;
 
   Task({
     required this.id,
@@ -37,7 +37,7 @@ class Task {
     this.updatedAt,
     this.firstName,
     this.inisial,
-    this.group,
+    required this.group,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -79,9 +79,9 @@ class Task {
       // Initialize these fields as null since they're not in the API response
       firstName: null,
       inisial: null,
-      group: null,
-    );
+      group: json['group'] ?? '',);
   }
+
 
   static IconData _getStatusIcon(String status) {
     switch (status) {

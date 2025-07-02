@@ -1,42 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../../controller/task_details_controller.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+import '../../../controller/Form/D/material_recon_controller.dart';
 import '../../../models/task_model.dart';
+import '../../../controller/task_details_controller.dart';
 
 class MaterialReconciliationAssySyringe extends StatefulWidget {
-  final VoidCallback onSubmit;
   final Task task;
-  final List<String> plungerDropdownItems;
-  final String? selectedPlungerItem;
-  final void Function(String?) onPlungerChanged;
-  final List<TextEditingController> plungerControllers;
-
-  final List<String> barrelDropdownItems;
-  final String? selectedBarrelItem;
-  final void Function(String?) onBarrelChanged;
-  final List<TextEditingController> barrelControllers;
-
-  final List<String> needleDropdownItems;
-  final String? selectedNeedleItem;
-  final void Function(String?) onNeedleChanged;
-  final List<TextEditingController> needleControllers;
+  final String selectedMaterialCode;
 
   const MaterialReconciliationAssySyringe({
     Key? key,
-    required this.onSubmit,
     required this.task,
-    required this.plungerDropdownItems,
-    required this.selectedPlungerItem,
-    required this.onPlungerChanged,
-    required this.plungerControllers,
-    required this.barrelDropdownItems,
-    required this.selectedBarrelItem,
-    required this.onBarrelChanged,
-    required this.barrelControllers,
-    required this.needleDropdownItems,
-    required this.selectedNeedleItem,
-    required this.onNeedleChanged,
-    required this.needleControllers,
+    required this.selectedMaterialCode,
   }) : super(key: key);
 
   @override
@@ -44,7 +21,29 @@ class MaterialReconciliationAssySyringe extends StatefulWidget {
 }
 
 class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliationAssySyringe> {
-  final TaskDetailsController controller = Get.put(TaskDetailsController());
+  late MaterialReconController controller;
+  final TaskDetailsController taskDetailsController = Get.find<TaskDetailsController>();
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(MaterialReconController(
+      widget.task, 
+      widget.selectedMaterialCode
+    ));
+    
+    // Fetch child materials when the screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchChildMaterials();
+    });
+  }
+
+  @override
+  void dispose() {
+    // Dispose controllers to prevent memory leaks
+    controller.dispose();
+    super.dispose();
+  }
 
   Widget _buildAlignedText(String label, String value) {
     return Row(
@@ -61,75 +60,216 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
     );
   }
 
-  Widget buildMaterialRow(
-      String title,
-      List<String> dropdownItems,
-      String? selectedItem,
-      ValueChanged<String?> onChanged,
-      List<TextEditingController> controllers,
-      ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        // Material Description Field (read-only)
-        TextFormField(
-          initialValue: selectedItem ?? 'No Material Selected',
-          readOnly: true,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            filled: true,
-            fillColor: Colors.grey[100],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
+  Widget _buildMaterialRow(Map<String, dynamic> material) {
+    final materialId = material['id_bom']?.toString() ?? '';
+    if (materialId.isEmpty) return const SizedBox.shrink();
+    
+    final childMaterial = material['child_material'] ?? material['childMaterial'];
+    if (childMaterial == null) return const SizedBox.shrink();
+    
+    final materialDesc = childMaterial['material_desc'] ?? childMaterial['material_name'] ?? 'Unknown Material';
+    final materialCode = childMaterial['material_code'] ?? '';
+    
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (var label in [
-              'Jumlah Awal',
-              'Jumlah Tambahan (SPBT)',
-              'Jumlah Reject',
-              'Jumlah Terpakai',
-              'Jumlah Material Karantina',
-              'Sisa Setelah Produksi',
-              'Jumlah Dimusnahkan',
-              'Jumlah Dikembalikan',
-            ])
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12),
+            Text(materialDesc, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue,)),
+            const SizedBox(height: 8),
+            Text("Code: $materialCode", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                for (var label in [
+                  'Jumlah\nAwal',
+                  'Jumlah\nTambahan',
+                  'Jumlah\nReject',
+                  'Jumlah\nTerpakai',
+                  'Jumlah\nKarantina',
+                  'Sisa\nProduksi',
+                  'Jumlah\nMusnah',
+                  'Jumlah\nKembali',
+                ])
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            for (var i = 0; i < controllers.length; i++)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: TextFormField(
-                    controller: controllers[i],
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      border: OutlineInputBorder(),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlAwalControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlSpbtControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlRejectControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlPakaiControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlKarantinaControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.sisaControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlMusnahControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: TextFormField(
+                      controller: controller.jmlKembaliControllers[materialId],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
-      ],
+      ),
     );
+  }
+
+  List<Widget> _buildDynamicMaterialSections() {
+    List<Widget> sections = [];
+    
+    // Add each material as a section
+    for (var material in controller.materials) {
+      sections.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: _buildMaterialRow(material),
+        ),
+      );
+    }
+    
+    if (sections.isEmpty) {
+      sections.add(
+        const Center(
+          child: Text(
+            "No materials found for reconciliation",
+            style: TextStyle(
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return sections;
   }
 
   @override
@@ -177,8 +317,7 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText(
-                          "BRM No.", controller.selectedBRM.value)),
+                      _buildAlignedText("BRM No.", taskDetailsController.selectedBRM.value),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -189,35 +328,57 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
           ),
           const Divider(thickness: 1),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  buildMaterialRow("Plunger", widget.plungerDropdownItems,
-                      widget.selectedPlungerItem, widget.onPlungerChanged, widget.plungerControllers),
-                  const Divider(height: 32),
-                  buildMaterialRow("Barrel", widget.barrelDropdownItems,
-                      widget.selectedBarrelItem, widget.onBarrelChanged, widget.barrelControllers),
-                  const Divider(height: 32),
-                  buildMaterialRow("Needle", widget.needleDropdownItems,
-                      widget.selectedNeedleItem, widget.onNeedleChanged, widget.needleControllers),
-                  const SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: widget.onSubmit,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ..._buildDynamicMaterialSections(),
+                    const SizedBox(height: 24),
+                    
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : () async {
+                                // Show confirmation dialog
+                                final result = await ArtSweetAlert.show(
+                                  barrierDismissible: false,
+                                  context: context,
+                                  artDialogArgs: ArtDialogArgs(
+                                    type: ArtSweetAlertType.question,
+                                    title: "Confirm Submission",
+                                    text: "Are you sure you want to submit the material reconciliation data?",
+                                    confirmButtonText: "Yes, Submit",
+                                    cancelButtonText: "Cancel",
+                                    showCancelBtn: true,
+                                  ),
+                                );
+                                
+                                // If confirmed, submit the form
+                                if (result != null && result.isTapConfirmButton) {
+                                  controller.submitForm();
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Submit",
+                            style: TextStyle(fontSize: 16)),
                       ),
-                      child: const Text("Submit",
-                          style: TextStyle(fontSize: 16)),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  ],
+                ),
+              );
+            }),
           ),
         ],
       ),
