@@ -1253,7 +1253,7 @@ class FormDAssySyringeController extends GetxController {
     String? goodsOk,
     String? goodsReject,
     dynamic machinePicture,
-    String? lineClearance,
+    dynamic lineClearance,
     // Blister specific parameters
     String? formingTime,
     String? formingTemperature,
@@ -1314,7 +1314,7 @@ class FormDAssySyringeController extends GetxController {
         'brm_no': brmNo,
         'shift': GetStorage().read('group'),
         'task_id': taskId,
-        'line_clearance': lineClearance,
+        'line_clear': lineClearance is bool ? lineClearance : (lineClearance == 'Sudah'),
       });
 
       if (formDResponse == null || formDResponse['data'] == null) {

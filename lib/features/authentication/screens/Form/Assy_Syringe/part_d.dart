@@ -59,6 +59,22 @@ class _PartDState extends State<PartD> {
   Future<void> getForm() async {
    displayData = await formDController.getForm(widget.task.id.toString());
    if (displayData["machine_type"] == "fcs_shi") {
+     formDController.selectedMachineType.value = "fcs_shi";
+   } else if (displayData["machine_type"] == "fcs") {
+     formDController.selectedMachineType.value = "fcs";
+   } else if (displayData["machine_type"] == "shi_1") {
+     formDController.selectedMachineType.value = "shi_1";
+   } else if (displayData["machine_type"] == "shi_2") {
+     formDController.selectedMachineType.value = "shi_2";
+   } else if (displayData["machine_type"] == "blister") {
+     formDController.selectedMachineType.value = "blister";
+   } else if (displayData["machine_type"] == "sgp") {
+     formDController.selectedMachineType.value = "sgp";
+   } else {
+     formDController.selectedMachineType.value = "assy";
+   }
+
+   if (displayData["machine_type"] == "fcs_shi") {
      parameterRows = [
        {'name': 'Temp Nozzle Z1', 'code': 'temp_nozzle_z1', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Temp Nozzle Z2', 'code': 'temp_nozzle_z2', 'controller': null, 'position': 'table', 'type': 'number'},
@@ -412,6 +428,17 @@ class _PartDState extends State<PartD> {
        displayType = 'No data available';
      }
    });
+
+   // Initialize line clearance based on form_value if available
+   if (displayData != null && displayData["form_value"] != null && displayData["form_value"]["line_clear"] != null) {
+     setState(() {
+       _lineClearance = displayData["form_value"]["line_clear"] == true ? 'Sudah' : 'Belum';
+     });
+   } else {
+     setState(() {
+       _lineClearance = 'Sudah'; // Default value
+     });
+   }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -449,9 +476,8 @@ class _PartDState extends State<PartD> {
       selectedMaterialCode: widget.selectedMaterialCode,
     ));
     
-    // If material reconciliation was completed successfully, you can handle it here
     if (result == true) {
-      // Maybe show a success message or update some state
+      // success message
     }
   }
 
@@ -914,7 +940,7 @@ class _PartDState extends State<PartD> {
       goodsOk: goodsOkController.text,
       goodsReject: goodsRejectController.text,
       machinePicture: _image,
-      lineClearance: _lineClearance ?? 'Sudah',
+      lineClearance: _lineClearance == 'Sudah' ? true : false,
     );
   }
 
