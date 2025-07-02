@@ -84,8 +84,8 @@ class _PartDState extends State<PartD> {
    } else if (displayData["machine_type"] == "assy") {
      // Add Assy parameters
      parameterRows = [
-       {'name': 'Print Machine Speed', 'code': 'print_match_speed', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Assy Machine Speed', 'code': 'assy_match_speed', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Print Machine Speed', 'code': 'print_mach_speed', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Assy Machine Speed', 'code': 'assy_mach_speed', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Silicon Spray', 'code': 'silicon_spray', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Actual Running', 'code': 'actual_running', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Run Awal', 'code': 'run_awal', 'controller': null, 'position': 'list', 'type': 'number'},
@@ -106,11 +106,11 @@ class _PartDState extends State<PartD> {
        {'name': 'Sealing Temperature', 'code': 'sealing_temperature', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Sealing Pressure', 'code': 'sealing_pressure', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Sealing Time', 'code': 'sealing_time', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Cycle Time', 'code': 'cycle_time', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Manufacturing Date', 'code': 'mfg_date', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Expiration Date', 'code': 'exp_date', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Needle Size', 'code': 'needle_size', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'NIE', 'code': 'nie', 'controller': null,'position': 'table', 'type': 'number'},
+       {'name': 'Cycle Time', 'code': 'cycle_time', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Manufacturing Date', 'code': 'mfg_date', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Expiration Date', 'code': 'exp_date', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Needle Size', 'code': 'needle_size', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'NIE', 'code': 'nie', 'controller': null,'position': 'list', 'type': 'number'},
      ];
 
 
@@ -120,36 +120,36 @@ class _PartDState extends State<PartD> {
        {'name': 'Temperature 2', 'code': 'temp2', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Temperature 3', 'code': 'temp3', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Temperature 4', 'code': 'temp4', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Load Cap', 'code': 'load_cap', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Load Hub', 'code': 'load_hub', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Load Needle', 'code': 'load_needle', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Hasil Epoxy', 'code': 'hasil_epoxy', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Pressure Actual', 'code': 'pressure_actual', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Pressure Status', 'code': 'pressure_status', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Low Epoxy 1', 'code': 'low_epoxy1', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Low Epoxy 2', 'code': 'low_epoxy2', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Low Epoxy 3', 'code': 'low_epoxy3', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Hub Cannula 1', 'code': 'hub_cannula1', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Hub Cannula 2', 'code': 'hub_cannula2', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Hub Cannula 3', 'code': 'hub_cannula3', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Exc Epoxy 1', 'code': 'exc_epoxy1', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Exc Epoxy 2', 'code': 'exc_epoxy2', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Exc Epoxy 3', 'code': 'exc_epoxy3', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Tumpul 1', 'code': 'needle_tumpul1', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Tumpul 2', 'code': 'needle_tumpul2', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Tumpul 3', 'code': 'needle_tumpul3', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Balik 1', 'code': 'needle_balik1', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Balik 2', 'code': 'needle_balik2', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Balik 3', 'code': 'needle_balik3', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Tersumbat 1', 'code': 'needle_tersumbat1', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Tersumbat 2', 'code': 'needle_tersumbat2', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Needle Tersumbat 3', 'code': 'needle_tersumbat3', 'controller': null, 'position': 'table', 'type': 'bool'},
-       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Berat Product', 'code': 'berat_product', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Load Cap', 'code': 'load_cap', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Load Hub', 'code': 'load_hub', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Load Needle', 'code': 'load_needle', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Hasil Epoxy', 'code': 'hasil_epoxy', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Pressure Actual', 'code': 'pressure_actual', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Pressure Status', 'code': 'pressure_status', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Low Epoxy 1', 'code': 'low_epoxy1', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Low Epoxy 2', 'code': 'low_epoxy2', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Low Epoxy 3', 'code': 'low_epoxy3', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Hub Cannula 1', 'code': 'hub_cannula1', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Hub Cannula 2', 'code': 'hub_cannula2', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Hub Cannula 3', 'code': 'hub_cannula3', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Exc Epoxy 1', 'code': 'exc_epoxy1', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Exc Epoxy 2', 'code': 'exc_epoxy2', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Exc Epoxy 3', 'code': 'exc_epoxy3', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Tumpul 1', 'code': 'needle_tumpul1', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Tumpul 2', 'code': 'needle_tumpul2', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Tumpul 3', 'code': 'needle_tumpul3', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Balik 1', 'code': 'needle_balik1', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Balik 2', 'code': 'needle_balik2', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Balik 3', 'code': 'needle_balik3', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Tersumbat 1', 'code': 'needle_tersumbat1', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Tersumbat 2', 'code': 'needle_tersumbat2', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Needle Tersumbat 3', 'code': 'needle_tersumbat3', 'controller': null, 'position': 'list', 'type': 'bool'},
+       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Product', 'code': 'berat_product', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'list', 'type': 'number'},
      ];
 
    } else if (displayData["machine_type"] == "fcs") {
@@ -292,7 +292,7 @@ class _PartDState extends State<PartD> {
        {'name': 'Purge Position Back', 'code': 'purge_position_back', 'controller': null, 'position': 'table', 'type': 'number'},
      ];
 
-     } else if (displayData["machine_type"] == "shi1") {
+     } else if (displayData["machine_type"] == "shi_1") {
      parameterRows = [
        {'name': 'Open Position Openlimit', 'code': 'open_position_openlimit', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Open Position Second', 'code': 'open_position_second', 'controller': null, 'position': 'table', 'type': 'number'},
@@ -331,15 +331,15 @@ class _PartDState extends State<PartD> {
        {'name': 'Plastictizing Forward Position', 'code': 'plastictizing_forward_position', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Plastictizing Forward Velocity', 'code': 'plastictizing_forward_velocity', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Plastictizing Cooling', 'code': 'plastictizing_cooling', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Berat Runner', 'code': 'berat_runner', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'list', 'type': 'number'},
+       {'name': 'Berat Runner', 'code': 'berat_runner', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Sampling', 'code': 'sampling', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Defect', 'code': 'defect', 'controller': null, 'position': 'list', 'type': 'number'},
      ];
 
-   } else if (displayData["machine_type"] == "shi2") {
+   } else if (displayData["machine_type"] == "shi_2") {
      parameterRows = [
        {'name': 'Open Position Openlimit', 'code': 'open_position_openlimit', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Open Position Forth', 'code': 'open_position_forth', 'controller': null, 'position': 'table', 'type': 'number'},
@@ -385,7 +385,7 @@ class _PartDState extends State<PartD> {
        {'name': 'Plastictizing Forward Position', 'code': 'plastictizing_forward_position', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Plastictizing Forward Velocity', 'code': 'plastictizing_forward_velocity', 'controller': null, 'position': 'table', 'type': 'number'},
        {'name': 'Plastictizing Cooling', 'code': 'plastictizing_cooling', 'controller': null, 'position': 'table', 'type': 'number'},
-       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'table', 'type': 'number'},
+       {'name': 'Masterbatch', 'code': 'masterbatch', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Berat Produk', 'code': 'berat_produk', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Berat Runner', 'code': 'berat_runner', 'controller': null, 'position': 'list', 'type': 'number'},
        {'name': 'Cavity', 'code': 'cavity', 'controller': null, 'position': 'list', 'type': 'number'},
@@ -851,8 +851,7 @@ class _PartDState extends State<PartD> {
       machineId: machineId,
       type: displayData['form_type'],
       brmNo: controller.selectedBRM.value,
-      materialType: machineType == 'blister' ? formDController.materialType.value :
-                   machineType == 'sgp' ? formDController.materialType.value : "Syringe",
+      materialType: displayData['material_type'],
       codeTask: widget.task.code,
       shift: storage.read("group") ?? "",
       taskId: widget.task.id,
@@ -1078,7 +1077,7 @@ class _PartDState extends State<PartD> {
                   // Parameter Value
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text(param['value'] ?? ''),
+                    child: Text(displayData[param['code']] ?? ''),
                   ),
                   // Actual (input field)
                   Padding(
