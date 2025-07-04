@@ -69,6 +69,7 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
     
     final materialDesc = childMaterial['material_desc'] ?? childMaterial['material_name'] ?? 'Unknown Material';
     final materialCode = childMaterial['material_code'] ?? '';
+    final materialUom = childMaterial['material_uom'] ?? '';
     
     return Card(
       elevation: 2,
@@ -84,7 +85,14 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
           children: [
             Text(materialDesc, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue,)),
             const SizedBox(height: 8),
-            Text("Code: $materialCode", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Expanded(
+                  child: Text("Code: $materialCode", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                ),
+                Text("UOM: $materialUom", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              ],
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -125,6 +133,10 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        // Auto-calculate sisa based on input values
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -140,6 +152,9 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -155,6 +170,9 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -170,6 +188,9 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -185,6 +206,9 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -196,10 +220,15 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
                       textAlign: TextAlign.center,
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.lightBlue.shade50,
+                        labelText: 'Auto',
+                        labelStyle: TextStyle(fontSize: 10, color: Colors.blue.shade700),
                       ),
+                      readOnly: true, // Make this field read-only as it's calculated
                     ),
                   ),
                 ),
@@ -215,6 +244,9 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -230,6 +262,9 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                         contentPadding: EdgeInsets.symmetric(vertical: 8),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        _calculateSisa(materialId);
+                      },
                     ),
                   ),
                 ),
@@ -239,6 +274,28 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
         ),
       ),
     );
+  }
+
+  // Helper method to calculate sisa (remaining) value
+  void _calculateSisa(String materialId) {
+    try {
+      // Get values from controllers
+      final jmlAwal = int.tryParse(controller.jmlAwalControllers[materialId]?.text ?? '') ?? 0;
+      final jmlSpbt = int.tryParse(controller.jmlSpbtControllers[materialId]?.text ?? '') ?? 0;
+      final jmlReject = int.tryParse(controller.jmlRejectControllers[materialId]?.text ?? '') ?? 0;
+      final jmlPakai = int.tryParse(controller.jmlPakaiControllers[materialId]?.text ?? '') ?? 0;
+      final jmlKarantina = int.tryParse(controller.jmlKarantinaControllers[materialId]?.text ?? '') ?? 0;
+      final jmlMusnah = int.tryParse(controller.jmlMusnahControllers[materialId]?.text ?? '') ?? 0;
+      final jmlKembali = int.tryParse(controller.jmlKembaliControllers[materialId]?.text ?? '') ?? 0;
+      
+      // Calculate sisa: jmlAwal + jmlSpbt - jmlReject - jmlPakai - jmlKarantina - jmlMusnah - jmlKembali
+      final sisa = jmlAwal + jmlSpbt - jmlReject - jmlPakai - jmlKarantina - jmlMusnah - jmlKembali;
+      
+      // Update sisa controller
+      controller.sisaControllers[materialId]?.text = sisa.toString();
+    } catch (e) {
+      print('Error calculating sisa: $e');
+    }
   }
 
   List<Widget> _buildDynamicMaterialSections() {
@@ -338,6 +395,45 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Material info section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Material Reconciliation Instructions:",
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "1. Enter the initial quantity in 'Jumlah Awal'",
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          const Text(
+                            "2. Fill in additional quantities and usage as needed",
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          const Text(
+                            "3. 'Sisa Produksi' will be calculated automatically",
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Selected Material Code: ${widget.selectedMaterialCode}",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Dynamic material sections
                     ..._buildDynamicMaterialSections(),
                     const SizedBox(height: 24),
                     
@@ -362,7 +458,13 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
                                 
                                 // If confirmed, submit the form
                                 if (result != null && result.isTapConfirmButton) {
-                                  controller.submitForm();
+                                  final success = await controller.submitForm();
+                                  if (success) {
+                                    // Navigate back after successful submission
+                                    Future.delayed(const Duration(seconds: 1), () {
+                                      Get.back();
+                                    });
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(

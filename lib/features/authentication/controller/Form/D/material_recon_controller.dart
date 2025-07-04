@@ -52,22 +52,10 @@ class MaterialReconController extends GetxController {
       isLoading.value = true;
       print("Starting to fetch child materials for Material Reconciliation");
       
-      // Determine the correct endpoint based on task name
-      String endpoint;
-      if (task.name.contains("Assy Syringe")) {
-        endpoint = 'tasks/${task.id}/child-materials-assy-syringe/${selectedMaterialCode}';
-      } else if (task.name.contains("Blister")) {
-        endpoint = 'tasks/${task.id}/child-materials-blister/${selectedMaterialCode}';
-      } else if (task.name.contains("Injection")) {
-        endpoint = 'tasks/${task.id}/child-materials-injection/${selectedMaterialCode}';
-      } else if (task.name.contains("Needle Assy")) {
-        endpoint = 'tasks/${task.id}/child-materials-needle-assy/${selectedMaterialCode}';
-      } else {
-        // Fallback to a generic endpoint if task name is not recognized
-        endpoint = 'tasks/${task.id}/child-materials-assy-syringe/${selectedMaterialCode}';
-      }
+      // Use the correct endpoint from your Laravel routes
+      final endpoint = 'form-d/tasks/${task.id}/child-materials/${selectedMaterialCode}';
       
-      print("Using API endpoint: $endpoint for task name: ${task.name}");
+      print("Using API endpoint: $endpoint for task ID: ${task.id}");
       final response = await Api.get(endpoint);
       print("Child materials API response received: ${response != null ? 'Success' : 'Null response'}");
       
@@ -78,18 +66,23 @@ class MaterialReconController extends GetxController {
       // Handle different response formats
       List<Map<String, dynamic>> materialsList = [];
       
-      if (response is Map<String, dynamic> && response.containsKey('data')) {
-        // Format: {"data": [...]}
-        print("Response is a Map with data key");
-        final responseData = response['data'];
-        
-        if (responseData is List) {
-          print("Response data is a List with ${responseData.length} items");
-          for (var item in responseData) {
-            if (item is Map<String, dynamic>) {
-              materialsList.add(item);
+      if (response is Map<String, dynamic>) {
+        // Format: {"data": [...]} or direct object
+        print("Response is a Map");
+        if (response.containsKey('data')) {
+          final responseData = response['data'];
+          
+          if (responseData is List) {
+            print("Response data is a List with ${responseData.length} items");
+            for (var item in responseData) {
+              if (item is Map<String, dynamic>) {
+                materialsList.add(item);
+              }
             }
           }
+        } else {
+          // Direct object response
+          materialsList.add(response);
         }
       } else if (response is List) {
         // Format: [...]
@@ -100,7 +93,7 @@ class MaterialReconController extends GetxController {
           }
         }
       } else {
-        print("Response is not a List or Map with data key: ${response.runtimeType}");
+        print("Response is not a List or Map: ${response.runtimeType}");
         materials.value = []; // Set empty list to avoid null issues
       }
       
@@ -153,7 +146,9 @@ class MaterialReconController extends GetxController {
   Future<void> fetchExistingData() async {
     try {
       isLoading.value = true;
-      final response = await Api.get('material-recon/${task.id}?is_task_id=true');
+      // Use the correct endpoint from your Laravel routes
+      final endpoint = 'form-d/material-recon/${task.id}?is_task_id=true';
+      final response = await Api.get(endpoint);
       
       if (response != null && response['data'] != null) {
         final materialsData = response['data'] as List;
@@ -227,6 +222,11 @@ class MaterialReconController extends GetxController {
   }
   
   Future<bool> submitForm() async {
+    // First validate the form
+    if (!validateForm()) {
+      return false;
+    }
+    
     try {
       isLoading.value = true;
       
@@ -236,6 +236,10 @@ class MaterialReconController extends GetxController {
       for (var entry in selectedMaterials.entries) {
         final materialId = entry.key;
         final material = entry.value;
+        
+        // Get the child material data
+        final childMaterial = material['child_material'] ?? material['childMaterial'];
+        if (childMaterial == null) continue;
         
         // Parse values from controllers, defaulting to 0 if invalid
         final jmlAwal = int.tryParse(jmlAwalControllers[materialId]?.text ?? '') ?? 0;
@@ -248,10 +252,10 @@ class MaterialReconController extends GetxController {
         final jmlKembali = int.tryParse(jmlKembaliControllers[materialId]?.text ?? '') ?? 0;
         
         materialsData.add({
-          'id_mat': material['childMaterial']?['id_mat'] ?? '',
+          'id_mat': childMaterial['id_mat'] ?? '',
           'id_bom': materialId,
-          'material_code': material['childMaterial']?['material_code'] ?? '',
-          'material_uom': material['childMaterial']?['uom'] ?? '',
+          'material_code': childMaterial['material_code'] ?? '',
+          'material_uom': childMaterial['uom'] ?? 'PCS', // Default to 'PCS' if uom is not available
           'jml_awal': jmlAwal,
           'jml_spbt': jmlSpbt,
           'jml_reject': jmlReject,
@@ -272,8 +276,8 @@ class MaterialReconController extends GetxController {
       
       print('Submitting material reconciliation data: ${json.encode(dataToSubmit)}');
       
-      // Submit the data
-      final response = await Api.post('material-recon', dataToSubmit);
+      // Submit the data to the correct endpoint
+      final response = await Api.post('form-d/material-recon', dataToSubmit);
       
       if (response != null) {
         ArtSweetAlert.show(
