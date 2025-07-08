@@ -31,6 +31,12 @@ class _PartDState extends State<PartD> {
   TextEditingController defectController = TextEditingController();
   TextEditingController goodsOkController = TextEditingController();
   TextEditingController goodsRejectController = TextEditingController();
+  TextEditingController cycleTimeController = TextEditingController();
+  TextEditingController formingTimeController = TextEditingController();
+  TextEditingController needleSizeController = TextEditingController();
+  TextEditingController nieController = TextEditingController();
+  TextEditingController mfgDateController = TextEditingController();
+  TextEditingController expDateController = TextEditingController();
   List<Map<String, dynamic>> parameterRows = [];
 
 
@@ -41,8 +47,7 @@ class _PartDState extends State<PartD> {
 
   String? _selectedMachine;
   DateTime? _selectedDateTime;
-  String? _lineClearance; // 'YA' or 'TIDAK'
-
+  String? _lineClearance; // 'Sudah' or 'Belum'
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
@@ -528,7 +533,7 @@ class _PartDState extends State<PartD> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Obx(() => _buildAlignedText("BRM No.", controller.selectedBRM.value)),
+                      _buildAlignedText("BRM No.", widget.task.brmNo),
                       _buildAlignedText("Rev No.", ""),
                       _buildAlignedText("Eff. Date", ""),
                     ],
@@ -866,38 +871,38 @@ class _PartDState extends State<PartD> {
     final selectedMachineData = formDController.machineList.firstWhereOrNull(
       (machine) => machine['id_machine'].toString() == _selectedMachine
     );
-    final machineType = selectedMachineData?['machine_type'] ?? 'assy'; // Default to 'assy' if not found
 
+    final machineType = selectedMachineData?['machine_type'] ?? 'assy'; // Default to 'assy' if not found
 
     final storage = GetStorage();
 
-
-    // Submit the form based on machine type
     await formDController.submitForm(
       machineId: machineId,
       type: displayData['form_type'],
-      brmNo: controller.selectedBRM.value,
+      // type: machineType,
+      brmNo: widget.task.brmNo,
       materialType: displayData['material_type'],
       codeTask: widget.task.code,
       shift: storage.read("group") ?? "",
       taskId: widget.task.id,
       tanggal: _selectedDateTime ?? DateTime.now(),
+      actualRunning: actualRunningController.text,
+      runAwal: runAwalController.text,
+      defect: defectController.text,
+      goodsOk: goodsOkController.text,
+      goodsReject: goodsRejectController.text,
+      machinePicture: _image,
+      lineClearance: _lineClearance == 'Sudah' ? true : false,
       // For Assy machine
       loadBarrel: _siapRunningChecks[0],
       loadPlunger: _siapRunningChecks[1],
       loadGasket: _siapRunningChecks[2],
       // For Blister machine
-      formingTime: machineType == 'blister' ? formDController.formingTime.value : '',
-      formingTemperature: machineType == 'blister' ? formDController.formingTemperature.value : '',
-      formingPressure: machineType == 'blister' ? formDController.formingPressure.value : '',
-      sealingTemperature: machineType == 'blister' ? formDController.sealingTemperature.value : '',
-      sealingPressure: machineType == 'blister' ? formDController.sealingPressure.value : '',
-      sealingTime: machineType == 'blister' ? formDController.sealingTime.value : '',
-      cycleTime: machineType == 'blister' ? formDController.cycleTime.value : '',
-      mfgDate: machineType == 'blister' ? formDController.mfgDate.value : '',
-      expDate: machineType == 'blister' ? formDController.expDate.value : '',
-      needleSize: machineType == 'blister' ? formDController.needleSize.value : '',
-      nie: machineType == 'blister' ? formDController.nie.value : '',
+      cycleTime: cycleTimeController.text,
+      mfgDate: mfgDateController.text,
+      expDate: expDateController.text,
+      needleSize: needleSizeController.text,
+      nie: nieController.text,
       // For SGP machine
       moldTemperature: machineType == 'sgp' ? formDController.moldTemperature.value : '',
       injectionPressure: machineType == 'sgp' ? formDController.injectionPressure.value : '',
@@ -933,14 +938,6 @@ class _PartDState extends State<PartD> {
       needleTersumbat1: machineType == 'sgp' ? formDController.needleTersumbat1.value : false,
       needleTersumbat2: machineType == 'sgp' ? formDController.needleTersumbat2.value : false,
       needleTersumbat3: machineType == 'sgp' ? formDController.needleTersumbat3.value : false,
-      // Common production data
-      actualRunning: actualRunningController.text,
-      runAwal: machineType == 'sgp' ? runAwalController.text : '', // For SGP, runAwal is used for cycle time
-      defect: defectController.text,
-      goodsOk: goodsOkController.text,
-      goodsReject: goodsRejectController.text,
-      machinePicture: _image,
-      lineClearance: _lineClearance == 'Sudah' ? true : false,
     );
   }
 
@@ -991,6 +988,7 @@ class _PartDState extends State<PartD> {
       ),
     );
   }
+
   Widget buildCheckBoxField(dynamic label, bool value, Function(bool?) onChanged) {
 
     return Padding(
@@ -1002,9 +1000,13 @@ class _PartDState extends State<PartD> {
             child: Text(label, style: const TextStyle(fontSize: 14)),
           ),
           Expanded(
-            child: Checkbox(
-              value: value,
-              onChanged: onChanged,
+            child: Align(
+              alignment: Alignment.center,
+              child: Checkbox(
+                value: value,
+                onChanged: onChanged,
+                activeColor: Colors.deepPurple,
+              ),
             ),
           ),
         ],

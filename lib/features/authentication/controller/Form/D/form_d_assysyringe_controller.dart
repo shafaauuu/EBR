@@ -356,333 +356,7 @@ class FormDAssySyringeController extends GetxController {
     }
   }
 
-  // Get machine display data for a specific machine and BRM
-  Future<void> getMachineDisplayData(dynamic machineId, String brmNo) async {
-    isLoading.value = true;
-    try {
-      // First check if we already have display data for this machine and BRM in our list
-      Map<String, dynamic>? matchingDisplay;
-      
-      for (var item in machineDisplayList) {
-        if (item['machine'] != null && 
-            item['machine']['id_machine'] == machineId && 
-            item['brm_no'] == brmNo) {
-          matchingDisplay = item;
-          break;
-        }
-      }
-      
-      // If we found a match, use it directly
-      if (matchingDisplay != null) {
-        // Determine the machine type based on the matching display
-        if (matchingDisplay['machine_type'] != null) {
-          selectedMachineType.value = matchingDisplay['machine_type'];
-        }
-        
-        // Initialize display data with common fields
-        var displayDataMap = {
-          'machine': matchingDisplay['machine'],
-          'machine_type': selectedMachineType.value,
-          'display_data': {
-            'material': matchingDisplay['material_type'] ?? matchingDisplay['material'] ?? '',
-          }
-        };
-        
-        // Add fields based on machine type
-        switch (selectedMachineType.value) {
-          case 'assy':
-            displayDataMap['display_data'].addAll({
-              'print_match_speed': matchingDisplay['print_mach_speed'] ?? '',
-              'assy_match_speed': matchingDisplay['assy_mach_speed'] ?? '',
-              'load_barrel': false,  // Default values since they're not in the response
-              'load_plunger': false,
-              'load_gasket': false,
-              'actual_running': '',
-              'run_awal': '',
-              'defect': '',
-              'goods_ok': '',
-              'goods_reject': '',
-              'silicon_spray': matchingDisplay['silicon_spray'] ?? '',
-            });
-            break;
-          case 'blister':
-            displayDataMap['display_data'].addAll({
-              'material_type': matchingDisplay['material_type'] ?? '',
-              'forming_time': matchingDisplay['forming_time'] ?? '',
-              'forming_temperature': matchingDisplay['forming_temperature'] ?? '',
-              'forming_pressure': matchingDisplay['forming_pressure'] ?? '',
-              'sealing_temperature': matchingDisplay['sealing_temperature'] ?? '',
-              'sealing_pressure': matchingDisplay['sealing_pressure'] ?? '',
-              'sealing_time': matchingDisplay['sealing_time'] ?? '',
-            });
-            break;
-          case 'sgp':
-            displayDataMap['display_data'].addAll({
-              'material_type': matchingDisplay['material_type'] ?? '',
-              // Add new SGP parameters
-              'mold_temperature': matchingDisplay['mold_temperature'] ?? '',
-              'injection_pressure': matchingDisplay['injection_pressure'] ?? '',
-              'injection_speed': matchingDisplay['injection_speed'] ?? '',
-              'holding_pressure': matchingDisplay['holding_pressure'] ?? '',
-              'holding_time': matchingDisplay['holding_time'] ?? '',
-              'cooling_time': matchingDisplay['cooling_time'] ?? '',
-              // Original parameters
-              'temp1': matchingDisplay['temp1'] ?? '',
-              'temp2': matchingDisplay['temp2'] ?? '',
-              'temp3': matchingDisplay['temp3'] ?? '',
-              'temp4': matchingDisplay['temp4'] ?? '',
-              'load_cap': matchingDisplay['load_cap'] ?? false,
-              'load_hub': matchingDisplay['load_hub'] ?? false,
-              'load_needle': matchingDisplay['load_needle'] ?? false,
-              'hasil_epoxy': matchingDisplay['hasil_epoxy'] ?? false,
-              'pressure_actual': matchingDisplay['pressure_actual'] ?? '',
-              'pressure_status': matchingDisplay['pressure_status'] ?? false,
-            });
-            break;
-          default:
-            // For other machine types, use default assy fields
-            displayDataMap['display_data'].addAll({
-              'print_match_speed': matchingDisplay['print_mach_speed'] ?? '',
-              'assy_match_speed': matchingDisplay['assy_mach_speed'] ?? '',
-              'load_barrel': false,
-              'load_plunger': false,
-              'load_gasket': false,
-              'actual_running': '',
-              'run_awal': '',
-              'defect': '',
-              'goods_ok': '',
-              'goods_reject': '',
-              'silicon_spray': matchingDisplay['silicon_spray'] ?? '',
-            });
-            break;
-        }
-        
-        displayData.value = displayDataMap;
-        
-        // Update form fields based on display_data
-        var data = displayData.value['display_data'];
-        
-        // Update common fields first
-        if (data['material'] != null) {
-          // Handle material field if needed
-        }
-        
-        // Update fields based on machine type
-        switch (selectedMachineType.value) {
-          case 'assy':
-            printMatchSpeed.value = data['print_match_speed'] ?? '';
-            assyMatchSpeed.value = data['assy_match_speed'] ?? '';
-            loadBarrel.value = data['load_barrel'] == true || data['load_barrel'] == 1;
-            loadPlunger.value = data['load_plunger'] == true || data['load_plunger'] == 1;
-            loadGasket.value = data['load_gasket'] == true || data['load_gasket'] == 1;
-            actualRunning.value = data['actual_running'] ?? '';
-            runAwal.value = data['run_awal'] ?? '';
-            defect.value = data['defect'] ?? '';
-            goodsOk.value = data['goods_ok'] ?? '';
-            goodsReject.value = data['goods_reject'] ?? '';
-            break;
-          case 'blister':
-            materialType.value = data['material_type'] ?? '';
-            formingTime.value = data['forming_time'] ?? '';
-            formingTemperature.value = data['forming_temperature'] ?? '';
-            formingPressure.value = data['forming_pressure'] ?? '';
-            sealingTemperature.value = data['sealing_temperature'] ?? '';
-            sealingPressure.value = data['sealing_pressure'] ?? '';
-            sealingTime.value = data['sealing_time'] ?? '';
-            break;
-          case 'sgp':
-            moldTemperature.value = data['mold_temperature'] ?? '';
-            injectionPressure.value = data['injection_pressure'] ?? '';
-            injectionSpeed.value = data['injection_speed'] ?? '';
-            holdingPressure.value = data['holding_pressure'] ?? '';
-            holdingTime.value = data['holding_time'] ?? '';
-            coolingTime.value = data['cooling_time'] ?? '';
-            temp1.value = data['temp1'] ?? '';
-            temp2.value = data['temp2'] ?? '';
-            temp3.value = data['temp3'] ?? '';
-            temp4.value = data['temp4'] ?? '';
-            loadCap.value = data['load_cap'] == true || data['load_cap'] == 1;
-            loadHub.value = data['load_hub'] == true || data['load_hub'] == 1;
-            loadNeedle.value = data['load_needle'] == true || data['load_needle'] == 1;
-            hasilEpoxy.value = data['hasil_epoxy'] == true || data['hasil_epoxy'] == 1;
-            pressureActual.value = data['pressure_actual'] ?? '';
-            pressureStatus.value = data['pressure_status'] == true || data['pressure_status'] == 1;
-            lowEpoxy1.value = data['low_epoxy1'] == true || data['low_epoxy1'] == 1;
-            lowEpoxy2.value = data['low_epoxy2'] == true || data['low_epoxy2'] == 1;
-            lowEpoxy3.value = data['low_epoxy3'] == true || data['low_epoxy3'] == 1;
-            hubCanula1.value = data['hub_canula1'] == true || data['hub_canula1'] == 1;
-            hubCanula2.value = data['hub_canula2'] == true || data['hub_canula2'] == 1;
-            hubCanula3.value = data['hub_canula3'] == true || data['hub_canula3'] == 1;
-            excEpoxy1.value = data['exc_epoxy1'] == true || data['exc_epoxy1'] == 1;
-            excEpoxy2.value = data['exc_epoxy2'] == true || data['exc_epoxy2'] == 1;
-            excEpoxy3.value = data['exc_epoxy3'] == true || data['exc_epoxy3'] == 1;
-            needleTumpul1.value = data['needle_tumpul1'] == true || data['needle_tumpul1'] == 1;
-            needleTumpul2.value = data['needle_tumpul2'] == true || data['needle_tumpul2'] == 1;
-            needleTumpul3.value = data['needle_tumpul3'] == true || data['needle_tumpul3'] == 1;
-            needleBalik1.value = data['needle_balik1'] == true || data['needle_balik1'] == 1;
-            needleBalik2.value = data['needle_balik2'] == true || data['needle_balik2'] == 1;
-            needleBalik3.value = data['needle_balik3'] == true || data['needle_balik3'] == 1;
-            needleTersumbat1.value = data['needle_tersumbat1'] == true || data['needle_tersumbat1'] == 1;
-            needleTersumbat2.value = data['needle_tersumbat2'] == true || data['needle_tersumbat2'] == 1;
-            needleTersumbat3.value = data['needle_tersumbat3'] == true || data['needle_tersumbat3'] == 1;
-            break;
-          default:
-            // Default to assy fields for backward compatibility
-            printMatchSpeed.value = data['print_match_speed'] ?? '';
-            assyMatchSpeed.value = data['assy_match_speed'] ?? '';
-            loadBarrel.value = data['load_barrel'] == true || data['load_barrel'] == 1;
-            loadPlunger.value = data['load_plunger'] == true || data['load_plunger'] == 1;
-            loadGasket.value = data['load_gasket'] == true || data['load_gasket'] == 1;
-            actualRunning.value = data['actual_running'] ?? '';
-            runAwal.value = data['run_awal'] ?? '';
-            defect.value = data['defect'] ?? '';
-            goodsOk.value = data['goods_ok'] ?? '';
-            goodsReject.value = data['goods_reject'] ?? '';
-            break;
-        }
-        
-        return;
-      }
-      
-      // If no match found in our list, try to get it from the API
-      String machineIdStr = machineId.toString();
-      
-      final response = await Api.post('form-d/get-machine-display', {
-        'machine_id': machineIdStr,
-        'brm_no': brmNo,
-      });
 
-      if (response != null) {
-        displayData.value = response;
-        
-        // Update machine type if available
-        if (response['machine_type'] != null) {
-          selectedMachineType.value = response['machine_type'];
-        }
-        
-        // Update form fields based on display_data and machine type
-        if (response['display_data'] != null) {
-          var data = response['display_data'];
-          
-          // Update fields based on machine type
-          switch (selectedMachineType.value) {
-            case 'assy':
-              printMatchSpeed.value = data['print_match_speed'] ?? '';
-              assyMatchSpeed.value = data['assy_match_speed'] ?? '';
-              loadBarrel.value = data['load_barrel'] == true || data['load_barrel'] == 1;
-              loadPlunger.value = data['load_plunger'] == true || data['load_plunger'] == 1;
-              loadGasket.value = data['load_gasket'] == true || data['load_gasket'] == 1;
-              actualRunning.value = data['actual_running'] ?? '';
-              runAwal.value = data['run_awal'] ?? '';
-              defect.value = data['defect'] ?? '';
-              goodsOk.value = data['goods_ok'] ?? '';
-              goodsReject.value = data['goods_reject'] ?? '';
-              break;
-            case 'blister':
-              materialType.value = data['material_type'] ?? '';
-              formingTime.value = data['forming_time'] ?? '';
-              formingTemperature.value = data['forming_temperature'] ?? '';
-              formingPressure.value = data['forming_pressure'] ?? '';
-              sealingTemperature.value = data['sealing_temperature'] ?? '';
-              sealingPressure.value = data['sealing_pressure'] ?? '';
-              sealingTime.value = data['sealing_time'] ?? '';
-              break;
-            case 'sgp':
-              moldTemperature.value = data['mold_temperature'] ?? '';
-              injectionPressure.value = data['injection_pressure'] ?? '';
-              injectionSpeed.value = data['injection_speed'] ?? '';
-              holdingPressure.value = data['holding_pressure'] ?? '';
-              holdingTime.value = data['holding_time'] ?? '';
-              coolingTime.value = data['cooling_time'] ?? '';
-              temp1.value = data['temp1'] ?? '';
-              temp2.value = data['temp2'] ?? '';
-              temp3.value = data['temp3'] ?? '';
-              temp4.value = data['temp4'] ?? '';
-              loadCap.value = data['load_cap'] == true || data['load_cap'] == 1;
-              loadHub.value = data['load_hub'] == true || data['load_hub'] == 1;
-              loadNeedle.value = data['load_needle'] == true || data['load_needle'] == 1;
-              hasilEpoxy.value = data['hasil_epoxy'] == true || data['hasil_epoxy'] == 1;
-              pressureActual.value = data['pressure_actual'] ?? '';
-              pressureStatus.value = data['pressure_status'] == true || data['pressure_status'] == 1;
-              lowEpoxy1.value = data['low_epoxy1'] == true || data['low_epoxy1'] == 1;
-              lowEpoxy2.value = data['low_epoxy2'] == true || data['low_epoxy2'] == 1;
-              lowEpoxy3.value = data['low_epoxy3'] == true || data['low_epoxy3'] == 1;
-              hubCanula1.value = data['hub_canula1'] == true || data['hub_canula1'] == 1;
-              hubCanula2.value = data['hub_canula2'] == true || data['hub_canula2'] == 1;
-              hubCanula3.value = data['hub_canula3'] == true || data['hub_canula3'] == 1;
-              excEpoxy1.value = data['exc_epoxy1'] == true || data['exc_epoxy1'] == 1;
-              excEpoxy2.value = data['exc_epoxy2'] == true || data['exc_epoxy2'] == 1;
-              excEpoxy3.value = data['exc_epoxy3'] == true || data['exc_epoxy3'] == 1;
-              needleTumpul1.value = data['needle_tumpul1'] == true || data['needle_tumpul1'] == 1;
-              needleTumpul2.value = data['needle_tumpul2'] == true || data['needle_tumpul2'] == 1;
-              needleTumpul3.value = data['needle_tumpul3'] == true || data['needle_tumpul3'] == 1;
-              needleBalik1.value = data['needle_balik1'] == true || data['needle_balik1'] == 1;
-              needleBalik2.value = data['needle_balik2'] == true || data['needle_balik2'] == 1;
-              needleBalik3.value = data['needle_balik3'] == true || data['needle_balik3'] == 1;
-              needleTersumbat1.value = data['needle_tersumbat1'] == true || data['needle_tersumbat1'] == 1;
-              needleTersumbat2.value = data['needle_tersumbat2'] == true || data['needle_tersumbat2'] == 1;
-              needleTersumbat3.value = data['needle_tersumbat3'] == true || data['needle_tersumbat3'] == 1;
-              break;
-            default:
-              // Default to assy fields for backward compatibility
-              printMatchSpeed.value = data['print_match_speed'] ?? '';
-              assyMatchSpeed.value = data['assy_match_speed'] ?? '';
-              loadBarrel.value = data['load_barrel'] == true || data['load_barrel'] == 1;
-              loadPlunger.value = data['load_plunger'] == true || data['load_plunger'] == 1;
-              loadGasket.value = data['load_gasket'] == true || data['load_gasket'] == 1;
-              actualRunning.value = data['actual_running'] ?? '';
-              runAwal.value = data['run_awal'] ?? '';
-              defect.value = data['defect'] ?? '';
-              goodsOk.value = data['goods_ok'] ?? '';
-              goodsReject.value = data['goods_reject'] ?? '';
-              break;
-          }
-        }
-      }
-    } catch (e) {
-      print('Error getting machine display data: $e');
-      ArtSweetAlert.show(
-        context: Get.context!,
-        artDialogArgs: ArtDialogArgs(
-          type: ArtSweetAlertType.danger,
-          title: "Error",
-          text: "Gagal mengambil data mesin: $e"
-        )
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> checkFcsShiValue() async {
-    isLoading.value = true;
-    try {
-      final response = await Api.get('/machine-fcs-shi/${taskId.value}');
-      
-      if (response != null) {
-        // Process the response data
-        return response;
-      } else {
-        // Handle case when no data is found
-        print('No Assy Syringe data found for this task');
-        return null;
-      }
-    } catch (e) {
-      print('Error retrieving Assy Syringe data: $e');
-      ArtSweetAlert.show(
-        context: Get.context!,
-        artDialogArgs: ArtDialogArgs(
-          type: ArtSweetAlertType.danger,
-          title: "Error",
-          text: "Failed to retrieve Assy Syringe data: $e"
-        )
-      );
-      return null;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-  
   Future<bool> checkAssyValue() async {
     isLoading.value = true;
     try {
@@ -727,27 +401,34 @@ class FormDAssySyringeController extends GetxController {
     
     try {
       final response = await Api.get('/machine-blister/${taskId.value}');
-      if (response != null && response['data'] != null && response['data'].isNotEmpty) {
-        final data = response['data'][0];
-        // Set values for fields
-        materialType.value = data['material_type']?.toString() ?? '';
-        formingTime.value = data['forming_time']?.toString() ?? '';
-        formingTemperature.value = data['forming_temperature']?.toString() ?? '';
-        formingPressure.value = data['forming_pressure']?.toString() ?? '';
-        sealingTemperature.value = data['sealing_temperature']?.toString() ?? '';
-        sealingPressure.value = data['sealing_pressure']?.toString() ?? '';
-        sealingTime.value = data['sealing_time']?.toString() ?? '';
-        actualRunning.value = data['actual_running']?.toString() ?? '';
-        defect.value = data['defect']?.toString() ?? '';
-        goodsOk.value = data['goods_ok']?.toString() ?? '';
-        goodsReject.value = data['goods_reject']?.toString() ?? '';
-        // Load new fields
-        cycleTime.value = data['cycle_time']?.toString() ?? '';
-        mfgDate.value = data['mfg_date']?.toString() ?? '';
-        expDate.value = data['exp_date']?.toString() ?? '';
-        needleSize.value = data['needle_size']?.toString() ?? '';
-        nie.value = data['nie']?.toString() ?? '';
-        
+
+      if (response != null) {
+        // Process the response data
+        print('Machine Assy data retrieved successfully');
+        // Update form fields if needed
+        if (response['data'] != null) {
+          var data = response['data'];
+
+          materialType.value = data['material_type']?.toString() ?? '';
+          formingTime.value = data['forming_time']?.toString() ?? '';
+          formingTemperature.value =
+              data['forming_temperature']?.toString() ?? '';
+          formingPressure.value = data['forming_pressure']?.toString() ?? '';
+          sealingTemperature.value =
+              data['sealing_temperature']?.toString() ?? '';
+          sealingPressure.value = data['sealing_pressure']?.toString() ?? '';
+          sealingTime.value = data['sealing_time']?.toString() ?? '';
+          actualRunning.value = data['actual_running']?.toString() ?? '';
+          defect.value = data['defect']?.toString() ?? '';
+          goodsOk.value = data['goods_ok']?.toString() ?? '';
+          goodsReject.value = data['goods_reject']?.toString() ?? '';
+          // Load new fields
+          cycleTime.value = data['cycle_time']?.toString() ?? '';
+          mfgDate.value = data['mfg_date']?.toString() ?? '';
+          expDate.value = data['exp_date']?.toString() ?? '';
+          needleSize.value = data['needle_size']?.toString() ?? '';
+          nie.value = data['nie']?.toString() ?? '';
+        }
         return true;
       } else {
         // Handle case when no data is found
@@ -769,7 +450,36 @@ class FormDAssySyringeController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
+  Future<void> checkFcsShiValue() async {
+    isLoading.value = true;
+    try {
+      final response = await Api.get('/machine-fcs-shi/${taskId.value}');
+
+      if (response != null) {
+        // Process the response data
+        return response;
+      } else {
+        // Handle case when no data is found
+        print('No Assy Syringe data found for this task');
+        return null;
+      }
+    } catch (e) {
+      print('Error retrieving Assy Syringe data: $e');
+      ArtSweetAlert.show(
+          context: Get.context!,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Failed to retrieve Assy Syringe data: $e"
+          )
+      );
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<bool> checkSgpValue() async {
     isLoading.value = true;
     try {
@@ -843,89 +553,77 @@ class FormDAssySyringeController extends GetxController {
       isLoading.value = false;
     }
   }
-  
-  Future<bool> storeFcsShiValue({
+
+  Future<bool> createAssyValue({
     required String codeTask,
-    required int formDId,
     required int taskId,
-    String? tempNozzleZ1,
-    String? tempNozzleZ2,
-    String? tempNozzleZ3,
-    String? tempNozzleZ4,
-    String? tempNozzleZ5,
-    String? tempMold,
-    String? injectPressure,
-    String? injectTime,
-    String? holdingPressure,
-    String? holdingTime,
-    String? ejectCounter,
-    String? cycleTime,
-    String? masterbatch,
-    String? beratProduk,
-    String? beratRunner,
-    String? cavity,
-    String? sampling,
+    String? actualRunning,
+    String? runAwal,
     String? defect,
+    String? goodsOk,
+    String? goodsReject,
+    String? qcBarrel,
+    String? qcGasket,
+    String? qcPlunger,
+    String? printMatchSpeed,
+    String? assyMatchSpeed,
+    int? formDId,
+    bool? loadBarrel,
+    bool? loadPlunger,
+    bool? loadGasket,
     dynamic machinePicture,
   }) async {
     isLoading.value = true;
-    
+
     try {
       // Prepare data for API call
       final data = {
         'code_task': codeTask,
-        'temp_nozzle_z1': tempNozzleZ1,
-        'temp_nozzle_z2': tempNozzleZ2,
-        'temp_nozzle_z3': tempNozzleZ3,
-        'temp_nozzle_z4': tempNozzleZ4,
-        'temp_nozzle_z5': tempNozzleZ5,
-        'temp_mold': tempMold,
-        'inject_pressure': injectPressure,
-        'inject_time': injectTime,
-        'holding_pressure': holdingPressure,
-        'holding_time': holdingTime,
-        'eject_counter': ejectCounter,
-        'cycle_time': cycleTime,
-        'masterbatch': masterbatch,
-        'berat_produk': beratProduk,
-        'berat_runner': beratRunner,
-        'cavity': cavity,
-        'sampling': sampling,
-        'defect': defect,
+
         'form_d_id': formDId,
         'task_id': taskId,
       };
-      
+      for (final entry in parameterControllers.entries) {
+        if (entry.value.text.isNotEmpty) {
+          if(entry.value.text == 'true' || entry.value.text == 'false') {
+            data[entry.key] = entry.value.text == 'true';
+          } else {
+            // Convert to string if not boolean
+            data[entry.key] = entry.value.text;
+          }
+        }
+      }
+
       // Add machine picture if provided
       if (machinePicture != null) {
         data['machine_picture'] = machinePicture;
       }
-      
+
       // Send data to API
-      final response = await Api.post('/machine-fcs-shi', data);
-      
+      final response = await Api.post('form-d/machine-assy', data);
+
       if (response != null) {
         ArtSweetAlert.show(
-          context: Get.context!,
-          artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.success,
-            title: "Berhasil",
-            text: "Assy Syringe data berhasil disimpan"
-          )
+            context: Get.context!,
+            artDialogArgs: ArtDialogArgs(
+                type: ArtSweetAlertType.success,
+                title: "Berhasil",
+                text: "Machine Assy data berhasil disimpan"
+            )
         );
         return true;
       } else {
-        throw Exception('Failed to store Assy Syringe data');
+        throw Exception('Failed to store Machine Assy data');
       }
     } catch (e) {
-      print('Error submitting Assy Syringe data: $e');
+      print('Error submitting Machine Assy data: $e');
       ArtSweetAlert.show(
-        context: Get.context!,
-        artDialogArgs: ArtDialogArgs(
-          type: ArtSweetAlertType.danger,
-          title: "Error",
-          text: "Terjadi kesalahan saat mengirim data Assy Syringe: $e"
-        )
+          context: Get.context!,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Terjadi kesalahan saat mengirim data Machine Assy: $e"
+          )
       );
       return false;
     } finally {
@@ -935,8 +633,8 @@ class FormDAssySyringeController extends GetxController {
 
   Future<bool> storeBlisterValue({
     required String codeTask,
-    required int formDId,
     required int taskId,
+    int? formDId,
     String? materialType,
     String? formingTime,
     String? formingTemperature,
@@ -968,8 +666,8 @@ class FormDAssySyringeController extends GetxController {
         'sealing_temperature': sealingTemperature,
         'sealing_pressure': sealingPressure,
         'sealing_time': sealingTime,
-        'form_d_id': formDId,
         'task_id': taskId,
+        'form_d_id': formDId,
         'actual_running': actualRunning,
         'defect': defect,
         'goods_ok': goodsOk,
@@ -987,7 +685,7 @@ class FormDAssySyringeController extends GetxController {
       }
       
       // Send data to API
-      final response = await Api.post('/machine-blister', data);
+      final response = await Api.post('form-d/machine-blister', data);
       
       if (response != null) {
         ArtSweetAlert.show(
@@ -1157,82 +855,96 @@ class FormDAssySyringeController extends GetxController {
     }
   }
 
-  Future<bool> createAssyValue({
+  Future<bool> storeFcsShiValue({
     required String codeTask,
+    required int formDId,
     required int taskId,
-    String? actualRunning,
-    String? runAwal,
+    String? tempNozzleZ1,
+    String? tempNozzleZ2,
+    String? tempNozzleZ3,
+    String? tempNozzleZ4,
+    String? tempNozzleZ5,
+    String? tempMold,
+    String? injectPressure,
+    String? injectTime,
+    String? holdingPressure,
+    String? holdingTime,
+    String? ejectCounter,
+    String? cycleTime,
+    String? masterbatch,
+    String? beratProduk,
+    String? beratRunner,
+    String? cavity,
+    String? sampling,
     String? defect,
-    String? goodsOk,
-    String? goodsReject,
-    String? qcBarrel,
-    String? qcGasket,
-    String? qcPlunger,
-    String? printMatchSpeed,
-    String? assyMatchSpeed,
-    int? formDId,
-    bool? loadBarrel,
-    bool? loadPlunger,
-    bool? loadGasket,
     dynamic machinePicture,
   }) async {
     isLoading.value = true;
-    
+
     try {
       // Prepare data for API call
       final data = {
         'code_task': codeTask,
-
+        'temp_nozzle_z1': tempNozzleZ1,
+        'temp_nozzle_z2': tempNozzleZ2,
+        'temp_nozzle_z3': tempNozzleZ3,
+        'temp_nozzle_z4': tempNozzleZ4,
+        'temp_nozzle_z5': tempNozzleZ5,
+        'temp_mold': tempMold,
+        'inject_pressure': injectPressure,
+        'inject_time': injectTime,
+        'holding_pressure': holdingPressure,
+        'holding_time': holdingTime,
+        'eject_counter': ejectCounter,
+        'cycle_time': cycleTime,
+        'masterbatch': masterbatch,
+        'berat_produk': beratProduk,
+        'berat_runner': beratRunner,
+        'cavity': cavity,
+        'sampling': sampling,
+        'defect': defect,
         'form_d_id': formDId,
         'task_id': taskId,
       };
-      for (final entry in parameterControllers.entries) {
-        if (entry.value.text.isNotEmpty) {
-          if(entry.value.text == 'true' || entry.value.text == 'false') {
-            data[entry.key] = entry.value.text == 'true';
-          } else {
-            // Convert to string if not boolean
-            data[entry.key] = entry.value.text;
-          }
-        }
-      }
-      
+
       // Add machine picture if provided
       if (machinePicture != null) {
         data['machine_picture'] = machinePicture;
       }
-      
+
       // Send data to API
-      final response = await Api.post('form-d/machine-assy', data);
-      
+      final response = await Api.post('/machine-fcs-shi', data);
+
       if (response != null) {
         ArtSweetAlert.show(
-          context: Get.context!,
-          artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.success,
-            title: "Berhasil",
-            text: "Machine Assy data berhasil disimpan"
-          )
+            context: Get.context!,
+            artDialogArgs: ArtDialogArgs(
+                type: ArtSweetAlertType.success,
+                title: "Berhasil",
+                text: "Assy Syringe data berhasil disimpan"
+            )
         );
         return true;
       } else {
-        throw Exception('Failed to store Machine Assy data');
+        throw Exception('Failed to store Assy Syringe data');
       }
     } catch (e) {
-      print('Error submitting Machine Assy data: $e');
+      print('Error submitting Assy Syringe data: $e');
       ArtSweetAlert.show(
-        context: Get.context!,
-        artDialogArgs: ArtDialogArgs(
-          type: ArtSweetAlertType.danger,
-          title: "Error",
-          text: "Terjadi kesalahan saat mengirim data Machine Assy: $e"
-        )
+          context: Get.context!,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Terjadi kesalahan saat mengirim data Assy Syringe: $e"
+          )
       );
       return false;
     } finally {
       isLoading.value = false;
     }
   }
+
+
 
   Future<bool> submitForm({
     required int machineId,
@@ -1325,7 +1037,6 @@ class FormDAssySyringeController extends GetxController {
 
       bool machineDataResult = false;
 
-      
 
       if (type == 'assysyringe') {
         // Create Assy values
@@ -1345,32 +1056,23 @@ class FormDAssySyringeController extends GetxController {
           loadPlunger: bool.parse(parameterControllers['load_plunger']?.text ?? 'false'),
           loadGasket: bool.parse(parameterControllers['load_gasket']?.text ?? 'false'),
         );
-      } else if (type == 'fcs_shi' || type == 'fcs' || type == 'shi_1' || type == 'shi_2') {
-        // These machine types might use the FCS-SHI form
-        // You may need to adjust this based on your specific requirements
-        machineDataResult = true; // Placeholder, implement as needed
       } else if (type == 'blister') {
-        // Create Blister values
         machineDataResult = await storeBlisterValue(
           codeTask: codeTask,
-          formDId: formDId,
           taskId: taskId,
+          formDId: formDId,
           materialType: materialType,
-          formingTime: formingTime,
-          formingTemperature: formingTemperature,
-          formingPressure: formingPressure,
-          sealingTemperature: sealingTemperature,
-          sealingPressure: sealingPressure,
-          sealingTime: sealingTime,
-          actualRunning: actualRunning,
-          defect: defect,
-          goodsOk: goodsOk,
-          goodsReject: goodsReject,
-          cycleTime: runAwal,
+          formingTime: parameterControllers['forming_time']?.text,
+          formingTemperature: parameterControllers['formingTemperature']?.text,
+          formingPressure: parameterControllers['formingPressure']?.text,
+          sealingTemperature: parameterControllers['sealingTemperature']?.text,
+          sealingPressure: parameterControllers['sealingPressure']?.text,
+          sealingTime: parameterControllers['sealingTime']?.text,
+          cycleTime: cycleTime,
           mfgDate: tanggal.toIso8601String(),
           expDate: tanggal.toIso8601String(),
-          needleSize: '',
-          nie: '',
+          needleSize: needleSize,
+          nie: nie,
           machinePicture: machinePicture,
         );
       } else if (type == 'sgp') {
@@ -1421,6 +1123,8 @@ class FormDAssySyringeController extends GetxController {
           needleTersumbat3: needleTersumbat3,
           machinePicture: machinePicture,
         );
+      } else if (type == 'fcs_shi' || type == 'fcs' || type == 'shi_1' || type == 'shi_2') {
+        // These machine types might use the FCS-SHI form
       } else {
         // Show error for unsupported machine type
         Get.snackbar(
