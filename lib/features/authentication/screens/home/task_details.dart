@@ -1,3 +1,4 @@
+import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
@@ -350,6 +351,10 @@ class _TaskDetailsState extends State<TaskDetails> {
 
     final category = controller.selectedCategory.value;
 
+    if ((key == "C" || key == "D") && !_checkMaterialSelected()) {
+      return; // Don't proceed with navigation if no material is selected
+    }
+
     switch (category) {
 
       case "Blister":
@@ -357,8 +362,8 @@ class _TaskDetailsState extends State<TaskDetails> {
           case "A": Get.to(() => PartA_Blister(task: widget.task)); break;
           case "B": Get.to(() => PartB_Blister(task: widget.task)); break;
           case "C": Get.to(() => PartC_Blister(task: widget.task,
-                                             selectedMaterialCode: controller.selectedMaterialCode.value,
-                                             requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
+                                            selectedMaterialCode: controller.selectedMaterialCode.value,
+                                            requiredQuantity: int.tryParse(controller.requiredQuantity.value) ?? 1)); break;
           case "D": Get.to(() => PartD(task: widget.task, selectedMaterialCode: controller.selectedMaterialCode.value)); break;
           case "E": Get.to(() => PartE_Blister(task: widget.task)); break;
           case "F": Get.to(() => PartF_Blister(task: widget.task)); break;
@@ -415,6 +420,25 @@ class _TaskDetailsState extends State<TaskDetails> {
       default:
         _showNotAvailableAlert();
     }
+  }
+
+  bool _checkMaterialSelected() {
+    if (controller.selectedMaterialCode.value.isEmpty) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.warning,
+          title: "Warning",
+          text: "Please choose the material first",
+          confirmButtonText: "OK",
+          onConfirm: () {
+            Navigator.of(context).pop(); // Close the alert
+          }
+        )
+      );
+      return false;
+    }
+    return true;
   }
 
   // Show loading dialog when BRM data is being fetched

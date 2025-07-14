@@ -32,10 +32,30 @@ class _MaterialReconciliationAssySyringeState extends State<MaterialReconciliati
       widget.selectedMaterialCode
     ));
     
-    // Fetch child materials when the screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchChildMaterials();
-    });
+    // Check if material code is selected
+    if (widget.selectedMaterialCode.isEmpty) {
+      // Show alert and navigate back after the widget is built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.warning,
+            title: "Warning",
+            text: "Please choose the material first",
+            confirmButtonText: "OK",
+            onConfirm: () {
+              Navigator.of(context).pop(); // Close the alert
+              Get.back(); // Return to task_details
+            }
+          )
+        );
+      });
+    } else {
+      // Fetch child materials when the screen loads and material is selected
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.fetchChildMaterials();
+      });
+    }
   }
 
   @override

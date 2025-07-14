@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 import '../../../controller/Form/D/form_d_assysyringe_controller.dart';
 import 'material_reconciliation.dart';
 
@@ -474,6 +475,25 @@ class _PartDState extends State<PartD> {
   }
 
   void _navigateToMaterialReconciliation() async {
+    // Check if material code is selected
+    if (widget.selectedMaterialCode.isEmpty) {
+      // Show alert if no material code is selected
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.warning,
+          title: "Warning",
+          text: "Please choose the material first",
+          confirmButtonText: "OK",
+          onConfirm: () {
+            Navigator.of(context).pop(); // Close the alert
+          }
+        )
+      );
+      return; // Don't navigate further
+    }
+    
+    // If material code is selected, proceed to Material Reconciliation
     final result = await Get.to(() => MaterialReconciliationAssySyringe(
       task: widget.task,
       selectedMaterialCode: widget.selectedMaterialCode,

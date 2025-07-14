@@ -35,7 +35,7 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(FormCAssySyringeController(widget.task,widget.selectedMaterialCode));
+    controller = Get.put(FormCAssySyringeController(widget.task, widget.selectedMaterialCode));
 
     for (var item in criteriaList) {
       catatanControllers[item["id"]!] = TextEditingController();
@@ -606,9 +606,6 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
             labelText: label,
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            filled: fillColor != null,
-            fillColor: fillColor,
-            isDense: true,
           ),
         ),
       ),
