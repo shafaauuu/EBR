@@ -44,7 +44,7 @@ class _EditTaskState extends State<EditTask> {
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.of(context).orientation == Orientation.portrait) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: Text(
             'Please rotate your device to landscape mode.',
@@ -57,7 +57,7 @@ class _EditTaskState extends State<EditTask> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Task'),
+        title: const Text('Edit Task'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
@@ -73,7 +73,7 @@ class _EditTaskState extends State<EditTask> {
               // Task Name
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Product/Component Name',
                   border: OutlineInputBorder(),
                 ),
@@ -84,12 +84,12 @@ class _EditTaskState extends State<EditTask> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Task Code
               TextFormField(
                 controller: _codeController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Product/Component Code',
                   border: OutlineInputBorder(),
                 ),
@@ -100,12 +100,12 @@ class _EditTaskState extends State<EditTask> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Batch Number
               TextFormField(
                 controller: _batchController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'BRM No',
                   border: OutlineInputBorder(),
                 ),
@@ -116,16 +116,16 @@ class _EditTaskState extends State<EditTask> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Date
               TextFormField(
                 controller: _dateController,
                 decoration: InputDecoration(
                   labelText: 'Date (YYYY-MM-DD)',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(Icons.calendar_today),
+                    icon: const Icon(Icons.calendar_today),
                     onPressed: () async {
                       final DateTime? picked = await showDatePicker(
                         context: context,
@@ -142,12 +142,12 @@ class _EditTaskState extends State<EditTask> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Status Dropdown
               DropdownButtonFormField<String>(
                 value: _status,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Status',
                   border: OutlineInputBorder(),
                 ),
@@ -164,18 +164,18 @@ class _EditTaskState extends State<EditTask> {
                   });
                 },
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               
               // Save Button
               Center(
                 child: _isLoading 
-                  ? CircularProgressIndicator()
+                  ? const CircularProgressIndicator()
                   : ElevatedButton(
                       onPressed: _saveTask,
                       style: ElevatedButton.styleFrom(
-                        minimumSize: Size(200, 50),
+                        minimumSize: const Size(200, 50),
                       ),
-                      child: Text('Save Changes'),
+                      child: const Text('Save Changes'),
                     ),
               ),
             ],

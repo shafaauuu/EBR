@@ -7,7 +7,6 @@ import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'dart:typed_data';
-import 'dart:html' as html;
 
 class PartD_Blister extends StatefulWidget {
   final Task task;
@@ -29,7 +28,7 @@ class _PartD_BlisterState extends State<PartD_Blister> {
   List<bool> assyStatusChecks = List.generate(2, (_) => false);
 
 
-  List<bool> _siapRunningChecks = [false, false, false]; // for Barrel, Plunger, Gasket
+  final List<bool> _siapRunningChecks = [false, false, false]; // for Barrel, Plunger, Gasket
 
   String? _selectedMachine;
   DateTime? _selectedDateTime;
@@ -454,7 +453,7 @@ class _PartD_BlisterState extends State<PartD_Blister> {
       void Function(int index, bool? value) onStatusChanged,
       ) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500, // Adjust as needed
         child: Table(
           border: TableBorder.all(color: Colors.grey),
@@ -525,7 +524,7 @@ class _PartD_BlisterState extends State<PartD_Blister> {
 
   Widget buildChecklistTable(List<List<String>> items) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500, // Match or customize as needed
         child: Table(
           border: TableBorder.all(color: Colors.grey),
@@ -534,9 +533,9 @@ class _PartD_BlisterState extends State<PartD_Blister> {
             1: FlexColumnWidth(3),
           },
           children: [
-            TableRow(
-              decoration: const BoxDecoration(color: Color(0xFFEFEFEF)),
-              children: const [
+            const TableRow(
+              decoration: BoxDecoration(color: Color(0xFFEFEFEF)),
+              children: [
                 Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text("Loading pada buffer", style: TextStyle(fontWeight: FontWeight.bold)),

@@ -1,15 +1,16 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controller/task_details_controller.dart';
-import '../../../models/task_model.dart';
 import 'package:signature/signature.dart';
 import '../../../controller/Form/G/form_g_needle_assy_controller.dart';
+import '../../../controller/task_details_controller.dart';
+import '../../../models/task_model.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
-import 'dart:convert';
-import 'dart:typed_data';
-import 'dart:html' as html;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:math';
 
 class PartG_NeedleAssy extends StatefulWidget {
   final Task task;
@@ -71,27 +72,22 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
       formController.setInisial3(userInisial);
     }
 
-    if (widget.task != null) {
-      formController.setTaskInfo(widget.task!);
-      _loadExistingData();
-    }
+    formController.setTaskInfo(widget.task);
+    _loadExistingData();
   }
 
   Future<void> _loadExistingData() async {
-    if (widget.task?.id != null) {
-      final formData = await formController.getFormByTaskId(widget.task!.id!);
-      if (formData != null) {
-        setState(() {
-          latestFormData = formData;
-          remarksController.text = formData['remarks'] ?? '';
-          formController.setRemarks(remarksController.text);
+    final formData = await formController.getFormByTaskId(widget.task.id);
+    if (formData != null) {
+      setState(() {
+        latestFormData = formData;
+        remarksController.text = formData['remarks'] ?? '';
+        formController.setRemarks(remarksController.text);
 
-          // Store the latest signatures from the controller
-          latestSignature1 = formController.signature1.value;
-          latestSignature2 = formController.signature2.value;
-          latestSignature3 = formController.signature3.value;
-        });
-      }
+        latestSignature1 = formController.signature1.value;
+        latestSignature2 = formController.signature2.value;
+        latestSignature3 = formController.signature3.value;
+      });
     }
   }
 
@@ -181,9 +177,9 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
                         },
                       ),
                       const SizedBox(height: 25),
-                      Center(
+                      const Center(
                         child: Column(
-                          children: const [
+                          children: [
                             Text(
                               "Batch Record ini telah diisi sepenuhnya sesuai dengan kondisi sebenarnya.",
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -206,10 +202,11 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
                       // First signature section - Operator (always visible)
                       _buildSignatureSection(
                         title: "Tanda Tangan Operator/Operator's Sign:",
-                        signatureController: _signatureController1,
-                        inisial: userRole == "Production Operation" ? userInisial : "",
                         signatureIndex: 1,
-                        isEnabled: userRole == "Production Operation",
+                        onSign: () {
+                          _signatureController1.clear();
+                          _updateSignatureInController(1, null);
+                        },
                       ),
 
                       const SizedBox(height: 16),
@@ -219,10 +216,11 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
                       if (userRole == "Head Section")
                         _buildSignatureSection(
                           title: "Tanda Tangan Kepala Bagian/Head Section's Sign:",
-                          signatureController: _signatureController2,
-                          inisial: userInisial,
                           signatureIndex: 2,
-                          isEnabled: true,
+                          onSign: () {
+                            _signatureController2.clear();
+                            _updateSignatureInController(2, null);
+                          },
                         ),
 
                       // Show a disabled version for other roles
@@ -238,10 +236,11 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
                       if (userRole == "Assistant Manager")
                         _buildSignatureSection(
                           title: "Tanda Tangan Asisten Manajer/Assistant Manager's Sign:",
-                          signatureController: _signatureController3,
-                          inisial: userInisial,
                           signatureIndex: 3,
-                          isEnabled: true,
+                          onSign: () {
+                            _signatureController3.clear();
+                            _updateSignatureInController(3, null);
+                          },
                         ),
 
                       // Show a disabled version for other roles
@@ -252,9 +251,9 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
 
                       const SizedBox(height: 16),
                       const Divider(thickness: 2),
-                      Center(
+                      const Center(
                         child: Column(
-                          children: const [
+                          children: [
                             Text(
                               "Halaman Terakhir",
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -305,140 +304,41 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
 
   Widget _buildSignatureSection({
     required String title,
-    required SignatureController signatureController,
-    required String inisial,
     required int signatureIndex,
-    required bool isEnabled,
+    required Function() onSign,
   }) {
+    String? rawBase64;
+    bool hasSigned = false;
+    String initial = "";
+
+    // Get the appropriate signature data based on index
+    switch (signatureIndex) {
+      case 1:
+        rawBase64 = formController.rawSignature1.value;
+        hasSigned = latestFormData != null && (latestFormData!['has_signed_1'] == true);
+        initial = formController.inisial1.value ?? "";
+        break;
+      case 2:
+        rawBase64 = formController.rawSignature2.value;
+        hasSigned = latestFormData != null && (latestFormData!['has_signed_2'] == true);
+        initial = formController.inisial2.value ?? "";
+        break;
+      case 3:
+        rawBase64 = formController.rawSignature3.value;
+        hasSigned = latestFormData != null && (latestFormData!['has_signed_3'] == true);
+        initial = formController.inisial3.value ?? "";
+        break;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
           ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: isEnabled ? Colors.grey : Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: AbsorbPointer(
-            absorbing: !isEnabled,
-            child: Opacity(
-              opacity: isEnabled ? 1.0 : 0.5,
-              child: Signature(
-                controller: signatureController,
-                height: 200,
-                backgroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ),
-        if (isEnabled)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  signatureController.clear();
-                  _updateSignatureInController(signatureIndex, null);
-                },
-                icon: const Icon(Icons.refresh, color: Colors.red),
-                label: const Text("Clear", style: TextStyle(color: Colors.red)),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final image = await signatureController.toPngBytes();
-                  if (image != null) {
-                    _updateSignatureInController(signatureIndex, image);
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("Signature Preview"),
-                        content: Image.memory(image),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Close"),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.visibility),
-                label: const Text("Preview"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 3,
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Text("Inisial/Initial: ", style: TextStyle(fontSize: 14)),
-            const SizedBox(width: 8),
-            Text(
-              inisial,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-
-        // Display the latest signature if available
-        _buildSignatureDisplay(signatureIndex),
-      ],
-    );
-  }
-
-  // Custom widget to display signature with fallback mechanisms
-  Widget _buildSignatureDisplay(int signatureIndex) {
-    Uint8List? signatureBytes;
-    String? rawBase64;
-
-    // Get the appropriate signature data based on index
-    switch (signatureIndex) {
-      case 1:
-        signatureBytes = latestSignature1;
-        rawBase64 = formController.rawSignature1.value;
-        break;
-      case 2:
-        signatureBytes = latestSignature2;
-        rawBase64 = formController.rawSignature2.value;
-        break;
-      case 3:
-        signatureBytes = latestSignature3;
-        rawBase64 = formController.rawSignature3.value;
-        break;
-    }
-
-    // If no signature data available, return empty container
-    if (signatureBytes == null && rawBase64 == null) {
-      return Container();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        const Text(
-          "Previous Signature:",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Container(
@@ -446,132 +346,163 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: _buildSignatureImageWithFallback(signatureBytes, rawBase64),
+          height: 200,
+          width: double.infinity,
+          child: hasSigned && rawBase64 != null && rawBase64.isNotEmpty
+              ? _buildExistingSignature(rawBase64, signatureIndex, onSign)
+              : _buildSignaturePad(signatureIndex),
         ),
-        if (latestFormData != null) ...[
+        if (hasSigned && latestFormData != null && rawBase64 != null && rawBase64.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
             "Date: ${_formatDateTime(latestFormData!['created_at'])}",
             style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Text("Inisial/Initial: ", style: TextStyle(fontSize: 14, color: Colors.grey)),
+              const SizedBox(width: 8),
+              Text(
+                initial,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
           ),
         ],
       ],
     );
   }
 
-  // Build signature image with fallback mechanisms
-  Widget _buildSignatureImageWithFallback(Uint8List? signatureBytes, String? rawBase64) {
-    // First try: Use the decoded Uint8List if available
-    if (signatureBytes != null) {
-      return Image.memory(
-        signatureBytes,
-        height: 150,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          print("Error displaying signature from bytes: $error");
-          // If Image.memory fails, try with base64 string
-          return _buildBase64Image(rawBase64);
-        },
-      );
-    }
-    // Second try: Use the raw base64 string
-    else if (rawBase64 != null) {
-      return _buildBase64Image(rawBase64);
-    }
-    // Fallback: Show placeholder
-    else {
-      return Container(
-        height: 150,
+  Widget _buildExistingSignature(String base64String, int signatureIndex, Function() onSign) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Signature $signatureIndex'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 500),
+                    child: _buildSignatureImageForDialog(base64String),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Date: ${latestFormData != null ? _formatDateTime(latestFormData!['created_at']) : "Unknown"}'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    // Update the has_signed flag in the latestFormData
+                    if (latestFormData != null) {
+                      switch (signatureIndex) {
+                        case 1:
+                          latestFormData!['has_signed_1'] = false;
+                          break;
+                        case 2:
+                          latestFormData!['has_signed_2'] = false;
+                          break;
+                        case 3:
+                          latestFormData!['has_signed_3'] = false;
+                          break;
+                      }
+                    }
+                  });
+                  onSign(); // Clear the signature controller
+                },
+                child: const Text('Sign Again'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Container(
         alignment: Alignment.center,
-        child: const Text("Signature not available", style: TextStyle(color: Colors.grey)),
-      );
-    }
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              "Signature Available",
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            const Text(
+              "(Tap to view)",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  // Build image from base64 string
-  Widget _buildBase64Image(String? base64String) {
-    if (base64String == null) {
-      return Container(
-        height: 150,
-        alignment: Alignment.center,
-        child: const Text("Signature data not available", style: TextStyle(color: Colors.grey)),
-      );
+  Widget _buildSignaturePad(int signatureIndex) {
+    SignatureController signatureController;
+    switch (signatureIndex) {
+      case 1:
+        signatureController = _signatureController1;
+        break;
+      case 2:
+        signatureController = _signatureController2;
+        break;
+      case 3:
+        signatureController = _signatureController3;
+        break;
+      default:
+        throw Exception("Invalid signature index");
     }
 
-    // For web platform, use HTML approach which can handle problematic base64 data better
-    if (kIsWeb) {
-      // Create a data URL for the image
-      final dataUrl = 'data:image/png;base64,$base64String';
-
-      // Create a unique ID for this image
-      final imageId = 'signature-image-${DateTime.now().millisecondsSinceEpoch}';
-
-      // Create an HTML image element
-      final imageElement = html.ImageElement()
-        ..id = imageId
-        ..src = dataUrl
-        ..style.height = '150px'
-        ..style.objectFit = 'contain';
-
-      // Add the image to the DOM temporarily
-      html.document.body?.append(imageElement);
-
-      // Use HtmlElementView to display the HTML element in Flutter
-      return SizedBox(
-        height: 150,
-        child: Builder(
-          builder: (BuildContext context) {
-            // Schedule to remove the element when this widget is disposed
-            Future.delayed(Duration.zero, () {
-              // Create a canvas to draw the image to
-              try {
-                final canvas = html.CanvasElement(width: imageElement.width, height: imageElement.height);
-                final ctx = canvas.context2D;
-
-                // Draw the image to the canvas
-                ctx.drawImage(imageElement, 0, 0);
-
-                // Replace the original image with the canvas-rendered version
-                imageElement.src = canvas.toDataUrl('image/png');
-              } catch (e) {
-                print('Error rendering image through canvas: $e');
-              }
-            });
-
-            return HtmlElementView(viewType: imageId);
-          },
+    return Column(
+      children: [
+        Expanded(
+          child: Signature(
+            controller: signatureController,
+            backgroundColor: Colors.white,
+          ),
         ),
-      );
-    }
-
-    // For non-web platforms, use the standard Flutter approach
-    return Container(
-      height: 150,
-      alignment: Alignment.center,
-      child: Image.memory(
-        base64Decode(base64String),
-        height: 150,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          print("Error displaying signature from base64: $error");
-          // Final fallback: Show placeholder with error message
-          return Container(
-            height: 150,
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.error_outline, color: Colors.red, size: 40),
-                SizedBox(height: 8),
-                Text(
-                  "Could not display signature",
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+        Container(
+          color: Colors.grey[200],
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Clear button
+              IconButton(
+                icon: const Icon(Icons.clear, color: Colors.blue),
+                onPressed: () {
+                  signatureController.clear();
+                },
+                tooltip: 'Clear All',
+              ),
+              // Undo button
+              IconButton(
+                icon: const Icon(Icons.undo, color: Colors.blue),
+                onPressed: () {
+                  signatureController.undo();
+                },
+                tooltip: 'Undo',
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -641,17 +572,17 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
 
   Future<void> _submitForm(BuildContext context) async {
     // Capture signatures if not already captured
-    if (userRole == "Production Operation" && formController.signature1.value == null && !_signatureController1.isEmpty) {
+    if (userRole == "Production Operation" && formController.signature1.value == null && _signatureController1.isNotEmpty) {
       final image1 = await _signatureController1.toPngBytes();
       formController.setSignature1(image1);
     }
 
-    if (userRole == "Head Section" && formController.signature2.value == null && !_signatureController2.isEmpty) {
+    if (userRole == "Head Section" && formController.signature2.value == null && _signatureController2.isNotEmpty) {
       final image2 = await _signatureController2.toPngBytes();
       formController.setSignature2(image2);
     }
 
-    if (userRole == "Assistant Manager" && formController.signature3.value == null && !_signatureController3.isEmpty) {
+    if (userRole == "Assistant Manager" && formController.signature3.value == null && _signatureController3.isNotEmpty) {
       final image3 = await _signatureController3.toPngBytes();
       formController.setSignature3(image3);
     }
@@ -692,6 +623,71 @@ class _PartG_NeedleAssyState extends State<PartG_NeedleAssy> {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return dateTimeStr;
+    }
+  }
+
+  // Try to build an image from base64 string for dialog display
+  Widget _buildSignatureImageForDialog(String base64String) {
+    try {
+      // For data URLs, try to display directly first
+      if (base64String.startsWith('data:image')) {
+        return Image.network(
+          base64String,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            print("Network approach failed in dialog: $error");
+            // If network approach fails, try extracting base64
+            return _tryExtractAndDisplayBase64(base64String);
+          },
+        );
+      } else {
+        // For regular base64, try to decode
+        return _tryExtractAndDisplayBase64(base64String);
+      }
+    } catch (e) {
+      print("Error in dialog image display: $e");
+      return Container(
+        alignment: Alignment.center,
+        child: Text("Could not display signature image"),
+      );
+    }
+  }
+
+  // Helper method to extract and display base64 data
+  Widget _tryExtractAndDisplayBase64(String base64String) {
+    try {
+      String processedBase64 = base64String;
+      if (base64String.startsWith('data:image')) {
+        final parts = base64String.split(',');
+        if (parts.length > 1) {
+          processedBase64 = parts[1];
+        }
+      }
+
+      // Add padding if needed
+      while (processedBase64.length % 4 != 0) {
+        processedBase64 += '=';
+      }
+
+      final Uint8List bytes = base64Decode(processedBase64);
+
+      return Image.memory(
+        bytes,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          print("Memory approach failed in dialog: $error");
+          return Container(
+            alignment: Alignment.center,
+            child: Text("Could not display signature image"),
+          );
+        },
+      );
+    } catch (e) {
+      print("Base64 extraction failed in dialog: $e");
+      return Container(
+        alignment: Alignment.center,
+        child: Text("Could not process signature data"),
+      );
     }
   }
 }

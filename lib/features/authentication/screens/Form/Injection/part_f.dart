@@ -141,160 +141,148 @@ class _PartF_InjectionState extends State<PartF_Injection> {
       ),
       body: Obx(() => formController.isLoading.value
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Sticky Header Section
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                color: Colors.white,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 250,
-                      child: Image.asset(
-                        'assets/logos/logo_oneject.png',
-                        height: 50,
+          : Column(
+        children: [
+          // Sticky Header Section
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            color: Colors.white,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 250,
+                  child: Image.asset('assets/logos/logo_oneject.png', height: 50),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "BATCH RECORD",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Batch Record Details (Left)
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "BATCH RECORD",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          _buildAlignedText("P/C Code", widget.task.code ?? "N/A"),
-                          _buildAlignedText("P/C Name", widget.task.name ?? "N/A"),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Batch Record Details (Right)
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Obx(() => _buildAlignedText("BRM No.", taskController.selectedBRM.value)),
-                          _buildAlignedText("Rev No.", ""),
-                          _buildAlignedText("Eff. Date", ""),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Divider(thickness: 1),
-              const SizedBox(height: 16),
-
-              // Label Mesin Section
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Take Photo of Label Mesin",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+                      _buildAlignedText("P/C Code", widget.task.code ?? "N/A"),
+                      _buildAlignedText("P/C Name", widget.task.name ?? "N/A"),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-
-              // Label Mesin Photo Field
-              GestureDetector(
-                onTap: () => _showImageSourceDialog(context, true),
-                child: Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[200],
-                  ),
-                  child: _labelMesinImage == null
-                      ? const Center(
-                    child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                  )
-                      : Image.file(_labelMesinImage!, fit: BoxFit.cover),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Label 2 Section
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Take Photo of Second Label",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildAlignedText("BRM No.", widget.task.brmNo ?? ""),
+                      _buildAlignedText("Rev No.", ""),
+                      _buildAlignedText("Eff. Date", ""),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-
-              // Label 2 Photo Field
-              GestureDetector(
-                onTap: () => _showImageSourceDialog(context, false),
-                child: Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[200],
-                  ),
-                  child: _label2Image == null
-                      ? const Center(
-                    child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                  )
-                      : Image.file(_label2Image!, fit: BoxFit.cover),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Submit Button
-              Center(
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                      : const Text("Submit", style: TextStyle(fontSize: 16)),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const Divider(thickness: 1),
+
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Label Mesin Section
+                  const Text(
+                    "Take Photo of Label Mesin",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Label Mesin Photo Field
+                  GestureDetector(
+                    onTap: () => _showImageSourceDialog(context, true),
+                    child: Container(
+                      height: 400,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey[200],
+                      ),
+                      child: _labelMesinImage == null
+                          ? const Center(
+                        child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      )
+                          : Image.file(_labelMesinImage!, fit: BoxFit.cover),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Label 2 Section
+                  const Text(
+                    "Take Photo of Second Label",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Label 2 Photo Field
+                  GestureDetector(
+                    onTap: () => _showImageSourceDialog(context, false),
+                    child: Container(
+                      height: 400,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey[200],
+                      ),
+                      child: _label2Image == null
+                          ? const Center(
+                        child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      )
+                          : Image.file(_label2Image!, fit: BoxFit.cover),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Submit Button
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                          : const Text("Submit", style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       ),
     );

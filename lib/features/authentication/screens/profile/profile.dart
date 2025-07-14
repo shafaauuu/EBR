@@ -37,11 +37,11 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
+            const Center(
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: OColors.lightGrey,
-                child: const Icon(
+                child: Icon(
                   Icons.account_circle,
                   size: 80,
                   color: OColors.darkerGrey,

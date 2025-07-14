@@ -28,7 +28,7 @@ class OColors{
   static Color darkContainer = OColors.white.withOpacity(0.1);
 
   static const Color buttonPrimary = Color(0xFF4b68ff);
-  static const Color buttonSecondary = Color(0xFF6CC757D);
+  static const Color buttonSecondary = Color(0xff6cc757d);
   static const Color buttonDisabled = Color(0xFFC4C4C4);
 
   static const Color borderPrimary = Color(0xFFD9D9D9);

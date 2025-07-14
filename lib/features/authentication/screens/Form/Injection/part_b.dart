@@ -72,9 +72,9 @@ class _PartB_InjectionState extends State<PartB_Injection> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "BATCH RECORD",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           _buildAlignedText("P/C Code", widget.task.code),
@@ -104,17 +104,17 @@ class _PartB_InjectionState extends State<PartB_Injection> {
               const Divider(thickness: 1),
 
               const SizedBox(height: Sizes.spaceBtwItems),
-              Text(
+              const Text(
                 "Mesin/Perlengkapan",
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.blue,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
+              const Text(
                 "Machine/Tools",
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.grey,
                   fontSize: 10,
                   fontStyle: FontStyle.italic,

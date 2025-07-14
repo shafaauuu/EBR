@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
-import 'dart:typed_data';
-import 'dart:html' as html;
 import '../../../controller/Form/D/form_d_assysyringe_controller.dart';
 import 'material_reconciliation.dart';
 
@@ -40,9 +38,9 @@ class _PartDState extends State<PartD> {
   List<Map<String, dynamic>> parameterRows = [];
 
 
-  List<bool> _siapRunningChecks = [false, false, false]; // for Barrel, Plunger, Gasket
+  final List<bool> _siapRunningChecks = [false, false, false]; // for Barrel, Plunger, Gasket
 
-  dynamic displayData = null;
+  dynamic displayData;
   String displayType = '';
 
   String? _selectedMachine;
@@ -904,40 +902,7 @@ class _PartDState extends State<PartD> {
       needleSize: needleSizeController.text,
       nie: nieController.text,
       // For SGP machine
-      moldTemperature: machineType == 'sgp' ? formDController.moldTemperature.value : '',
-      injectionPressure: machineType == 'sgp' ? formDController.injectionPressure.value : '',
-      injectionSpeed: machineType == 'sgp' ? formDController.injectionSpeed.value : '',
-      holdingPressure: machineType == 'sgp' ? formDController.holdingPressure.value : '',
-      holdingTime: machineType == 'sgp' ? formDController.holdingTime.value : '',
-      coolingTime: machineType == 'sgp' ? formDController.coolingTime.value : '',
-      temp1: machineType == 'sgp' ? formDController.temp1.value : '',
-      temp2: machineType == 'sgp' ? formDController.temp2.value : '',
-      temp3: machineType == 'sgp' ? formDController.temp3.value : '',
-      temp4: machineType == 'sgp' ? formDController.temp4.value : '',
-      loadCap: machineType == 'sgp' ? formDController.loadCap.value : false,
-      loadHub: machineType == 'sgp' ? formDController.loadHub.value : false,
-      loadNeedle: machineType == 'sgp' ? formDController.loadNeedle.value : false,
-      hasilEpoxy: machineType == 'sgp' ? formDController.hasilEpoxy.value : false,
-      pressureActual: machineType == 'sgp' ? formDController.pressureActual.value : '',
-      pressureStatus: machineType == 'sgp' ? formDController.pressureStatus.value : false,
-      lowEpoxy1: machineType == 'sgp' ? formDController.lowEpoxy1.value : false,
-      lowEpoxy2: machineType == 'sgp' ? formDController.lowEpoxy2.value : false,
-      lowEpoxy3: machineType == 'sgp' ? formDController.lowEpoxy3.value : false,
-      hubCanula1: machineType == 'sgp' ? formDController.hubCanula1.value : false,
-      hubCanula2: machineType == 'sgp' ? formDController.hubCanula2.value : false,
-      hubCanula3: machineType == 'sgp' ? formDController.hubCanula3.value : false,
-      excEpoxy1: machineType == 'sgp' ? formDController.excEpoxy1.value : false,
-      excEpoxy2: machineType == 'sgp' ? formDController.excEpoxy2.value : false,
-      excEpoxy3: machineType == 'sgp' ? formDController.excEpoxy3.value : false,
-      needleTumpul1: machineType == 'sgp' ? formDController.needleTumpul1.value : false,
-      needleTumpul2: machineType == 'sgp' ? formDController.needleTumpul2.value : false,
-      needleTumpul3: machineType == 'sgp' ? formDController.needleTumpul3.value : false,
-      needleBalik1: machineType == 'sgp' ? formDController.needleBalik1.value : false,
-      needleBalik2: machineType == 'sgp' ? formDController.needleBalik2.value : false,
-      needleBalik3: machineType == 'sgp' ? formDController.needleBalik3.value : false,
-      needleTersumbat1: machineType == 'sgp' ? formDController.needleTersumbat1.value : false,
-      needleTersumbat2: machineType == 'sgp' ? formDController.needleTersumbat2.value : false,
-      needleTersumbat3: machineType == 'sgp' ? formDController.needleTersumbat3.value : false,
+
     );
   }
 
@@ -1051,7 +1016,7 @@ class _PartDState extends State<PartD> {
 
 
     return Center(
-      child: Container(
+      child: SizedBox(
         width: double.infinity,
         child: Table(
           border: TableBorder.all(color: Colors.grey),

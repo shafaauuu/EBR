@@ -333,7 +333,7 @@ class _PartC_InjectionState extends State<PartC_Injection> {
                                 )
                             );
 
-                            final confirmed = response != null && response.isTapConfirmButton;
+                            final confirmed = response.isTapConfirmButton;
 
                             if (confirmed) {
                               // Prepare form data with the correct structure for the backend API

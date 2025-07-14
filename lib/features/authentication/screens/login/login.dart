@@ -20,7 +20,7 @@ class LoginScreen extends StatelessWidget {
       Future.delayed(const Duration(seconds: 2), () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       });
 
@@ -44,9 +44,9 @@ class LoginScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Image(
+                  const Image(
                     height: 150,
-                    image: const AssetImage('assets/logos/Oneject-removebg-preview.png'),
+                    image: AssetImage('assets/logos/Oneject-removebg-preview.png'),
                   ),
                   const SizedBox(height: Sizes.sm),
                   Text(
@@ -65,8 +65,8 @@ class LoginScreen extends StatelessWidget {
                       // Email Field
                       TextFormField(
                         controller: authController.emailController,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Iconsax.direct_right),
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Iconsax.direct_right),
                           labelText: Texts.email,
                         ),
                       ),
@@ -93,7 +93,7 @@ class LoginScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
+                          const Row(
                             children: [
                               // Obx(() => Checkbox(
                               //   value: authController.rememberMe.value,

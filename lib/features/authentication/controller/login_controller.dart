@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:oji_1/common/api.dart';
 import 'package:oji_1/features/authentication/controller/task_controller.dart';
 import 'package:oji_1/features/authentication/screens/home/home.dart';
@@ -61,7 +59,7 @@ class AuthController extends GetxController {
   }
   Future<void> checkUser(BuildContext context) async {
     var data = await Api.get("user");
-    this.userData = data;
+    userData = data;
 
     storage.write("user_email", data["email"]);
     storage.write("first_name", data["first_name"]);

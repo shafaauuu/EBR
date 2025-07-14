@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:oji_1/features/authentication/screens/home/home.dart';
 import 'package:oji_1/features/authentication/screens/login/login.dart';
 import 'package:oji_1/utils/theme/theme.dart';

@@ -13,7 +13,6 @@ import 'package:oji_1/features/authentication/controller/task_details_controller
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_a.dart';
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_b.dart';
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_c.dart';
-import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_d.dart';
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_e.dart';
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_f.dart';
 import 'package:oji_1/features/authentication/screens/Form/Needle_Assy/part_g.dart';
@@ -29,7 +28,6 @@ import 'package:oji_1/features/authentication/screens/Form/Assy_Syringe/part_g.d
 import 'package:oji_1/features/authentication/screens/Form/Blister/part_a.dart';
 import 'package:oji_1/features/authentication/screens/Form/Blister/part_b.dart';
 import 'package:oji_1/features/authentication/screens/Form/Blister/part_c.dart';
-import 'package:oji_1/features/authentication/screens/Form/Blister/part_d.dart';
 import 'package:oji_1/features/authentication/screens/Form/Blister/part_e.dart';
 import 'package:oji_1/features/authentication/screens/Form/Blister/part_f.dart';
 import 'package:oji_1/features/authentication/screens/Form/Blister/part_g.dart';
@@ -37,7 +35,6 @@ import 'package:oji_1/features/authentication/screens/Form/Blister/part_g.dart';
 import 'package:oji_1/features/authentication/screens/Form/Injection/part_a.dart';
 import 'package:oji_1/features/authentication/screens/Form/Injection/part_b.dart';
 import 'package:oji_1/features/authentication/screens/Form/Injection/part_c.dart';
-import 'package:oji_1/features/authentication/screens/Form/Injection/part_d.dart';
 import 'package:oji_1/features/authentication/screens/Form/Injection/part_e.dart';
 import 'package:oji_1/features/authentication/screens/Form/Injection/part_f.dart';
 import 'package:oji_1/features/authentication/screens/Form/Injection/part_g.dart';
@@ -84,7 +81,7 @@ class _TaskDetailsState extends State<TaskDetails> {
     controller.fetchMachinesByBRM(widget.task.brmNo);
     controller.setBRM(widget.task.brmNo);
     if (MediaQuery.of(context).orientation == Orientation.portrait) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: Text(
             'Please rotate your device to landscape mode.',
@@ -107,8 +104,8 @@ class _TaskDetailsState extends State<TaskDetails> {
         ),
         actions: widget.isEditing 
           ? [
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
+              const Padding(
+                padding: EdgeInsets.only(right: 16.0),
                 child: Icon(Icons.edit, color: Colors.blue),
               )
             ] 
@@ -136,9 +133,9 @@ class _TaskDetailsState extends State<TaskDetails> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         "BATCH RECORD",
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       _buildAlignedText("P/C Code", widget.task.code),
@@ -425,18 +422,18 @@ class _TaskDetailsState extends State<TaskDetails> {
     Get.dialog(
       WillPopScope(
         onWillPop: () async => false, // Prevent dialog from being dismissed by back button
-        child: AlertDialog(
+        child: const AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 20),
-              const Text(
+              CircularProgressIndicator(),
+              SizedBox(height: 20),
+              Text(
                 "Loading BRM data...",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
-              const Text(
+              SizedBox(height: 10),
+              Text(
                 "Please wait while we fetch the necessary data for this form.",
                 textAlign: TextAlign.center,
               ),

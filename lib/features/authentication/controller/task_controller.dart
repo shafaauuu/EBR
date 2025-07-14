@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:oji_1/common/api.dart';
 import '../models/task_model.dart';
@@ -149,8 +147,8 @@ class TaskController extends GetxController {
         return Wrap(
           children: [
             ListTile(
-              leading: Icon(Icons.visibility),
-              title: Text("View Details"),
+              leading: const Icon(Icons.visibility),
+              title: const Text("View Details"),
               onTap: () {
                 Navigator.pop(context);
                 Get.to(() => TaskDetails(task: task));
@@ -158,8 +156,8 @@ class TaskController extends GetxController {
             ),
             if (task.status == "ongoing")
               ListTile(
-                leading: Icon(Icons.edit),
-                title: Text("Edit Task Details"),
+                leading: const Icon(Icons.edit),
+                title: const Text("Edit Task Details"),
                 onTap: () {
                   Navigator.pop(context);
                   // Navigate to task details screen for editing forms A-G
@@ -168,8 +166,8 @@ class TaskController extends GetxController {
               ),
             if (task.status == "ongoing")
               ListTile(
-                leading: Icon(Icons.pending_actions),
-                title: Text("Move to Pending"),
+                leading: const Icon(Icons.pending_actions),
+                title: const Text("Move to Pending"),
                 onTap: () {
                   updateTaskStatus(task.id, "pending");
                   Navigator.pop(context);
@@ -177,8 +175,8 @@ class TaskController extends GetxController {
               ),
             if (task.status == "pending")
               ListTile(
-                leading: Icon(Icons.check),
-                title: Text("Move to Completed"),
+                leading: const Icon(Icons.check),
+                title: const Text("Move to Completed"),
                 onTap: () {
                   updateTaskStatus(task.id, "completed");
                   Navigator.pop(context);

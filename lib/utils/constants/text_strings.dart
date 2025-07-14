@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 class Texts {
   static const String loginTitle = "E-Batch Record";

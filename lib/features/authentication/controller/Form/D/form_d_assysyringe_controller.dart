@@ -1,9 +1,9 @@
-import 'dart:js_interop';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:oji_1/common/api.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:oji_1/utils/js_interop_stub.dart';
 
 class FormDAssySyringeController extends GetxController {
   var isLoading = false.obs;
@@ -288,8 +288,8 @@ class FormDAssySyringeController extends GetxController {
   Future<JSAny?> getForm(String taskId) async {
     try {
       // Try needle-assy machines
-      final needle = await Api.get("form-d/form/${taskId}");
-      if (needle != null) return needle;
+      final needle = await Api.get("form-d/form/$taskId");
+      if (needle != null) return JSAny(needle);
     } catch (e) {
       print('Error getting needle-assy form data: $e');
     }
@@ -462,7 +462,7 @@ class FormDAssySyringeController extends GetxController {
       } else {
         // Handle case when no data is found
         print('No Assy Syringe data found for this task');
-        return null;
+        return;
       }
     } catch (e) {
       print('Error retrieving Assy Syringe data: $e');
@@ -474,81 +474,7 @@ class FormDAssySyringeController extends GetxController {
               text: "Failed to retrieve Assy Syringe data: $e"
           )
       );
-      return null;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<bool> checkSgpValue() async {
-    isLoading.value = true;
-    try {
-      final response = await Api.get('/machine-sgp/${taskId.value}');
-      
-      if (response != null) {
-        // Process the response data
-        print('Machine SGP data retrieved successfully');
-        // Update form fields if needed
-        if (response['data'] != null) {
-          var data = response['data'];
-          materialType.value = data['material_type']?.toString() ?? '';
-          moldTemperature.value = data['mold_temperature']?.toString() ?? '';
-          injectionPressure.value = data['injection_pressure']?.toString() ?? '';
-          injectionSpeed.value = data['injection_speed']?.toString() ?? '';
-          holdingPressure.value = data['holding_pressure']?.toString() ?? '';
-          holdingTime.value = data['holding_time']?.toString() ?? '';
-          coolingTime.value = data['cooling_time']?.toString() ?? '';
-          actualRunning.value = data['actual_running']?.toString() ?? '';
-          runAwal.value = data['cycle_time']?.toString() ?? '';
-          defect.value = data['defect']?.toString() ?? '';
-          goodsOk.value = data['goods_ok']?.toString() ?? '';
-          goodsReject.value = data['goods_reject']?.toString() ?? '';
-          temp1.value = data['temp1']?.toString() ?? '';
-          temp2.value = data['temp2']?.toString() ?? '';
-          temp3.value = data['temp3']?.toString() ?? '';
-          temp4.value = data['temp4']?.toString() ?? '';
-          loadCap.value = data['load_cap'] ?? false;
-          loadHub.value = data['load_hub'] ?? false;
-          loadNeedle.value = data['load_needle'] ?? false;
-          hasilEpoxy.value = data['hasil_epoxy'] ?? false;
-          pressureActual.value = data['pressure_actual']?.toString() ?? '';
-          pressureStatus.value = data['pressure_status'] ?? false;
-          lowEpoxy1.value = data['low_epoxy1'] ?? false;
-          lowEpoxy2.value = data['low_epoxy2'] ?? false;
-          lowEpoxy3.value = data['low_epoxy3'] ?? false;
-          hubCanula1.value = data['hub_canula1'] ?? false;
-          hubCanula2.value = data['hub_canula2'] ?? false;
-          hubCanula3.value = data['hub_canula3'] ?? false;
-          excEpoxy1.value = data['exc_epoxy1'] ?? false;
-          excEpoxy2.value = data['exc_epoxy2'] ?? false;
-          excEpoxy3.value = data['exc_epoxy3'] ?? false;
-          needleTumpul1.value = data['needle_tumpul1'] ?? false;
-          needleTumpul2.value = data['needle_tumpul2'] ?? false;
-          needleTumpul3.value = data['needle_tumpul3'] ?? false;
-          needleBalik1.value = data['needle_balik1'] ?? false;
-          needleBalik2.value = data['needle_balik2'] ?? false;
-          needleBalik3.value = data['needle_balik3'] ?? false;
-          needleTersumbat1.value = data['needle_tersumbat1'] ?? false;
-          needleTersumbat2.value = data['needle_tersumbat2'] ?? false;
-          needleTersumbat3.value = data['needle_tersumbat3'] ?? false;
-        }
-        return true;
-      } else {
-        // Handle case when no data is found
-        print('No Machine SGP data found for this task');
-        return false;
-      }
-    } catch (e) {
-      print('Error retrieving Machine SGP data: $e');
-      ArtSweetAlert.show(
-        context: Get.context!,
-        artDialogArgs: ArtDialogArgs(
-          type: ArtSweetAlertType.danger,
-          title: "Error",
-          text: "Failed to retrieve Machine SGP data: $e"
-        )
-      );
-      return false;
+      return;
     } finally {
       isLoading.value = false;
     }
@@ -716,54 +642,12 @@ class FormDAssySyringeController extends GetxController {
     }
   }
 
-  Future<bool> storeSgpValue({
-    required String codeTask,
-    required int formDId,
-    required int taskId,
-    String? materialType,
-    // New SGP parameters
-    String? moldTemperature,
-    String? injectionPressure,
-    String? injectionSpeed,
-    String? holdingPressure,
-    String? holdingTime,
-    String? coolingTime,
-    // Production data
-    String? actualRunning,
-    String? cycleTime,
-    String? defect,
-    String? goodsOk,
-    String? goodsReject,
-    // Original parameters
-    String? temp1,
-    String? temp2,
-    String? temp3,
-    String? temp4,
-    bool? loadCap,
-    bool? loadHub,
-    bool? loadNeedle,
-    bool? hasilEpoxy,
-    String? pressureActual,
-    bool? pressureStatus,
-    bool? lowEpoxy1,
-    bool? lowEpoxy2,
-    bool? lowEpoxy3,
-    bool? hubCanula1,
-    bool? hubCanula2,
-    bool? hubCanula3,
-    bool? excEpoxy1,
-    bool? excEpoxy2,
-    bool? excEpoxy3,
-    bool? needleTumpul1,
-    bool? needleTumpul2,
-    bool? needleTumpul3,
-    bool? needleBalik1,
-    bool? needleBalik2,
-    bool? needleBalik3,
-    bool? needleTersumbat1,
-    bool? needleTersumbat2,
-    bool? needleTersumbat3,
+  Future<bool> storeFcsValue({
     dynamic machinePicture,
+    required String codeTask,
+    required int taskId,
+    int? formDId,
+    String? materialType,
   }) async {
     isLoading.value = true;
     
@@ -772,50 +656,187 @@ class FormDAssySyringeController extends GetxController {
       final data = {
         'code_task': codeTask,
         'material_type': materialType,
-        // New SGP parameters
-        'mold_temperature': moldTemperature,
-        'injection_pressure': injectionPressure,
-        'injection_speed': injectionSpeed,
-        'holding_pressure': holdingPressure,
-        'holding_time': holdingTime,
-        'cooling_time': coolingTime,
-        // Production data
-        'actual_running': actualRunning,
-        'cycle_time': cycleTime,
-        'defect': defect,
-        'goods_ok': goodsOk,
-        'goods_reject': goodsReject,
-        // Original parameters
-        'temp1': temp1,
-        'temp2': temp2,
-        'temp3': temp3,
-        'temp4': temp4,
-        'load_cap': loadCap,
-        'load_hub': loadHub,
-        'load_needle': loadNeedle,
-        'hasil_epoxy': hasilEpoxy,
-        'pressure_actual': pressureActual,
-        'pressure_status': pressureStatus,
-        'low_epoxy1': lowEpoxy1,
-        'low_epoxy2': lowEpoxy2,
-        'low_epoxy3': lowEpoxy3,
-        'hub_canula1': hubCanula1,
-        'hub_canula2': hubCanula2,
-        'hub_canula3': hubCanula3,
-        'exc_epoxy1': excEpoxy1,
-        'exc_epoxy2': excEpoxy2,
-        'exc_epoxy3': excEpoxy3,
-        'needle_tumpul1': needleTumpul1,
-        'needle_tumpul2': needleTumpul2,
-        'needle_tumpul3': needleTumpul3,
-        'needle_balik1': needleBalik1,
-        'needle_balik2': needleBalik2,
-        'needle_balik3': needleBalik3,
-        'needle_tersumbat1': needleTersumbat1,
-        'needle_tersumbat2': needleTersumbat2,
-        'needle_tersumbat3': needleTersumbat3,
         'form_d_id': formDId,
         'task_id': taskId,
+        // Open Position parameters
+        'open_position_slow': parameterControllers['open_position_slow']?.text,
+        'open_position_fast': parameterControllers['open_position_fast']?.text,
+        'open_position_mid': parameterControllers['open_position_mid']?.text,
+        'open_position_dec': parameterControllers['open_position_dec']?.text,
+
+        // Open Speed parameters
+        'open_speed_slow': parameterControllers['open_speed_slow']?.text,
+        'open_speed_fast': parameterControllers['open_speed_fast']?.text,
+        'open_speed_mid': parameterControllers['open_speed_mid']?.text,
+        'open_speed_dec': parameterControllers['open_speed_dec']?.text,
+
+        // Sealing Temperature
+        'sealing_temperature': parameterControllers['sealing_temperature']?.text,
+
+        // Open Pressure parameters
+        'open_pressure_slow': parameterControllers['open_pressure_slow']?.text,
+        'open_pressure_fast': parameterControllers['open_pressure_fast']?.text,
+        'open_pressure_mid': parameterControllers['open_pressure_mid']?.text,
+        'open_pressure_dec': parameterControllers['open_pressure_dec']?.text,
+
+        // Close Position parameters
+        'close_position_slow': parameterControllers['close_position_slow']?.text,
+        'close_position_fast': parameterControllers['close_position_fast']?.text,
+        'close_position_mid': parameterControllers['close_position_mid']?.text,
+        'close_position_dec': parameterControllers['close_position_dec']?.text,
+
+        // Close Speed parameters
+        'close_speed_slow': parameterControllers['close_speed_slow']?.text,
+        'close_speed_fast': parameterControllers['close_speed_fast']?.text,
+        'close_speed_mid': parameterControllers['close_speed_mid']?.text,
+        'close_speed_dec': parameterControllers['close_speed_dec']?.text,
+
+        // Close Pressure parameters
+        'close_pressure_slow': parameterControllers['close_pressure_slow']?.text,
+        'close_pressure_fast': parameterControllers['close_pressure_fast']?.text,
+        'close_pressure_mid': parameterControllers['close_pressure_mid']?.text,
+        'close_pressure_dec': parameterControllers['close_pressure_dec']?.text,
+
+        // Ejector Position parameters
+        'ejector_position_ret2': parameterControllers['ejector_position_ret2']?.text,
+        'ejector_position_ret1': parameterControllers['ejector_position_ret1']?.text,
+        'ejector_position_adv2': parameterControllers['ejector_position_adv2']?.text,
+        'ejector_position_adv1': parameterControllers['ejector_position_adv1']?.text,
+
+        // Ejector Speed parameters
+        'ejector_speed_ret2': parameterControllers['ejector_speed_ret2']?.text,
+        'ejector_speed_ret1': parameterControllers['ejector_speed_ret1']?.text,
+        'ejector_speed_adv2': parameterControllers['ejector_speed_adv2']?.text,
+        'ejector_speed_adv1': parameterControllers['ejector_speed_adv1']?.text,
+
+        // Ejector Pressure parameters
+        'ejector_pressure_ret2': parameterControllers['ejector_pressure_ret2']?.text,
+        'ejector_pressure_ret1': parameterControllers['ejector_pressure_ret1']?.text,
+        'ejector_pressure_adv2': parameterControllers['ejector_pressure_adv2']?.text,
+        'ejector_pressure_adv1': parameterControllers['ejector_pressure_adv1']?.text,
+
+        // Temperature SV parameters
+        'temperature_sv_sect1': parameterControllers['temperature_sv_sect1']?.text,
+        'temperature_sv_sect2': parameterControllers['temperature_sv_sect2']?.text,
+        'temperature_sv_sect3': parameterControllers['temperature_sv_sect3']?.text,
+        'temperature_sv_sect4': parameterControllers['temperature_sv_sect4']?.text,
+        'temperature_sv_sect5': parameterControllers['temperature_sv_sect5']?.text,
+        'temperature_sv_sect6': parameterControllers['temperature_sv_sect6']?.text,
+
+        // Temperature PV parameters
+        'temperature_pv_sect1': parameterControllers['temperature_pv_sect1']?.text,
+        'temperature_pv_sect2': parameterControllers['temperature_pv_sect2']?.text,
+        'temperature_pv_sect3': parameterControllers['temperature_pv_sect3']?.text,
+        'temperature_pv_sect4': parameterControllers['temperature_pv_sect4']?.text,
+        'temperature_pv_sect5': parameterControllers['temperature_pv_sect5']?.text,
+        'temperature_pv_sect6': parameterControllers['temperature_pv_sect6']?.text,
+
+        // Temperature PRE parameters
+        'temperature_pre_sect1': parameterControllers['temperature_pre_sect1']?.text,
+        'temperature_pre_sect2': parameterControllers['temperature_pre_sect2']?.text,
+        'temperature_pre_sect3': parameterControllers['temperature_pre_sect3']?.text,
+        'temperature_pre_sect4': parameterControllers['temperature_pre_sect4']?.text,
+        'temperature_pre_sect5': parameterControllers['temperature_pre_sect5']?.text,
+        'temperature_pre_sect6': parameterControllers['temperature_pre_sect6']?.text,
+
+        // Temperature MAX parameters
+        'temperature_max_sect1': parameterControllers['temperature_max_sect1']?.text,
+        'temperature_max_sect2': parameterControllers['temperature_max_sect2']?.text,
+        'temperature_max_sect3': parameterControllers['temperature_max_sect3']?.text,
+        'temperature_max_sect4': parameterControllers['temperature_max_sect4']?.text,
+        'temperature_max_sect5': parameterControllers['temperature_max_sect5']?.text,
+        'temperature_max_sect6': parameterControllers['temperature_max_sect6']?.text,
+
+        // Temperature LOW parameters
+        'temperature_low_sect1': parameterControllers['temperature_low_sect1']?.text,
+        'temperature_low_sect2': parameterControllers['temperature_low_sect2']?.text,
+        'temperature_low_sect3': parameterControllers['temperature_low_sect3']?.text,
+        'temperature_low_sect4': parameterControllers['temperature_low_sect4']?.text,
+        'temperature_low_sect5': parameterControllers['temperature_low_sect5']?.text,
+        'temperature_low_sect6': parameterControllers['temperature_low_sect6']?.text,
+
+        // Filling Position parameters
+        'filling_position_inj5': parameterControllers['filling_position_inj5']?.text,
+        'filling_position_inj4': parameterControllers['filling_position_inj4']?.text,
+        'filling_position_inj3': parameterControllers['filling_position_inj3']?.text,
+        'filling_position_inj2': parameterControllers['filling_position_inj2']?.text,
+        'filling_position_inj1': parameterControllers['filling_position_inj1']?.text,
+
+        // Filling Velocity parameters
+        'filling_velocity_inj5': parameterControllers['filling_velocity_inj5']?.text,
+        'filling_velocity_inj4': parameterControllers['filling_velocity_inj4']?.text,
+        'filling_velocity_inj3': parameterControllers['filling_velocity_inj3']?.text,
+        'filling_velocity_inj2': parameterControllers['filling_velocity_inj2']?.text,
+        'filling_velocity_inj1': parameterControllers['filling_velocity_inj1']?.text,
+
+        // Filling Pressure parameters
+        'filling_pressure_inj5': parameterControllers['filling_pressure_inj5']?.text,
+        'filling_pressure_inj4': parameterControllers['filling_pressure_inj4']?.text,
+        'filling_pressure_inj3': parameterControllers['filling_pressure_inj3']?.text,
+        'filling_pressure_inj2': parameterControllers['filling_pressure_inj2']?.text,
+        'filling_pressure_inj1': parameterControllers['filling_pressure_inj1']?.text,
+
+        // Filling Time parameters
+        'filling_time_inj5': parameterControllers['filling_time_inj5']?.text,
+        'filling_time_inj4': parameterControllers['filling_time_inj4']?.text,
+        'filling_time_inj3': parameterControllers['filling_time_inj3']?.text,
+        'filling_time_inj2': parameterControllers['filling_time_inj2']?.text,
+        'filling_time_inj1': parameterControllers['filling_time_inj1']?.text,
+
+        // Holding Speed parameters
+        'holding_speed_hdp4': parameterControllers['holding_speed_hdp4']?.text,
+        'holding_speed_hdp3': parameterControllers['holding_speed_hdp3']?.text,
+        'holding_speed_hdp2': parameterControllers['holding_speed_hdp2']?.text,
+        'holding_speed_hdp1': parameterControllers['holding_speed_hdp1']?.text,
+
+        // Holding Pressure parameters
+        'holding_pressure_hdp4': parameterControllers['holding_pressure_hdp4']?.text,
+        'holding_pressure_hdp3': parameterControllers['holding_pressure_hdp3']?.text,
+        'holding_pressure_hdp2': parameterControllers['holding_pressure_hdp2']?.text,
+        'holding_pressure_hdp1': parameterControllers['holding_pressure_hdp1']?.text,
+
+        // Charging Back parameters
+        'charging_back_pre': parameterControllers['charging_back_pre']?.text,
+        'charging_back_charge1': parameterControllers['charging_back_charge1']?.text,
+        'charging_back_charge2': parameterControllers['charging_back_charge2']?.text,
+        'charging_back_charge3': parameterControllers['charging_back_charge3']?.text,
+        'charging_back_post': parameterControllers['charging_back_post']?.text,
+
+        // Charging Speed parameters
+        'charging_speed_pre': parameterControllers['charging_speed_pre']?.text,
+        'charging_speed_charge1': parameterControllers['charging_speed_charge1']?.text,
+        'charging_speed_charge2': parameterControllers['charging_speed_charge2']?.text,
+        'charging_speed_charge3': parameterControllers['charging_speed_charge3']?.text,
+        'charging_speed_post': parameterControllers['charging_speed_post']?.text,
+
+        // Charging Pressure parameters
+        'charging_pressure_pre': parameterControllers['charging_pressure_pre']?.text,
+        'charging_pressure_charge1': parameterControllers['charging_pressure_charge1']?.text,
+        'charging_pressure_charge2': parameterControllers['charging_pressure_charge2']?.text,
+        'charging_pressure_charge3': parameterControllers['charging_pressure_charge3']?.text,
+        'charging_pressure_post': parameterControllers['charging_pressure_post']?.text,
+
+        // Charging Position parameters
+        'charging_position_pre': parameterControllers['charging_position_pre']?.text,
+        'charging_position_charge1': parameterControllers['charging_position_charge1']?.text,
+        'charging_position_charge2': parameterControllers['charging_position_charge2']?.text,
+        'charging_position_charge3': parameterControllers['charging_position_charge3']?.text,
+        'charging_position_post': parameterControllers['charging_position_post']?.text,
+
+        // Purge Velocity parameters
+        'purge_velocity_slow': parameterControllers['purge_velocity_slow']?.text,
+        'purge_velocity_fast': parameterControllers['purge_velocity_fast']?.text,
+        'purge_velocity_back': parameterControllers['purge_velocity_back']?.text,
+
+        // Purge Pressure parameters
+        'purge_pressure_slow': parameterControllers['purge_pressure_slow']?.text,
+        'purge_pressure_fast': parameterControllers['purge_pressure_fast']?.text,
+        'purge_pressure_back': parameterControllers['purge_pressure_back']?.text,
+
+        // Purge Position parameters
+        'purge_position_slow': parameterControllers['purge_position_slow']?.text,
+        'purge_position_fast': parameterControllers['purge_position_fast']?.text,
+        'purge_position_back': parameterControllers['purge_position_back']?.text,
       };
       
       // Add machine picture if provided
@@ -824,7 +845,7 @@ class FormDAssySyringeController extends GetxController {
       }
       
       // Send data to API
-      final response = await Api.post('/machine-sgp', data);
+      final response = await Api.post('/machine-fcs', data);
       
       if (response != null) {
         ArtSweetAlert.show(
@@ -832,21 +853,29 @@ class FormDAssySyringeController extends GetxController {
           artDialogArgs: ArtDialogArgs(
             type: ArtSweetAlertType.success,
             title: "Berhasil",
-            text: "Machine SGP data berhasil disimpan"
+            text: "Machine FCS data berhasil disimpan"
           )
         );
         return true;
       } else {
-        throw Exception('Failed to store Machine SGP data');
+        ArtSweetAlert.show(
+          context: Get.context!,
+          artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.danger,
+            title: "Error",
+            text: "Gagal menyimpan data Machine FCS"
+          )
+        );
+        return false;
       }
     } catch (e) {
-      print('Error submitting Machine SGP data: $e');
+      print('Error submitting Machine FCS data: $e');
       ArtSweetAlert.show(
         context: Get.context!,
         artDialogArgs: ArtDialogArgs(
           type: ArtSweetAlertType.danger,
           title: "Error",
-          text: "Terjadi kesalahan saat mengirim data Machine SGP: $e"
+          text: "Terjadi kesalahan saat mengirim data Machine FCS: $e"
         )
       );
       return false;
@@ -854,97 +883,6 @@ class FormDAssySyringeController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  Future<bool> storeFcsShiValue({
-    required String codeTask,
-    required int formDId,
-    required int taskId,
-    String? tempNozzleZ1,
-    String? tempNozzleZ2,
-    String? tempNozzleZ3,
-    String? tempNozzleZ4,
-    String? tempNozzleZ5,
-    String? tempMold,
-    String? injectPressure,
-    String? injectTime,
-    String? holdingPressure,
-    String? holdingTime,
-    String? ejectCounter,
-    String? cycleTime,
-    String? masterbatch,
-    String? beratProduk,
-    String? beratRunner,
-    String? cavity,
-    String? sampling,
-    String? defect,
-    dynamic machinePicture,
-  }) async {
-    isLoading.value = true;
-
-    try {
-      // Prepare data for API call
-      final data = {
-        'code_task': codeTask,
-        'temp_nozzle_z1': tempNozzleZ1,
-        'temp_nozzle_z2': tempNozzleZ2,
-        'temp_nozzle_z3': tempNozzleZ3,
-        'temp_nozzle_z4': tempNozzleZ4,
-        'temp_nozzle_z5': tempNozzleZ5,
-        'temp_mold': tempMold,
-        'inject_pressure': injectPressure,
-        'inject_time': injectTime,
-        'holding_pressure': holdingPressure,
-        'holding_time': holdingTime,
-        'eject_counter': ejectCounter,
-        'cycle_time': cycleTime,
-        'masterbatch': masterbatch,
-        'berat_produk': beratProduk,
-        'berat_runner': beratRunner,
-        'cavity': cavity,
-        'sampling': sampling,
-        'defect': defect,
-        'form_d_id': formDId,
-        'task_id': taskId,
-      };
-
-      // Add machine picture if provided
-      if (machinePicture != null) {
-        data['machine_picture'] = machinePicture;
-      }
-
-      // Send data to API
-      final response = await Api.post('/machine-fcs-shi', data);
-
-      if (response != null) {
-        ArtSweetAlert.show(
-            context: Get.context!,
-            artDialogArgs: ArtDialogArgs(
-                type: ArtSweetAlertType.success,
-                title: "Berhasil",
-                text: "Assy Syringe data berhasil disimpan"
-            )
-        );
-        return true;
-      } else {
-        throw Exception('Failed to store Assy Syringe data');
-      }
-    } catch (e) {
-      print('Error submitting Assy Syringe data: $e');
-      ArtSweetAlert.show(
-          context: Get.context!,
-          artDialogArgs: ArtDialogArgs(
-              type: ArtSweetAlertType.danger,
-              title: "Error",
-              text: "Terjadi kesalahan saat mengirim data Assy Syringe: $e"
-          )
-      );
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-
 
   Future<bool> submitForm({
     required int machineId,
@@ -1075,56 +1013,22 @@ class FormDAssySyringeController extends GetxController {
           nie: nie,
           machinePicture: machinePicture,
         );
-      } else if (type == 'sgp') {
-        // Create SGP values
-        machineDataResult = await storeSgpValue(
-          codeTask: codeTask,
-          formDId: formDId,
-          taskId: taskId,
-          materialType: materialType,
-          moldTemperature: moldTemperature,
-          injectionPressure: injectionPressure,
-          injectionSpeed: injectionSpeed,
-          holdingPressure: holdingPressure,
-          holdingTime: holdingTime,
-          coolingTime: coolingTime,
-          actualRunning: actualRunning,
-          cycleTime: runAwal,
-          defect: defect,
-          goodsOk: goodsOk,
-          goodsReject: goodsReject,
-          temp1: temp1,
-          temp2: temp2,
-          temp3: temp3,
-          temp4: temp4,
-          loadCap: loadCap,
-          loadHub: loadHub,
-          loadNeedle: loadNeedle,
-          hasilEpoxy: hasilEpoxy,
-          pressureActual: pressureActual,
-          pressureStatus: pressureStatus,
-          lowEpoxy1: lowEpoxy1,
-          lowEpoxy2: lowEpoxy2,
-          lowEpoxy3: lowEpoxy3,
-          hubCanula1: hubCanula1,
-          hubCanula2: hubCanula2,
-          hubCanula3: hubCanula3,
-          excEpoxy1: excEpoxy1,
-          excEpoxy2: excEpoxy2,
-          excEpoxy3: excEpoxy3,
-          needleTumpul1: needleTumpul1,
-          needleTumpul2: needleTumpul2,
-          needleTumpul3: needleTumpul3,
-          needleBalik1: needleBalik1,
-          needleBalik2: needleBalik2,
-          needleBalik3: needleBalik3,
-          needleTersumbat1: needleTersumbat1,
-          needleTersumbat2: needleTersumbat2,
-          needleTersumbat3: needleTersumbat3,
+      } else if (type == 'fcs_shi') {
+
+      } else if (type == 'fcs') {
+        machineDataResult = await storeFcsValue(
           machinePicture: machinePicture,
+          codeTask: codeTask,
+          taskId: taskId,
+          formDId: formDId,
+          materialType: materialType,
         );
-      } else if (type == 'fcs_shi' || type == 'fcs' || type == 'shi_1' || type == 'shi_2') {
-        // These machine types might use the FCS-SHI form
+      } else if (type == 'sgp') {
+
+      } else if (type == 'shi_1') {
+
+      } else if (type == 'shi_2') {
+
       } else {
         // Show error for unsupported machine type
         Get.snackbar(

@@ -374,11 +374,11 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                     setState(() => needleassyController.responses[key] = value);
                   },
                 ),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Bersih"),
-                    const Text(
+                    Text("Bersih"),
+                    Text(
                       "Clean",
                       style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
                     ),
@@ -396,11 +396,11 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                     setState(() => needleassyController.responses[key] = value);
                   },
                 ),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Tidak Bersih"),
-                    const Text(
+                    Text("Tidak Bersih"),
+                    Text(
                       "Not Clean",
                       style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
                     ),
@@ -443,11 +443,11 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                     setState(() => needleassyController.responses[key] = value);
                   },
                 ),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Ya"),
-                    const Text(
+                    Text("Ya"),
+                    Text(
                       "Yes",
                       style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
                     ),
@@ -465,11 +465,11 @@ class _PartA_NeedleAssyState extends State<PartA_NeedleAssy> {
                     setState(() => needleassyController.responses[key] = value);
                   },
                 ),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Tidak"),
-                    const Text(
+                    Text("Tidak"),
+                    Text(
                       "No",
                       style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
                     ),

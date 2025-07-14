@@ -32,17 +32,23 @@ class FormCNeedleAssyController extends GetxController {
     fetchExistingData(); // Add this line to fetch existing data
 
     // Initialize radio selections and note controllers
-    ['1', '2', '3'].forEach((id) {
+    for (var id in ['1', '2', '3']) {
       radioSelections[id] = '';
       noteControllers[id] = TextEditingController();
-    });
+    }
   }
 
   @override
   void onClose() {
-    batchControllers.values.forEach((controller) => controller.dispose());
-    qtyControllers.values.forEach((controller) => controller.dispose());
-    noteControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in batchControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in qtyControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in noteControllers.values) {
+      controller.dispose();
+    }
     super.onClose();
   }
 
@@ -51,7 +57,7 @@ class FormCNeedleAssyController extends GetxController {
       isLoading.value = true;
       print("Starting to fetch child materials for Assembly Needle");
 
-      final response = await Api.get('tasks/${task.id}/child-materials-needle-assy/${selectedMaterialCode}');
+      final response = await Api.get('tasks/${task.id}/child-materials-needle-assy/$selectedMaterialCode');
       print("Child materials API response received: ${response != null ? 'Success' : 'Null response'}");
 
       if (response is List) {

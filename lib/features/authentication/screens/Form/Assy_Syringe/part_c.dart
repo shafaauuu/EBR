@@ -305,7 +305,7 @@ class _PartC_SyringeState extends State<PartC_Syringe> {
                             )
                           );
 
-                          final confirmed = response != null && response.isTapConfirmButton;
+                          final confirmed = response.isTapConfirmButton;
 
                           if (confirmed) {
                             // Prepare form data with the correct structure for the backend API

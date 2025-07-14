@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter/services.dart';
 import 'package:oji_1/common/api.dart';
 import '../models/material_model.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
-import './task_controller.dart';
 
 class TaskDetailsController extends GetxController {
   var selectedMaterialCode = ''.obs;

@@ -3,6 +3,15 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Fix for flutter_keyboard_visibility namespace issue
+    plugins.withId('com.android.library') {
+        android {
+            if (!project.hasProperty('android.namespace')) {
+                namespace project.findProperty('android.package') ?: project.group
+            }
+        }
+    }
 }
 
 rootProject.buildDir = "../build"

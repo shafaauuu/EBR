@@ -296,7 +296,7 @@ class _PartC_BlisterState extends State<PartC_Blister> {
                                 )
                             );
 
-                            final confirmed = response != null && response.isTapConfirmButton;
+                            final confirmed = response.isTapConfirmButton;
 
                             if (confirmed) {
                               // Prepare form data with the correct structure for the backend API

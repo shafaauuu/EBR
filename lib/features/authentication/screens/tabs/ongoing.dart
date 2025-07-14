@@ -22,8 +22,8 @@ class _OngoingPageState extends State<OngoingPage> {
         final matchesSearch = searchText.isEmpty ||
             task.name.toLowerCase().contains(searchText.toLowerCase());
 
-        final matchesDate = selectedDate == null || (task.date != null && (() {
-          final taskDate = DateTime.parse(task.date!).toLocal();
+        final matchesDate = selectedDate == null || ((() {
+          final taskDate = DateTime.parse(task.date).toLocal();
           return taskDate.year == selectedDate!.year &&
               taskDate.month == selectedDate!.month &&
               taskDate.day == selectedDate!.day;

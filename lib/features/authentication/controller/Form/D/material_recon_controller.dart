@@ -36,14 +36,30 @@ class MaterialReconController extends GetxController {
   @override
   void onClose() {
     // Dispose all controllers
-    jmlAwalControllers.values.forEach((controller) => controller.dispose());
-    jmlSpbtControllers.values.forEach((controller) => controller.dispose());
-    jmlRejectControllers.values.forEach((controller) => controller.dispose());
-    jmlPakaiControllers.values.forEach((controller) => controller.dispose());
-    jmlKarantinaControllers.values.forEach((controller) => controller.dispose());
-    sisaControllers.values.forEach((controller) => controller.dispose());
-    jmlMusnahControllers.values.forEach((controller) => controller.dispose());
-    jmlKembaliControllers.values.forEach((controller) => controller.dispose());
+    for (var controller in jmlAwalControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in jmlSpbtControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in jmlRejectControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in jmlPakaiControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in jmlKarantinaControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in sisaControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in jmlMusnahControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in jmlKembaliControllers.values) {
+      controller.dispose();
+    }
     super.onClose();
   }
   
@@ -53,7 +69,7 @@ class MaterialReconController extends GetxController {
       print("Starting to fetch child materials for Material Reconciliation");
       
       // Use the correct endpoint from your Laravel routes
-      final endpoint = 'form-d/tasks/${task.id}/child-materials/${selectedMaterialCode}';
+      final endpoint = 'form-d/tasks/${task.id}/child-materials/$selectedMaterialCode';
       
       print("Using API endpoint: $endpoint for task ID: ${task.id}");
       final response = await Api.get(endpoint);

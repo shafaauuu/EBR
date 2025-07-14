@@ -1,13 +1,13 @@
-import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:oji_1/common/api.dart';
 import '../../../models/task_model.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
-import 'dart:typed_data';
-import 'package:get_storage/get_storage.dart';
-import 'package:flutter/services.dart';
 
 class FormGNeedleAssyController extends GetxController {
   var isLoading = false.obs;
@@ -173,112 +173,49 @@ class FormGNeedleAssyController extends GetxController {
       if (response.statusCode == 200) {
         try {
           final jsonResponse = json.decode(response.body);
-          print('Form G response: $jsonResponse');
+          print('Form G response received');
 
           if (jsonResponse['data'] != null && jsonResponse['data'].isNotEmpty) {
             var formData = jsonResponse['data'][0];
+            print('Processing form data for ID: ${formData['id']}');
 
-            // Store raw base64 strings for later use
-            if ((formData['has_signed_1'] == true || formData['signed_1'] != null) && formData['signed_1'] != null) {
-              try {
-                String base64String = formData['signed_1'].toString().trim();
-                // Remove any potential data URL prefix
-                if (base64String.contains(',')) {
-                  base64String = base64String.split(',')[1];
-                }
-
-                // Store the raw base64 string
-                rawSignature1.value = base64String;
-
-                // Try to decode the base64 string
-                try {
-                  signature1.value = base64Decode(base64String);
-                  print('Signature 1 decoded successfully');
-                } catch (e) {
-                  print('Error in standard base64 decode for signature 1: $e');
-
-                  // Try with padding adjustment if needed
-                  try {
-                    // Add padding if needed
-                    String paddedBase64 = base64String;
-                    while (paddedBase64.length % 4 != 0) {
-                      paddedBase64 += '=';
-                    }
-                    signature1.value = base64Decode(paddedBase64);
-                    print('Signature 1 decoded with padding adjustment');
-                  } catch (e) {
-                    print('Error in padded base64 decode for signature 1: $e');
-                  }
-                }
-              } catch (e) {
-                print('Error processing signature 1: $e');
-              }
+            // Process signature 1
+            if (formData['has_signed_1'] == true && formData['signed_1'] != null) {
+              print('Found signature 1');
+              
+              // Store the raw base64 string directly
+              rawSignature1.value = formData['signed_1'];
+              
+              // Don't try to decode here - we'll handle it in the UI
+              print('Stored raw signature 1');
+            } else {
+              print('No signature 1 found or has_signed_1 is false');
             }
 
-            if ((formData['has_signed_2'] == true || formData['signed_2'] != null) && formData['signed_2'] != null) {
-              try {
-                String base64String = formData['signed_2'].toString().trim();
-                if (base64String.contains(',')) {
-                  base64String = base64String.split(',')[1];
-                }
-
-                // Store the raw base64 string
-                rawSignature2.value = base64String;
-
-                try {
-                  signature2.value = base64Decode(base64String);
-                  print('Signature 2 decoded successfully');
-                } catch (e) {
-                  print('Error in standard base64 decode for signature 2: $e');
-
-                  try {
-                    // Add padding if needed
-                    String paddedBase64 = base64String;
-                    while (paddedBase64.length % 4 != 0) {
-                      paddedBase64 += '=';
-                    }
-                    signature2.value = base64Decode(paddedBase64);
-                    print('Signature 2 decoded with padding adjustment');
-                  } catch (e) {
-                    print('Error in padded base64 decode for signature 2: $e');
-                  }
-                }
-              } catch (e) {
-                print('Error processing signature 2: $e');
-              }
+            // Process signature 2
+            if (formData['has_signed_2'] == true && formData['signed_2'] != null) {
+              print('Found signature 2');
+              
+              // Store the raw base64 string directly
+              rawSignature2.value = formData['signed_2'];
+              
+              // Don't try to decode here - we'll handle it in the UI
+              print('Stored raw signature 2');
+            } else {
+              print('No signature 2 found or has_signed_2 is false');
             }
 
-            if ((formData['has_signed_3'] == true || formData['signed_3'] != null) && formData['signed_3'] != null) {
-              try {
-                String base64String = formData['signed_3'].toString().trim();
-                if (base64String.contains(',')) {
-                  base64String = base64String.split(',')[1];
-                }
-
-                // Store the raw base64 string
-                rawSignature3.value = base64String;
-
-                try {
-                  signature3.value = base64Decode(base64String);
-                  print('Signature 3 decoded successfully');
-                } catch (e) {
-                  print('Error in standard base64 decode for signature 3: $e');
-
-                  try {
-                    // Add padding if needed
-                    String paddedBase64 = base64String;
-                    while (paddedBase64.length % 4 != 0) {
-                      paddedBase64 += '=';
-                    }
-                    signature3.value = base64Decode(paddedBase64);
-                    print('Signature 3 decoded with padding adjustment');
-                  } catch (e) {
-                    print('Error in padded base64 decode for signature 3: $e');
-                  }
-                }
-              } catch (e) {
-                print('Error processing signature 3: $e');
-              }
+            // Process signature 3
+            if (formData['has_signed_3'] == true && formData['signed_3'] != null) {
+              print('Found signature 3');
+              
+              // Store the raw base64 string directly
+              rawSignature3.value = formData['signed_3'];
+              
+              // Don't try to decode here - we'll handle it in the UI
+              print('Stored raw signature 3');
+            } else {
+              print('No signature 3 found or has_signed_3 is false');
             }
 
             // Set other form values
@@ -288,6 +225,8 @@ class FormGNeedleAssyController extends GetxController {
             inisial3.value = formData['inisial_3'] ?? '';
 
             return formData;
+          } else {
+            print('No form data found for task ID: $taskId');
           }
         } catch (e) {
           print('Error parsing response: $e');

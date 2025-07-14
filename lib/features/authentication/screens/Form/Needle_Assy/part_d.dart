@@ -7,7 +7,10 @@ import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'dart:typed_data';
-import 'dart:html' as html;
+import 'package:signature/signature.dart';
+import 'package:get_storage/get_storage.dart';
+import 'dart:convert';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 class PartD_NeedleAssy extends StatefulWidget {
   final Task task;
@@ -21,6 +24,7 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
   Uint8List? _webImage;
 
   final TaskDetailsController controller = Get.put(TaskDetailsController());
+  final storage = GetStorage();
 
   List<TextEditingController> printingActualControllers = List.generate(3, (_) => TextEditingController());
   List<bool> printingStatusChecks = List.generate(3, (_) => false);
@@ -28,8 +32,20 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
   List<TextEditingController> assyActualControllers = List.generate(2, (_) => TextEditingController());
   List<bool> assyStatusChecks = List.generate(2, (_) => false);
 
+  // Signature controllers
+  final SignatureController _signatureController = SignatureController(
+    penStrokeWidth: 3,
+    penColor: Colors.black,
+    exportBackgroundColor: Colors.white,
+  );
 
-  List<bool> _siapRunningChecks = [false, false, false]; // for Barrel, Plunger, Gasket
+  // Variables to store signature data
+  Uint8List? latestSignature;
+  String? rawSignature;
+  bool hasSignature = false;
+  Map<String, dynamic>? latestFormData;
+
+  final List<bool> _siapRunningChecks = [false, false, false]; // for Barrel, Plunger, Gasket
 
   String? _selectedMachine;
   DateTime? _selectedDateTime;
@@ -86,6 +102,11 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
         _pickImage(ImageSource.gallery);
       },
     ).show();
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -292,6 +313,10 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
 
                   const SizedBox(height: 30),
 
+                  _buildSignatureSection(),
+
+                  const SizedBox(height: 30),
+
                   const Divider(thickness: 1),
 
                   // Submit Button
@@ -454,7 +479,7 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
       void Function(int index, bool? value) onStatusChanged,
       ) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500, // Adjust as needed
         child: Table(
           border: TableBorder.all(color: Colors.grey),
@@ -525,7 +550,7 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
 
   Widget buildChecklistTable(List<List<String>> items) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500, // Match or customize as needed
         child: Table(
           border: TableBorder.all(color: Colors.grey),
@@ -534,9 +559,9 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
             1: FlexColumnWidth(3),
           },
           children: [
-            TableRow(
-              decoration: const BoxDecoration(color: Color(0xFFEFEFEF)),
-              children: const [
+            const TableRow(
+              decoration: BoxDecoration(color: Color(0xFFEFEFEF)),
+              children: [
                 Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text("Loading pada buffer", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -594,107 +619,249 @@ class _PartD_NeedleAssyState extends State<PartD_NeedleAssy> {
     );
   }
 
-  Widget buildMaterialRow(
-      String title,
-      List<String> dropdownItems,
-      String? selectedItem,
-      ValueChanged<String?> onChanged,
-      List<TextEditingController> controllers,
-      ) {
+  Widget _buildSignatureSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedItem,
-          items: dropdownItems.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Select Here',
+        sectionTitle("Signature"),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            width: 500,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            height: 200,
+            child: hasSignature && rawSignature != null && rawSignature!.isNotEmpty
+                ? _buildExistingSignature()
+                : _buildSignaturePad(),
           ),
         ),
-        const SizedBox(height: 8),
-
-        // Row for labels
-        Row(
-          children: [
-            for (var label in [
-              'Jumlah Awal',
-              'Jumlah Tambahan (SPBT)',
-              'Jumlah Reject',
-              'Jumlah Terpakai',
-              'Jumlah Material Karantina',
-              'Sisa Setelah Produksi',
-              'Jumlah Dimusnahkan',
-              'Jumlah Dikembalikan',
-            ])
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12),
-                  ),
+        if (hasSignature && latestFormData != null && rawSignature != null && rawSignature!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              "Date: ${_formatDateTime(latestFormData!['created_at'] ?? DateTime.now().toString())}",
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (!hasSignature || rawSignature == null || rawSignature!.isEmpty)
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    final signatureImage = await _signatureController.toPngBytes();
+                    if (signatureImage != null) {
+                      setState(() {
+                        latestSignature = signatureImage;
+                        rawSignature = base64Encode(signatureImage);
+                        hasSignature = true;
+                        
+                        // Update form data
+                        if (latestFormData == null) {
+                          latestFormData = {};
+                        }
+                        latestFormData!['has_signature'] = true;
+                        latestFormData!['signature'] = rawSignature;
+                        latestFormData!['created_at'] = DateTime.now().toString();
+                      });
+                      
+                      // Save to backend
+                      // controller.updateFormData(widget.task.id, {'signature': rawSignature, 'has_signature': true});
+                      
+                      ArtSweetAlert.show(
+                        context: context,
+                        artDialogArgs: ArtDialogArgs(
+                          type: ArtSweetAlertType.success,
+                          title: "Success",
+                          text: "Signature saved successfully",
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text("Save Signature"),
                 ),
-              ),
-          ],
+                const SizedBox(width: 16),
+                TextButton(
+                  onPressed: () {
+                    _signatureController.clear();
+                  },
+                  child: const Text("Clear"),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSignaturePad() {
+    return Column(
+      children: [
+        Expanded(
+          child: Signature(
+            controller: _signatureController,
+            backgroundColor: Colors.white,
+          ),
         ),
-
-        const SizedBox(height: 4),
-
-        // Row for input fields
-        Row(
-          children: [
-            for (var i = 0; i < controllers.length; i++)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: TextFormField(
-                    controller: controllers[i],
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
+        Container(
+          color: Colors.grey[200],
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Pen color button
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.black),
+                onPressed: () {
+                  setState(() {
+                  });
+                },
+                tooltip: 'Draw',
               ),
-          ],
+              // Eraser button
+              IconButton(
+                icon: const Icon(Icons.edit_off, color: Colors.red),
+                onPressed: () {
+                  setState(() {
+                  });
+                },
+                tooltip: 'Erase',
+              ),
+              // Clear button
+              IconButton(
+                icon: const Icon(Icons.clear, color: Colors.blue),
+                onPressed: () {
+                  _signatureController.clear();
+                },
+                tooltip: 'Clear All',
+              ),
+              // Undo button
+              IconButton(
+                icon: const Icon(Icons.undo, color: Colors.blue),
+                onPressed: () {
+                  _signatureController.undo();
+                },
+                tooltip: 'Undo',
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget buildTextField(String label, TextEditingController controller) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(
-          children: [
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
-            TextFormField(
-              controller: controller,
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 8),
-                border: OutlineInputBorder(),
+  Widget _buildExistingSignature() {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Signature'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    child: _buildSignatureImageForDialog(rawSignature!),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Date: ${latestFormData != null ? _formatDateTime(latestFormData!['created_at'] ?? "") : "Unknown"}'),
+                ],
               ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    // Update the has_signed flag in the latestFormData
+                    if (latestFormData != null) {
+                      latestFormData!['has_signature'] = false;
+                    }
+                    // Clear signature data
+                    _signatureController.clear();
+                    hasSignature = false;
+                    rawSignature = null;
+                  });
+                },
+                child: const Text('Sign Again'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              "Signature Available",
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            const Text(
+              "(Tap to view)",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSignatureImageForDialog(String base64String) {
+    return _tryExtractAndDisplayBase64(base64String);
+  }
+
+  Widget _tryExtractAndDisplayBase64(String base64String) {
+    try {
+      // Try to handle both data URL format and raw base64
+      String rawBase64 = base64String;
+      if (base64String.contains(',')) {
+        rawBase64 = base64String.split(',')[1];
+      }
+      
+      return Image.memory(
+        base64Decode(rawBase64),
+        fit: BoxFit.contain,
+      );
+    } catch (e) {
+      return Column(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 48),
+          const SizedBox(height: 8),
+          Text(
+            "Error loading signature: $e",
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    }
+  }
+
+  String _formatDateTime(String dateTimeStr) {
+    try {
+      final dateTime = DateTime.parse(dateTimeStr);
+      return "${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}";
+    } catch (e) {
+      return "Date not available";
+    }
   }
 
   void _submitPartD() {

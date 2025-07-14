@@ -72,9 +72,9 @@ class _PartB_SyringeState extends State<PartB_Syringe> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "BATCH RECORD",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           _buildAlignedText("P/C Code", widget.task.code),
@@ -104,17 +104,17 @@ class _PartB_SyringeState extends State<PartB_Syringe> {
               const Divider(thickness: 1),
 
               const SizedBox(height: Sizes.spaceBtwItems),
-              Text(
+              const Text(
                 "Mesin/Perlengkapan",
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.blue,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
+              const Text(
                 "Machine/Tools",
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.grey,
                   fontSize: 10,
                   fontStyle: FontStyle.italic,
