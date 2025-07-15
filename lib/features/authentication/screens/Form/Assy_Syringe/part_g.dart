@@ -1,14 +1,14 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controller/task_details_controller.dart';
-import '../../../models/task_model.dart';
 import 'package:signature/signature.dart';
 import '../../../controller/Form/G/form_g_assysyringe_controller.dart';
+import '../../../controller/task_details_controller.dart';
+import '../../../models/task_model.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
-import 'dart:convert';
-import 'package:oji_1/utils/html_stub.dart' as html;
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class PartG_Syringe extends StatefulWidget {
   final Task task;
@@ -60,7 +60,7 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
     super.initState();
     userRole = storage.read("role") ?? "Production Operation";
     userInisial = storage.read("inisial") ?? "";
-    
+
     // Set the user's initials based on their role
     if (userRole == "Production Operation") {
       formController.setInisial1(userInisial);
@@ -72,7 +72,7 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
     
     formController.setTaskInfo(widget.task);
     _loadExistingData();
-    }
+  }
   
   Future<void> _loadExistingData() async {
     final formData = await formController.getFormByTaskId(widget.task.id);
@@ -82,13 +82,12 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
         remarksController.text = formData['remarks'] ?? '';
         formController.setRemarks(remarksController.text);
         
-        // Store the latest signatures from the controller
         latestSignature1 = formController.signature1.value;
         latestSignature2 = formController.signature2.value;
         latestSignature3 = formController.signature3.value;
       });
     }
-    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -201,10 +200,11 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
                       // First signature section - Operator (always visible)
                       _buildSignatureSection(
                         title: "Tanda Tangan Operator/Operator's Sign:",
-                        signatureController: _signatureController1,
-                        inisial: userRole == "Production Operation" ? userInisial : "",
                         signatureIndex: 1,
-                        isEnabled: userRole == "Production Operation",
+                        onSign: () {
+                          _signatureController1.clear();
+                          _updateSignatureInController(1, null);
+                        },
                       ),
                       
                       const SizedBox(height: 16),
@@ -214,10 +214,11 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
                       if (userRole == "Head Section")
                         _buildSignatureSection(
                           title: "Tanda Tangan Kepala Bagian/Head Section's Sign:",
-                          signatureController: _signatureController2,
-                          inisial: userInisial,
                           signatureIndex: 2,
-                          isEnabled: true,
+                          onSign: () {
+                            _signatureController2.clear();
+                            _updateSignatureInController(2, null);
+                          },
                         ),
                       
                       // Show a disabled version for other roles
@@ -233,10 +234,11 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
                       if (userRole == "Assistant Manager")
                         _buildSignatureSection(
                           title: "Tanda Tangan Asisten Manajer/Assistant Manager's Sign:",
-                          signatureController: _signatureController3,
-                          inisial: userInisial,
                           signatureIndex: 3,
-                          isEnabled: true,
+                          onSign: () {
+                            _signatureController3.clear();
+                            _updateSignatureInController(3, null);
+                          },
                         ),
                       
                       // Show a disabled version for other roles
@@ -300,156 +302,80 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
 
   Widget _buildSignatureSection({
     required String title,
-    required SignatureController signatureController,
-    required String inisial,
     required int signatureIndex,
-    required bool isEnabled,
+    required Function() onSign,
   }) {
+    String? rawBase64;
+    bool hasSigned = false;
+    String initial = "";
+
+    // Get the appropriate signature data based on index
+    switch (signatureIndex) {
+      case 1:
+        rawBase64 = formController.rawSignature1.value;
+        hasSigned = latestFormData != null && (latestFormData!['has_signed_1'] == true);
+        initial = formController.inisial1.value ?? "";
+        break;
+      case 2:
+        rawBase64 = formController.rawSignature2.value;
+        hasSigned = latestFormData != null && (latestFormData!['has_signed_2'] == true);
+        initial = formController.inisial2.value ?? "";
+        break;
+      case 3:
+        rawBase64 = formController.rawSignature3.value;
+        hasSigned = latestFormData != null && (latestFormData!['has_signed_3'] == true);
+        initial = formController.inisial3.value ?? "";
+        break;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: isEnabled ? Colors.grey : Colors.grey.shade300),
+            border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: AbsorbPointer(
-            absorbing: !isEnabled,
-            child: Opacity(
-              opacity: isEnabled ? 1.0 : 0.5,
-              child: Signature(
-                controller: signatureController,
-                height: 200,
-                backgroundColor: Colors.white,
-              ),
-            ),
-          ),
+          height: 200,
+          width: double.infinity,
+          child: hasSigned && rawBase64 != null && rawBase64.isNotEmpty
+              ? _buildExistingSignature(rawBase64, signatureIndex, onSign)
+              : _buildSignaturePad(signatureIndex),
         ),
-        if (isEnabled)
+        if (hasSigned && latestFormData != null && rawBase64 != null && rawBase64.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            "Date: ${_formatDateTime(latestFormData!['created_at'])}",
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton.icon(
-                onPressed: () {
-                  signatureController.clear();
-                  _updateSignatureInController(signatureIndex, null);
-                },
-                icon: const Icon(Icons.refresh, color: Colors.red),
-                label: const Text("Clear", style: TextStyle(color: Colors.red)),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final image = await signatureController.toPngBytes();
-                  if (image != null) {
-                    _updateSignatureInController(signatureIndex, image);
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("Signature Preview"),
-                        content: Image.memory(image),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Close"),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.visibility),
-                label: const Text("Preview"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 3,
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+              const Text("Inisial/Initial: ", style: TextStyle(fontSize: 14, color: Colors.grey)),
+              const SizedBox(width: 8),
+              Text(
+                initial,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
                 ),
               ),
             ],
           ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Text("Inisial/Initial: ", style: TextStyle(fontSize: 14)),
-            const SizedBox(width: 8),
-            Text(
-              inisial,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-
-        // Display the latest signature if available
-        _buildSignatureDisplay(signatureIndex),
+        ],
       ],
     );
   }
 
-  // Custom widget to display signature with fallback mechanisms
-  Widget _buildSignatureDisplay(int signatureIndex) {
-    Uint8List? signatureBytes;
-    String? rawBase64;
-    bool hasSigned = false;
-
-    // Get the appropriate signature data based on index
-    switch (signatureIndex) {
-      case 1:
-        signatureBytes = latestSignature1;
-        rawBase64 = formController.rawSignature1.value;
-        hasSigned = latestFormData != null && (latestFormData!['has_signed_1'] == true);
-        break;
-      case 2:
-        signatureBytes = latestSignature2;
-        rawBase64 = formController.rawSignature2.value;
-        hasSigned = latestFormData != null && (latestFormData!['has_signed_2'] == true);
-        break;
-      case 3:
-        signatureBytes = latestSignature3;
-        rawBase64 = formController.rawSignature3.value;
-        hasSigned = latestFormData != null && (latestFormData!['has_signed_3'] == true);
-        break;
-    }
-
-    // If no signature data available, return empty container
-    if (!hasSigned || (signatureBytes == null && rawBase64 == null) || (rawBase64 != null && rawBase64.isEmpty)) {
-      return Container();
-    }
-
-    return _buildExistingSignature(rawBase64!, signatureIndex, () {
-      switch (signatureIndex) {
-        case 1:
-          _signatureController1.clear();
-          _updateSignatureInController(1, null);
-          break;
-        case 2:
-          _signatureController2.clear();
-          _updateSignatureInController(2, null);
-          break;
-        case 3:
-          _signatureController3.clear();
-          _updateSignatureInController(3, null);
-          break;
-      }
-    });
-  }
-
-  // Build existing signature with view and re-sign options
   Widget _buildExistingSignature(String base64String, int signatureIndex, Function() onSign) {
     return GestureDetector(
       onTap: () {
@@ -462,7 +388,7 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    constraints: const BoxConstraints(maxHeight: 300),
+                    constraints: const BoxConstraints(maxHeight: 500),
                     child: _buildSignatureImageForDialog(base64String),
                   ),
                   const SizedBox(height: 16),
@@ -525,69 +451,57 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
     );
   }
 
-  // Build signature image for dialog with fallback mechanisms
-  Widget _buildSignatureImageForDialog(String base64String) {
-    try {
-      // For data URLs, try to display directly first
-      if (base64String.startsWith('data:image')) {
-        return Image.network(
-          base64String,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            print("Network approach failed in dialog: $error");
-            // If network approach fails, try extracting base64
-            return _tryExtractAndDisplayBase64(base64String);
-          },
-        );
-      } else {
-        // For regular base64, try to decode
-        return _tryExtractAndDisplayBase64(base64String);
-      }
-    } catch (e) {
-      print("Error in dialog image display: $e");
-      return Container(
-        alignment: Alignment.center,
-        child: Text("Could not display signature image"),
-      );
+  Widget _buildSignaturePad(int signatureIndex) {
+    SignatureController signatureController;
+    switch (signatureIndex) {
+      case 1:
+        signatureController = _signatureController1;
+        break;
+      case 2:
+        signatureController = _signatureController2;
+        break;
+      case 3:
+        signatureController = _signatureController3;
+        break;
+      default:
+        throw Exception("Invalid signature index");
     }
-  }
 
-  // Helper method to extract and display base64 image
-  Widget _tryExtractAndDisplayBase64(String base64String) {
-    try {
-      String processedBase64 = base64String;
-      if (base64String.startsWith('data:image')) {
-        final parts = base64String.split(',');
-        if (parts.length > 1) {
-          processedBase64 = parts[1];
-        }
-      }
-
-      // Add padding if needed
-      while (processedBase64.length % 4 != 0) {
-        processedBase64 += '=';
-      }
-
-      final Uint8List bytes = base64Decode(processedBase64);
-
-      return Image.memory(
-        bytes,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          print("Memory approach failed in dialog: $error");
-          return Container(
-            alignment: Alignment.center,
-            child: Text("Could not display signature image"),
-          );
-        },
-      );
-    } catch (e) {
-      print("Base64 extraction failed in dialog: $e");
-      return Container(
-        alignment: Alignment.center,
-        child: Text("Could not process signature data"),
-      );
-    }
+    return Column(
+      children: [
+        Expanded(
+          child: Signature(
+            controller: signatureController,
+            backgroundColor: Colors.white,
+          ),
+        ),
+        Container(
+          color: Colors.grey[200],
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Clear button
+              IconButton(
+                icon: const Icon(Icons.clear, color: Colors.blue),
+                onPressed: () {
+                  signatureController.clear();
+                },
+                tooltip: 'Clear All',
+              ),
+              // Undo button
+              IconButton(
+                icon: const Icon(Icons.undo, color: Colors.blue),
+                onPressed: () {
+                  signatureController.undo();
+                },
+                tooltip: 'Undo',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildDisabledSignatureSection({
@@ -707,6 +621,71 @@ class _PartG_SyringeState extends State<PartG_Syringe> {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return dateTimeStr;
+    }
+  }
+
+  // Try to build an image from base64 string for dialog display
+  Widget _buildSignatureImageForDialog(String base64String) {
+    try {
+      // For data URLs, try to display directly first
+      if (base64String.startsWith('data:image')) {
+        return Image.network(
+          base64String,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            print("Network approach failed in dialog: $error");
+            // If network approach fails, try extracting base64
+            return _tryExtractAndDisplayBase64(base64String);
+          },
+        );
+      } else {
+        // For regular base64, try to decode
+        return _tryExtractAndDisplayBase64(base64String);
+      }
+    } catch (e) {
+      print("Error in dialog image display: $e");
+      return Container(
+        alignment: Alignment.center,
+        child: Text("Could not display signature image"),
+      );
+    }
+  }
+
+  // Helper method to extract and display base64 data
+  Widget _tryExtractAndDisplayBase64(String base64String) {
+    try {
+      String processedBase64 = base64String;
+      if (base64String.startsWith('data:image')) {
+        final parts = base64String.split(',');
+        if (parts.length > 1) {
+          processedBase64 = parts[1];
+        }
+      }
+
+      // Add padding if needed
+      while (processedBase64.length % 4 != 0) {
+        processedBase64 += '=';
+      }
+
+      final Uint8List bytes = base64Decode(processedBase64);
+
+      return Image.memory(
+        bytes,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          print("Memory approach failed in dialog: $error");
+          return Container(
+            alignment: Alignment.center,
+            child: Text("Could not display signature image"),
+          );
+        },
+      );
+    } catch (e) {
+      print("Base64 extraction failed in dialog: $e");
+      return Container(
+        alignment: Alignment.center,
+        child: Text("Could not process signature data"),
+      );
     }
   }
 }

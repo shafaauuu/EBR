@@ -22,7 +22,6 @@ class FormGNeedleAssyController extends GetxController {
   Rx<Uint8List?> signature2 = Rx<Uint8List?>(null);
   Rx<Uint8List?> signature3 = Rx<Uint8List?>(null);
 
-  // Raw base64 strings for signatures
   Rx<String?> rawSignature1 = Rx<String?>(null);
   Rx<String?> rawSignature2 = Rx<String?>(null);
   Rx<String?> rawSignature3 = Rx<String?>(null);
@@ -88,7 +87,6 @@ class FormGNeedleAssyController extends GetxController {
         requestBody['signed_3'] = base64Encode(signature3.value!);
       }
 
-      // Send the request
       var response = await http.post(
         url,
         headers: {

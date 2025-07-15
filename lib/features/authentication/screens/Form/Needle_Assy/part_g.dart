@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,7 +9,6 @@ import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
-import 'dart:math';
 
 class PartG_NeedleAssy extends StatefulWidget {
   final Task task;

@@ -166,7 +166,7 @@ class AuthController extends GetxController {
     ArtSweetAlert.show(
       context: context,
       artDialogArgs: ArtDialogArgs(
-        type: ArtSweetAlertType.warning,
+        type: ArtSweetAlertType.danger,
         title: Texts.logoutConfirmationTitle,
         text: Texts.logoutConfirmationMessage,
         showCancelBtn: true,

@@ -351,7 +351,7 @@ class _TaskDetailsState extends State<TaskDetails> {
 
     final category = controller.selectedCategory.value;
 
-    if ((key == "C" || key == "D") && !_checkMaterialSelected()) {
+    if ((key == "C") && !_checkMaterialSelected()) {
       return; // Don't proceed with navigation if no material is selected
     }
 

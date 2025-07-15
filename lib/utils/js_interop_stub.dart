@@ -16,7 +16,6 @@ class JSAny implements Map<String, dynamic> {
     return JSAny(value);
   }
   
-  // Allow access to the underlying data
   dynamic get data => _data;
   
   // Convert to string
@@ -25,12 +24,10 @@ class JSAny implements Map<String, dynamic> {
     return _data?.toString() ?? 'null';
   }
   
-  // Support for map-like access if the underlying data is a map
   @override
   dynamic operator [](Object? key) {
     if (_data is Map) {
       var value = _data[key];
-      // If the value is a Map, wrap it in a JSAny
       if (value is Map) {
         return JSAny(value);
       }
