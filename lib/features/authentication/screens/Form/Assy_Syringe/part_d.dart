@@ -455,23 +455,25 @@ class _PartDState extends State<PartD> {
   }
 
   void _showImageSourceDialog(BuildContext context) {
-    AwesomeDialog(
+    ArtSweetAlert.show(
       context: context,
-      dialogType: DialogType.info,
-      animType: AnimType.scale,
-      title: 'Select Image Source',
-      desc: 'Choose where to get the image from:',
-      btnOkText: "Camera",
-      btnOkColor: Colors.blue, // Blue for Camera
-      btnOkOnPress: () {
-        _pickImage(ImageSource.camera);
-      },
-      btnCancelText: "Gallery",
-      btnCancelColor: Colors.blue, // Green for Gallery
-      btnCancelOnPress: () {
-        _pickImage(ImageSource.gallery);
-      },
-    ).show();
+      artDialogArgs: ArtDialogArgs(
+        type: ArtSweetAlertType.question,
+        title: "Select Image Source",
+        text: "Choose where to get the image from:",
+        showCancelBtn: true,
+        confirmButtonText: "Camera",
+        cancelButtonText: "Gallery",
+        onConfirm: () {
+          Navigator.of(context).pop(); // Close the dialog first
+          _pickImage(ImageSource.camera);
+        },
+        onCancel: () {
+          Navigator.of(context).pop(); // Close the dialog first
+          _pickImage(ImageSource.gallery);
+        },
+      ),
+    );
   }
 
   void _navigateToMaterialReconciliation() async {
