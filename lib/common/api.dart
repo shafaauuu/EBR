@@ -9,16 +9,14 @@ class ApiConfig {
   static String get baseUrl {
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api';
-    } 
+    }
     // For Android devices
     else if (Platform.isAndroid) {
-      // Use your computer's actual IP address when testing on a physical device
-      return 'http://192.104.202.207:8000/api'; // Your computer's actual IP address
-    } 
+      return 'http://192.104.202.147:8000/api';
+    }
     // For iOS devices
     else if (Platform.isIOS) {
-      // Use your computer's actual IP address when testing on a physical device
-      return 'http://192.104.202.207:8000/api'; // Your computer's actual IP address
+      return 'http://192.104.202.147:8000/api';
     } 
     // Fallback
     else {

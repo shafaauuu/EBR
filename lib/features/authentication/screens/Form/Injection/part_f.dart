@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
 import '../../../controller/task_details_controller.dart';
 import '../../../models/task_model.dart';
 import 'package:art_sweetalert/art_sweetalert.dart';
 import '../../../controller/Form/F/form_f_injection_controller.dart';
+
 
 class PartF_Injection extends StatefulWidget {
   final Task task;
@@ -22,8 +24,12 @@ class _PartF_InjectionState extends State<PartF_Injection> {
 
   File? _labelMesinImage;
   File? _label2Image;
+  String? _existingLabelMesinImage;
+  String? _existingLabel2Image;
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
+  bool _isEditMode = false;
+  String? _formId;
 
   @override
   void initState() {
@@ -32,9 +38,12 @@ class _PartF_InjectionState extends State<PartF_Injection> {
 
     ever(formController.existingFormData, (data) {
       if (data != null) {
-        // If we have existing data, we can show it in the UI
-        // This would be useful for viewing or editing existing forms
-        // But for this form with images, we can't directly display the binary data
+        setState(() {
+          _formId = data['id'].toString();
+          _existingLabelMesinImage = data['label_mesin'];
+          _existingLabel2Image = data['label_2'];
+          _isEditMode = true;
+        });
       }
     });
   }
@@ -44,8 +53,11 @@ class _PartF_InjectionState extends State<PartF_Injection> {
     if (pickedFile != null) {
       setState(() {
         _labelMesinImage = File(pickedFile.path);
+        _existingLabelMesinImage = null; // Clear existing image when new one is selected
         formController.setLabelMesin(_labelMesinImage!);
       });
+      // Close the dialog after picking an image
+      Navigator.of(context).pop();
     }
   }
 
@@ -54,8 +66,11 @@ class _PartF_InjectionState extends State<PartF_Injection> {
     if (pickedFile != null) {
       setState(() {
         _label2Image = File(pickedFile.path);
+        _existingLabel2Image = null; // Clear existing image when new one is selected
         formController.setLabel2(_label2Image!);
       });
+      // Close the dialog after picking an image
+      Navigator.of(context).pop();
     }
   }
 
@@ -81,8 +96,59 @@ class _PartF_InjectionState extends State<PartF_Injection> {
     );
   }
 
+  // New method to view full-size image
+  void _viewFullImage(BuildContext context, bool isLabelMesin) {
+    final imageData = isLabelMesin ? _existingLabelMesinImage : _existingLabel2Image;
+    final localImage = isLabelMesin ? _labelMesinImage : _label2Image;
+    final title = isLabelMesin ? "Label Mesin" : "Second Label";
+
+    if (imageData != null || localImage != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => Scaffold(
+            appBar: AppBar(
+              title: Text(title),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showImageSourceDialog(context, isLabelMesin);
+                  },
+                ),
+              ],
+            ),
+            body: Center(
+              child: InteractiveViewer(
+                panEnabled: true,
+                boundaryMargin: const EdgeInsets.all(20),
+                minScale: 0.5,
+                maxScale: 4,
+                child: localImage != null
+                    ? Image.file(localImage)
+                    : Image.memory(
+                  base64Decode(imageData!.split(',').last),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Text('Error loading image', style: TextStyle(color: Colors.red)),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _submitForm() async {
-    if (_labelMesinImage == null || _label2Image == null) {
+    if (!_isEditMode && (_labelMesinImage == null || _label2Image == null)) {
       ArtSweetAlert.show(
         context: context,
         artDialogArgs: ArtDialogArgs(
@@ -94,11 +160,25 @@ class _PartF_InjectionState extends State<PartF_Injection> {
       return;
     }
 
+    if (_isEditMode && _labelMesinImage == null && _label2Image == null && _existingLabelMesinImage == null && _existingLabel2Image == null) {
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.warning,
+          title: "Missing Images",
+          text: "Please upload at least one image",
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
 
-    final result = await formController.submitForm();
+    final result = _isEditMode && _formId != null
+        ? await formController.updateForm(_formId!)
+        : await formController.submitForm();
 
     setState(() {
       _isSubmitting = false;
@@ -121,7 +201,7 @@ class _PartF_InjectionState extends State<PartF_Injection> {
       ArtSweetAlert.show(
         context: context,
         artDialogArgs: ArtDialogArgs(
-          type: ArtSweetAlertType.danger,
+          type: ArtSweetAlertType.warning,
           title: "Error",
           text: formController.errorMessage.value,
         ),
@@ -195,19 +275,41 @@ class _PartF_InjectionState extends State<PartF_Injection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Label Mesin Section
-                  const Text(
-                    "Take Photo of Label Mesin",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Take Photo of Label Mesin",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (_existingLabelMesinImage != null || _labelMesinImage != null)
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.fullscreen, color: Colors.blue),
+                              onPressed: () => _viewFullImage(context, true),
+                              tooltip: "View Full Image",
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _showImageSourceDialog(context, true),
+                              tooltip: "Update Image",
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
 
                   // Label Mesin Photo Field
                   GestureDetector(
-                    onTap: () => _showImageSourceDialog(context, true),
+                    onTap: () => (_existingLabelMesinImage != null || _labelMesinImage != null)
+                        ? _viewFullImage(context, true)
+                        : _showImageSourceDialog(context, true),
                     child: Container(
                       height: 400,
                       width: double.infinity,
@@ -216,30 +318,62 @@ class _PartF_InjectionState extends State<PartF_Injection> {
                         borderRadius: BorderRadius.circular(8),
                         color: Colors.grey[200],
                       ),
-                      child: _labelMesinImage == null
-                          ? const Center(
-                        child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      child: _labelMesinImage != null
+                          ? Image.file(_labelMesinImage!, fit: BoxFit.cover)
+                          : _existingLabelMesinImage != null
+                          ? Image.memory(
+                        base64Decode(_existingLabelMesinImage!.split(',').last),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Text('Error loading image', style: TextStyle(color: Colors.red)),
+                          );
+                        },
                       )
-                          : Image.file(_labelMesinImage!, fit: BoxFit.cover),
+                          : const Center(
+                        child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
                   // Label 2 Section
-                  const Text(
-                    "Take Photo of Second Label",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Take Photo of Second Label",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (_existingLabel2Image != null || _label2Image != null)
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.fullscreen, color: Colors.blue),
+                              onPressed: () => _viewFullImage(context, false),
+                              tooltip: "View Full Image",
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _showImageSourceDialog(context, false),
+                              tooltip: "Update Image",
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
 
                   // Label 2 Photo Field
                   GestureDetector(
-                    onTap: () => _showImageSourceDialog(context, false),
+                    onTap: () => (_existingLabel2Image != null || _label2Image != null)
+                        ? _viewFullImage(context, false)
+                        : _showImageSourceDialog(context, false),
                     child: Container(
                       height: 400,
                       width: double.infinity,
@@ -248,11 +382,21 @@ class _PartF_InjectionState extends State<PartF_Injection> {
                         borderRadius: BorderRadius.circular(8),
                         color: Colors.grey[200],
                       ),
-                      child: _label2Image == null
-                          ? const Center(
-                        child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      child: _label2Image != null
+                          ? Image.file(_label2Image!, fit: BoxFit.cover)
+                          : _existingLabel2Image != null
+                          ? Image.memory(
+                        base64Decode(_existingLabel2Image!.split(',').last),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Text('Error loading image', style: TextStyle(color: Colors.red)),
+                          );
+                        },
                       )
-                          : Image.file(_label2Image!, fit: BoxFit.cover),
+                          : const Center(
+                        child: Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      ),
                     ),
                   ),
 
@@ -275,7 +419,7 @@ class _PartF_InjectionState extends State<PartF_Injection> {
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                          : const Text("Submit", style: TextStyle(fontSize: 16)),
+                          : Text(_isEditMode ? "Update" : "Submit", style: const TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],
